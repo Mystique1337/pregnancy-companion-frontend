@@ -23,6 +23,7 @@ export default function ChatPanel({
   const [recording, setRecording] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
   const [voiceMsg, setVoiceMsg] = useState<number | null>(null);
+  const [pendingVoiceSend, setPendingVoiceSend] = useState<string | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const recRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -51,7 +52,11 @@ export default function ChatPanel({
           form.append("file", blob, "clip.webm");
           const res = await fetch("/api/asr", { method: "POST", body: form });
           const data = await res.json().catch(() => ({}));
-          if (data.text) setInput((cur) => (cur ? cur + " " : "") + data.text);
+          const tx = String(data.text || "").trim();
+          // Voice-first: if she spoke a real question, send it and speak the reply
+          // back — a hands-free conversation in her language (no typing needed).
+          if (tx.length > 1) setPendingVoiceSend(tx);
+          else if (tx) setInput((cur) => (cur ? cur + " " : "") + tx);
         } catch { /* ignore */ }
         setTranscribing(false);
       };
@@ -82,14 +87,16 @@ export default function ChatPanel({
     setVoiceMsg(null);
   }
 
-  async function send(text?: string) {
+  async function send(text?: string, spoken = false) {
     const content = (text ?? input).trim();
     if (!content || busy) return;
     const next: Msg[] = [...msgs, { role: "user", content }];
+    const assistantIdx = next.length; // slot the streamed reply will occupy
     setMsgs(next);
     setInput("");
     setBusy(true);
 
+    let finalText = "";
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
@@ -100,8 +107,8 @@ export default function ChatPanel({
       setMsgs((m) => [...m, { role: "assistant", content: "" }]);
       const reader = res.body?.getReader();
       if (!reader) {
-        const fallback = await res.text();
-        setMsgs((m) => replaceLast(m, fallback));
+        finalText = await res.text();
+        setMsgs((m) => replaceLast(m, finalText));
       } else {
         const dec = new TextDecoder();
         let acc = "";
@@ -111,13 +118,26 @@ export default function ChatPanel({
           acc += dec.decode(value, { stream: true });
           setMsgs((m) => replaceLast(m, acc));
         }
+        finalText = acc;
       }
     } catch {
       setMsgs((m) => [...m, { role: "assistant", content: "I couldn't reach my thoughts just now — try again. 🌸" }]);
     } finally {
       setBusy(false);
     }
+    // Voice-first: read the answer aloud in her language when she asked by voice.
+    if (spoken && finalText.trim()) playMsg(assistantIdx, finalText.trim());
   }
+
+  // Auto-send a transcribed voice question (hands-free), then speak the reply.
+  useEffect(() => {
+    if (pendingVoiceSend && !busy) {
+      const tx = pendingVoiceSend;
+      setPendingVoiceSend(null);
+      send(tx, true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingVoiceSend]);
 
   return (
     <div className="card" style={{ padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", height: "68vh" }}>

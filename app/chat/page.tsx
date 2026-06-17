@@ -36,7 +36,12 @@ export default async function ChatPage() {
       <AppHeader plan={mother.plan} lang={mother.language} active="chat" features={features} />
       <div className="app-shell">
         <p className="s-label">{t("chat.talkto", L)}</p>
-        <h1 className="s-title" style={{ marginBottom: 16 }}>{t("chat.companionAny", L)}</h1>
+        <h1 className="s-title" style={{ marginBottom: 12 }}>{t("chat.companionAny", L)}</h1>
+        {mother.plan === "premium" && (
+          <p className="muted" style={{ marginBottom: 16, fontSize: 13 }}>
+            🎤 Prefer to talk? Tap the mic and speak — Bumply listens and answers aloud in your language.
+          </p>
+        )}
 
         {mother.plan === "premium" ? (
           <>

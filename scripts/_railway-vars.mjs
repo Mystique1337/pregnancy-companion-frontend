@@ -5,7 +5,7 @@ import { spawnSync } from "node:child_process";
 
 const SKIP = new Set(["APP_URL", "PUBLIC_WEBHOOK_URL"]);
 const env = readFileSync(".env.local", "utf8");
-const args = ["variables"];
+const args = ["variables", "--service", "bumply"];
 let count = 0;
 for (const line of env.split("\n")) {
   const m = line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*)\s*$/);

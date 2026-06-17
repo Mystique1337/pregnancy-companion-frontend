@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { getMotherById, getOrCreateTelegramToken } from "@/lib/queries";
+import { getMotherById, getOrCreateTelegramToken, getOrCreateFamilyToken } from "@/lib/queries";
 import { telegramConfigured, telegramBotUsername } from "@/lib/telegram";
 import { getSettings } from "@/lib/settings";
 import { normalizeLang } from "@/lib/languages";
@@ -10,6 +10,7 @@ import AppHeader from "../_components/AppHeader";
 import SubscribeButton from "../_components/SubscribeButton";
 import PreferencesForm from "../_components/PreferencesForm";
 import EmergencyContactForm from "../_components/EmergencyContactForm";
+import FamilyInvite from "../_components/FamilyInvite";
 import TelegramLink from "../_components/TelegramLink";
 
 export const dynamic = "force-dynamic";
@@ -70,6 +71,8 @@ export default async function Account() {
         <PreferencesForm prefs={getPrefs(mother)} lang={mother.language} />
 
         <EmergencyContactForm name={mother.emergency_contact_name} phone={mother.emergency_contact_phone} />
+
+        <FamilyInvite token={await getOrCreateFamilyToken(mother.id)} firstName={mother.full_name?.split(" ")[0] || ""} />
 
         {telegramConfigured() && (
           <TelegramLink

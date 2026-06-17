@@ -106,6 +106,16 @@ ok("mild itching → selfcare (no alert)", triSelf?.level === "selfcare" && !tri
 const triBad = await req(mom, "POST", "/api/triage", { json: { symptomId: "nope", yes: [] } });
 ok("invalid symptom rejected", triBad.status === 400);
 
+console.log("\n— Family companion (public share) —");
+const famToken = await q.getOrCreateFamilyToken(id);
+ok("family token created", typeof famToken === "string" && famToken.length >= 12);
+const famPage = await req(null, "GET", `/family/${famToken}`); // public, no cookie
+const famHtml = await famPage.text();
+ok("public family view renders (no auth)", famPage.status === 200 && famHtml.includes("journey"));
+ok("family view hides medical data", !/blood pressure|vitals|mood|alert/i.test(famHtml));
+const famBad = await req(null, "GET", "/family/not-a-real-token");
+ok("invalid family token → not active", (await famBad.text()).includes("isn"));
+
 console.log("\n— Wellbeing (mood) screen —");
 ok("wellbeing page 200", (await req(mom, "GET", "/wellbeing")).status === 200);
 const moodOk = await (await req(mom, "POST", "/api/wellbeing", { json: { answers: { q1:0,q2:0,q3:0,q4:0,q5:0,q6:0,q7:0,q8:0,q9:0,q10:0 } } })).json();

@@ -105,6 +105,9 @@ alter table preg_companion.mothers add column if not exists telegram_link_token 
 -- Emergency next-of-kin contact (used by Emergency Mode).
 alter table preg_companion.mothers add column if not exists emergency_contact_name text;
 alter table preg_companion.mothers add column if not exists emergency_contact_phone text;
+
+-- Family/partner share token — read-only weekly view, no login (Family Companion).
+alter table preg_companion.mothers add column if not exists family_token text;
 create index if not exists idx_mothers_telegram on preg_companion.mothers(telegram_chat_id);
 create index if not exists idx_mothers_tgtoken on preg_companion.mothers(telegram_link_token);
 

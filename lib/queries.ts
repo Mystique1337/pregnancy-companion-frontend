@@ -24,6 +24,7 @@ export type Mother = {
   telegram_link_token: string | null;
   emergency_contact_name: string | null;
   emergency_contact_phone: string | null;
+  family_token: string | null;
   last_sent_at: string | null;
   created_at: string;
 };
@@ -131,6 +132,20 @@ export async function getOrCreateTelegramToken(motherId: string): Promise<string
   const token = randomBytes(5).toString("hex"); // 10-char code
   await sql`update mothers set telegram_link_token = ${token} where id = ${motherId}`;
   return token;
+}
+
+export async function getOrCreateFamilyToken(motherId: string): Promise<string> {
+  const rows = await sql<{ family_token: string | null }[]>`select family_token from mothers where id = ${motherId}`;
+  if (rows[0]?.family_token) return rows[0].family_token;
+  const token = randomBytes(9).toString("hex"); // 18-char unguessable token
+  await sql`update mothers set family_token = ${token} where id = ${motherId}`;
+  return token;
+}
+
+export async function getMotherByFamilyToken(token: string): Promise<Mother | null> {
+  if (!token) return null;
+  const rows = await sql<Mother[]>`select * from mothers where family_token = ${token} limit 1`;
+  return rows[0] ?? null;
 }
 
 export async function getMotherByTelegramToken(token: string): Promise<Mother | null> {

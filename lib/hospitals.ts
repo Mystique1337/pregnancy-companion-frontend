@@ -41,14 +41,29 @@ export async function findHospitals(lat: number, lon: number, radiusM = 8000): P
     node["healthcare"~"hospital|clinic|midwife|birthing_centre|centre"]${a};way["healthcare"~"hospital|clinic|centre"]${a};
   );out center tags 80;`;
 
-  const res = await fetch("https://overpass-api.de/api/interpreter", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": UA },
-    body: "data=" + encodeURIComponent(q),
-    cache: "no-store",
-  });
-  if (!res.ok) throw new Error(`Overpass HTTP ${res.status}`);
-  const data = (await res.json()) as { elements?: Record<string, unknown>[] };
+  // Overpass public mirrors rate-limit / go down independently — try each in turn.
+  const MIRRORS = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+  ];
+  let data: { elements?: Record<string, unknown>[] } | null = null;
+  let lastErr: unknown = null;
+  for (const url of MIRRORS) {
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": UA },
+        body: "data=" + encodeURIComponent(q),
+        cache: "no-store",
+        signal: AbortSignal.timeout(20000),
+      });
+      if (!res.ok) { lastErr = new Error(`Overpass HTTP ${res.status}`); continue; }
+      data = (await res.json()) as { elements?: Record<string, unknown>[] };
+      break;
+    } catch (e) { lastErr = e; }
+  }
+  if (!data) throw lastErr instanceof Error ? lastErr : new Error("Overpass unavailable");
 
   const seen = new Set<string>();
   const out: Hospital[] = [];

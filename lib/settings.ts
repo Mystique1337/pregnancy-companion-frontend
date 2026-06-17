@@ -23,7 +23,24 @@ function toBool(v: string | undefined, d: boolean): boolean {
   return v === "true" || v === "1";
 }
 
+// Settings change rarely (admin-only) but are read on every page render. Cache
+// in-process with a short TTL so a normal page load costs zero DB round-trips.
+let _cache: { at: number; val: Settings } | null = null;
+const SETTINGS_TTL_MS = 30_000;
+
+export function invalidateSettings() {
+  _cache = null;
+}
+
 export async function getSettings(): Promise<Settings> {
+  const now = Date.now();
+  if (_cache && now - _cache.at < SETTINGS_TTL_MS) return _cache.val;
+  const val = await loadSettings();
+  _cache = { at: now, val };
+  return val;
+}
+
+async function loadSettings(): Promise<Settings> {
   try {
     const rows = await sql<{ key: string; value: string }[]>`select key, value from app_settings`;
     const m = Object.fromEntries(rows.map((r) => [r.key, r.value]));
@@ -44,6 +61,7 @@ export async function setSetting(key: string, value: string) {
   await sql`
     insert into app_settings (key, value, updated_at) values (${key}, ${value}, now())
     on conflict (key) do update set value = ${value}, updated_at = now()`;
+  invalidateSettings(); // admin just changed a setting — drop the cache so it takes effect now
 }
 
 /** Model to use for AI calls: admin override if set, else env/default. */

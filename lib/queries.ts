@@ -22,6 +22,8 @@ export type Mother = {
   preferences: Record<string, unknown> | null;
   telegram_chat_id: string | null;
   telegram_link_token: string | null;
+  emergency_contact_name: string | null;
+  emergency_contact_phone: string | null;
   last_sent_at: string | null;
   created_at: string;
 };
@@ -107,6 +109,10 @@ export async function updateMotherLanguage(id: string, language: string) {
 
 export async function updateMotherPreferences(id: string, prefs: Record<string, unknown>) {
   await sql`update mothers set preferences = ${sql.json(prefs as Parameters<typeof sql.json>[0])} where id = ${id}`;
+}
+
+export async function updateEmergencyContact(id: string, name: string | null, phone: string | null) {
+  await sql`update mothers set emergency_contact_name = ${name}, emergency_contact_phone = ${phone} where id = ${id}`;
 }
 
 export async function getMotherByTelegram(chatId: string): Promise<Mother | null> {

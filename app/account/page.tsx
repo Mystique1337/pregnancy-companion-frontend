@@ -9,6 +9,7 @@ import { getPrefs } from "@/lib/personalize";
 import AppHeader from "../_components/AppHeader";
 import SubscribeButton from "../_components/SubscribeButton";
 import PreferencesForm from "../_components/PreferencesForm";
+import EmergencyContactForm from "../_components/EmergencyContactForm";
 import TelegramLink from "../_components/TelegramLink";
 
 export const dynamic = "force-dynamic";
@@ -67,6 +68,8 @@ export default async function Account() {
         </div>
 
         <PreferencesForm prefs={getPrefs(mother)} lang={mother.language} />
+
+        <EmergencyContactForm name={mother.emergency_contact_name} phone={mother.emergency_contact_phone} />
 
         {telegramConfigured() && (
           <TelegramLink

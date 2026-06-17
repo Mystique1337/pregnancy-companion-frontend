@@ -1,5 +1,6 @@
 import { NextResponse, after } from "next/server";
-import { getMotherByTelegram, getMotherByTelegramToken, getMotherByEmail, getMotherByPhone, linkTelegramChat, type Mother } from "@/lib/queries";
+import { getMotherByTelegram, getMotherByTelegramToken, getMotherByEmail, getMotherByPhone, linkTelegramChat, createAlert, type Mother } from "@/lib/queries";
+import { publicBaseUrl } from "@/lib/baseUrl";
 import { getSettings } from "@/lib/settings";
 import { bumplyReply } from "@/lib/companion";
 import { sendTelegram, telegramSecret, sendChatAction, downloadTelegramFile, sendVoiceReply } from "@/lib/telegram";
@@ -24,8 +25,12 @@ async function handleCommand(chatId: string, mother: Mother, cmd: string) {
     await sendTelegram(chatId, `📅 You're in week ${week} (${trimesterFor(week)} trimester). Your baby is ${size}. ${Math.max(0, 40 - week)} weeks to go! 🌸`);
   } else if (c === "/tips") {
     await sendTelegram(chatId, `🌿 ${dailyTipFor(week, week)}`);
+  } else if (c === "/emergency" || c === "/sos") {
+    await createAlert(mother.id, { level: "urgent", kind: "emergency", message: `🚨 EMERGENCY requested via Telegram by ${mother.full_name}.` }).catch(() => {});
+    const base = publicBaseUrl();
+    await sendTelegram(chatId, `🚨 If this is life-threatening — heavy bleeding, fits, severe pain, or your baby not moving — go to the nearest hospital NOW. Don't wait.\n\nI've alerted your clinician.${base ? `\n\nOpen Emergency Mode to find the nearest hospital and alert your loved one:\n${base}/emergency` : ""}`);
   } else {
-    await sendTelegram(chatId, "I'm Bumply 🌸 your pregnancy companion. Just talk to me — type or send a voice note and I'll help. Try:\n• /week — your week & baby size\n• /tips — a tip for today\nOr ask me anything: symptoms, food, what's normal, how you're feeling.");
+    await sendTelegram(chatId, "I'm Bumply 🌸 your pregnancy companion. Just talk to me — type or send a voice note and I'll help. Try:\n• /week — your week & baby size\n• /tips — a tip for today\n• /emergency — get help fast\nOr ask me anything: symptoms, food, what's normal, how you're feeling.");
   }
 }
 

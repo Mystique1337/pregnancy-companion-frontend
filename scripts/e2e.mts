@@ -106,6 +106,14 @@ ok("mild itching → selfcare (no alert)", triSelf?.level === "selfcare" && !tri
 const triBad = await req(mom, "POST", "/api/triage", { json: { symptomId: "nope", yes: [] } });
 ok("invalid symptom rejected", triBad.status === 400);
 
+console.log("\n— Emergency Mode —");
+ok("emergency page 200", (await req(mom, "GET", "/emergency")).status === 200);
+ok("save emergency contact", (await req(mom, "PUT", "/api/emergency", { json: { name: "Emeka", phone: "+2348030000000" } })).status === 200);
+const emerg = await (await req(mom, "POST", "/api/emergency", { json: { lat: 6.5095, lon: 3.3711 } })).json();
+ok("emergency trigger returns contact + ok", emerg?.ok === true && emerg?.contact?.name === "Emeka", JSON.stringify(emerg?.contact));
+const emergAlerts = await q.listAlertsForMother(id);
+ok("emergency raises an urgent alert", emergAlerts.some((a: { kind: string; level: string }) => a.kind === "emergency" && a.level === "urgent"));
+
 console.log("\n— Bump photo diary —");
 ok("bump page 200", (await req(mom, "GET", "/bump")).status === 200);
 const PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";

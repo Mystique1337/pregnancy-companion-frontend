@@ -175,6 +175,54 @@ export async function deleteMother(id: string) {
   await sql`delete from mothers where id = ${id}`;
 }
 
+// Aggregated, anonymised population-health view (for an admin / health-authority
+// dashboard). No personal identifiers — counts only.
+export type PopulationStats = {
+  byTrimester: { label: string; count: number }[];
+  byLanguage: { label: string; count: number }[];
+  alertsByKind: { kind: string; total: number; open: number; urgent: number }[];
+  totalAlerts: number;
+  openAlerts: number;
+  emergencies: number;
+  moodFlags: number;
+  ancReminders: number;
+};
+
+export async function populationStats(): Promise<PopulationStats> {
+  const [tri, lang, alerts, notif] = await Promise.all([
+    sql<{ trimester: string; count: string }[]>`
+      select coalesce(trimester, 'unknown') as trimester, count(*) as count
+      from mothers group by trimester order by count desc`,
+    sql<{ language: string; count: string }[]>`
+      select coalesce(language, 'en') as language, count(*) as count
+      from mothers group by language order by count desc`,
+    sql<{ kind: string; total: string; open: string; urgent: string }[]>`
+      select kind,
+             count(*) as total,
+             count(*) filter (where status = 'open')   as open,
+             count(*) filter (where level = 'urgent')  as urgent
+      from alerts group by kind order by total desc`,
+    sql<{ kind: string; count: string }[]>`
+      select kind, count(*) as count from notification_log group by kind`,
+  ]);
+
+  const LANG_LABEL: Record<string, string> = { en: "English", pcm: "Pidgin", yo: "Yoruba", ha: "Hausa", ig: "Igbo" };
+  const n = (v: string) => Number(v || 0);
+  const alertsByKind = alerts.map((a) => ({ kind: a.kind, total: n(a.total), open: n(a.open), urgent: n(a.urgent) }));
+  const notifMap = Object.fromEntries(notif.map((r) => [r.kind, n(r.count)]));
+
+  return {
+    byTrimester: tri.map((r) => ({ label: r.trimester, count: n(r.count) })),
+    byLanguage: lang.map((r) => ({ label: LANG_LABEL[r.language] || r.language, count: n(r.count) })),
+    alertsByKind,
+    totalAlerts: alertsByKind.reduce((s, a) => s + a.total, 0),
+    openAlerts: alertsByKind.reduce((s, a) => s + a.open, 0),
+    emergencies: alertsByKind.filter((a) => a.kind === "emergency").reduce((s, a) => s + a.total, 0),
+    moodFlags: alertsByKind.filter((a) => a.kind === "mood").reduce((s, a) => s + a.total, 0),
+    ancReminders: notifMap["anc"] || 0,
+  };
+}
+
 // --- Web-push subscriptions ---
 export type PushSub = { id: string; mother_id: string; endpoint: string; p256dh: string; auth: string };
 

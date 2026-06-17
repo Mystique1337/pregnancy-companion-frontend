@@ -163,7 +163,7 @@ ok("free user gets premium upsell", /premium/i.test(freeChat));
 console.log("\n— Admin —");
 const admin = new Jar();
 ok("admin login", (await req(admin, "POST", "/api/admin/login", { json: { password: ADMIN_PW } })).status === 200);
-for (const p of ["/admin", "/admin/users", "/admin/notifications", "/admin/clinicians", "/admin/settings", "/admin/whatsapp"]) {
+for (const p of ["/admin", "/admin/insights", "/admin/users", "/admin/notifications", "/admin/clinicians", "/admin/settings", "/admin/whatsapp"]) {
   ok(`admin GET ${p}`, (await req(admin, "GET", p)).status === 200);
 }
 ok("admin set mother → premium", (await req(admin, "POST", "/api/admin/user", { json: { id, action: "plan", plan: "premium" } })).status === 200);

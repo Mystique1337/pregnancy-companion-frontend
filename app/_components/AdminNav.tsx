@@ -19,6 +19,7 @@ export default function AdminNav({ active }: { active?: string }) {
         </a>
         <div className="app-nav">
           {link("/admin", "Overview", "overview")}
+          {link("/admin/insights", "Insights", "insights")}
           {link("/admin/users", "Users", "users")}
           {link("/admin/whatsapp", "WhatsApp", "whatsapp")}
           {link("/admin/notifications", "Notifications", "notifications")}

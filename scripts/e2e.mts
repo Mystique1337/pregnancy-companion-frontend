@@ -85,6 +85,10 @@ for (const p of ["/journal", "/account", "/vitals"]) {
   ok(`GET ${p} (with data)`, (await req(mom, "GET", p)).status === 200);
 }
 
+console.log("\n— Doctor report —");
+const report = await (await req(mom, "GET", "/report")).text();
+ok("report page renders with patient name", report.includes("Pregnancy summary") && report.includes("E2E Mama"));
+
 console.log("\n— RAG / Meili search —");
 const search = await (await req(mom, "POST", "/api/search", { json: { q: "nausea" } })).json();
 ok("library search returns hits", (search?.hits?.length || 0) > 0, `${search?.hits?.length} hits`);

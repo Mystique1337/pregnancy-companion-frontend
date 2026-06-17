@@ -40,6 +40,7 @@ export default function LoginPage() {
   return (
     <div className="auth-wrap">
       <div className="auth-card">
+        <a href="/" style={{ color: "var(--ink-muted)", fontSize: 13, marginBottom: 14, display: "inline-block" }}>← Back to home</a>
         <a className="logo" href="/" style={{ marginBottom: 24 }}>
           <div className="logo-dot" />
           Bumply

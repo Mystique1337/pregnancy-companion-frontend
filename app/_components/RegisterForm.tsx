@@ -5,7 +5,7 @@ import { LANGUAGES } from "@/lib/languages";
 const WEEKS = Array.from({ length: 40 }, (_, i) => i + 1);
 const ETHNICITIES = [
   "Yoruba", "Igbo", "Hausa", "Fulani", "Ijaw", "Kanuri", "Tiv", "Ibibio / Efik",
-  "Edo", "Nupe", "Urhobo", "Other Nigerian", "Non-Nigerian", "Prefer not to say",
+  "Edo", "Nupe", "Urhobo", "Non-Nigerian", "Prefer not to say", "Other",
 ];
 
 export default function RegisterForm() {
@@ -22,6 +22,7 @@ export default function RegisterForm() {
     ethnicity: "",
     language: "en",
   });
+  const [otherEth, setOtherEth] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
@@ -40,10 +41,11 @@ export default function RegisterForm() {
     }
     setBusy(true);
     try {
+      const ethnicity = form.ethnicity === "Other" ? otherEth.trim() : form.ethnicity;
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, current_week: parseInt(form.current_week, 10), source: "website" }),
+        body: JSON.stringify({ ...form, ethnicity, current_week: parseInt(form.current_week, 10), source: "website" }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Registration failed");
@@ -126,6 +128,9 @@ export default function RegisterForm() {
             <option key={e} value={e}>{e}</option>
           ))}
         </select>
+        {form.ethnicity === "Other" && (
+          <input style={{ marginTop: 8 }} value={otherEth} onChange={(e) => setOtherEth(e.target.value)} placeholder="Type your ethnicity / cuisine" />
+        )}
       </div>
       <div className="fg">
         <label>Dietary Restrictions (optional)</label>

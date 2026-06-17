@@ -375,6 +375,11 @@ footer { background: var(--ink); padding: 56px 0 40px; }
 .app-nav a:hover { color: var(--pink); }
 .app-nav-links { display: contents; }
 
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; }
+}
+
 /* Mobile bottom tab bar (hidden on desktop) */
 .bottom-nav { display: none; }
 .bn-item { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; padding: 7px 0; color: var(--ink-muted); font-size: 10px; letter-spacing: 0; text-transform: none; }

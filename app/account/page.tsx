@@ -35,7 +35,8 @@ export default async function Account() {
       <AppHeader plan={mother.plan} lang={mother.language} active="account" features={features} />
       <div className="app-shell" style={{ maxWidth: 640 }}>
         <p className="s-label">{t("account.title", L)}</p>
-        <h1 className="s-title" style={{ marginBottom: 20 }}>{t("account.details", L)}</h1>
+        <h1 className="s-title" style={{ marginBottom: 12 }}>{t("account.details", L)}</h1>
+        <a className="btn-ghost" href="/report" style={{ display: "inline-flex", marginBottom: 20 }}>📄 Report for your doctor</a>
 
         <div className="card" style={{ marginBottom: 20 }}>
           {row(t("account.name", L), mother.full_name)}

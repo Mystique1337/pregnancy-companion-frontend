@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { getMotherById, listVitals, listAlertsForMother, recentJournalSummary, type Vital } from "@/lib/queries";
+import { getMotherById, listVitals, listAlertsForMother, listJournalEntries, recentJournalSummary, type Vital } from "@/lib/queries";
 import { currentWeekFrom, trimesterFor } from "@/lib/babyData";
 import { VITAL_KINDS, evaluateVital, type VitalKind } from "@/lib/vitals";
+import { assessRisk } from "@/lib/risk";
 import { clinicalSummary } from "@/lib/report";
 import ReportPrint from "../_components/ReportPrint";
 
@@ -22,6 +23,8 @@ export default async function ReportPage() {
   const vitals = await listVitals(mother.id, undefined, 100);
   const alerts = await listAlertsForMother(mother.id, 12);
   const journal = await recentJournalSummary(mother.id, 7);
+  const journalEntries = await listJournalEntries(mother.id, 20);
+  const risk = assessRisk({ week, firstPregnancy: !!mother.first_pregnancy, vitals, journal: journalEntries });
   let summary = "";
   try {
     summary = await clinicalSummary(mother, week, vitals, alerts, journal);
@@ -85,6 +88,27 @@ export default async function ReportPage() {
                 );
               })}
               {vitals.length === 0 && (<tr><td colSpan={4} style={{ padding: "8px 4px", color: "#9A8576" }}>No vitals logged.</td></tr>)}
+            </tbody>
+          </table>
+
+          <h2 style={{ fontSize: 13, letterSpacing: ".08em", textTransform: "uppercase", color: "#C97B5A", marginBottom: 6 }}>Risk screening (algorithmic, self-reported data)</h2>
+          <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse", marginBottom: 20 }}>
+            <thead>
+              <tr style={{ textAlign: "left", color: "#9A8576", borderBottom: "1px solid #e6ddd4" }}>
+                <th style={{ padding: "6px 4px" }}>Condition</th><th style={{ padding: "6px 4px" }}>Level</th><th style={{ padding: "6px 4px" }}>Contributing factors</th>
+              </tr>
+            </thead>
+            <tbody>
+              {risk.assessments.map((a) => {
+                const flag = a.level === "elevated" || a.level === "high";
+                return (
+                  <tr key={a.condition} style={{ borderBottom: "1px solid #f0e9e1" }}>
+                    <td style={{ padding: "6px 4px" }}>{a.label}</td>
+                    <td style={{ padding: "6px 4px", fontWeight: 600, color: flag ? "#C0392B" : "#2E2620", textTransform: "capitalize" }}>{a.level}{flag ? " ⚠" : ""}</td>
+                    <td style={{ padding: "6px 4px", color: "#6b5a4d" }}>{a.factors.length ? a.factors.join("; ") : "—"}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
 

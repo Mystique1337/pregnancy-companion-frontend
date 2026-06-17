@@ -1,10 +1,13 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { getMotherById, listVitals, listAlertsForMother, type Vital } from "@/lib/queries";
+import { getMotherById, listVitals, listAlertsForMother, listJournalEntries, type Vital } from "@/lib/queries";
 import { getSettings } from "@/lib/settings";
 import { VITAL_KINDS } from "@/lib/vitals";
+import { currentWeekFrom } from "@/lib/babyData";
+import { assessRisk } from "@/lib/risk";
 import AppHeader from "../_components/AppHeader";
 import VitalsForm from "../_components/VitalsForm";
+import RiskCard from "../_components/RiskCard";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +44,10 @@ export default async function VitalsPage() {
   const features = { journal: settings.journal_enabled, tools: settings.tools_enabled, chat: settings.chat_enabled };
   const all = await listVitals(mother.id, undefined, 200);
   const alerts = await listAlertsForMother(mother.id, 5);
+  const journal = await listJournalEntries(mother.id, 20);
+  const week = currentWeekFrom({ dueDate: mother.due_date, enteredWeek: mother.current_week, createdAt: mother.created_at });
+  const risk = assessRisk({ week, firstPregnancy: !!mother.first_pregnancy, vitals: all, journal });
+  const hasData = all.length > 0 || journal.length > 0;
 
   return (
     <>
@@ -59,6 +66,12 @@ export default async function VitalsPage() {
         </div>
 
         <VitalsForm />
+
+        {hasData && (
+          <div style={{ marginBottom: 28 }}>
+            <RiskCard report={risk} />
+          </div>
+        )}
 
         {alerts.length > 0 && (
           <div style={{ marginBottom: 28 }}>

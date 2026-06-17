@@ -89,6 +89,13 @@ console.log("\n— Doctor report —");
 const report = await (await req(mom, "GET", "/report")).text();
 ok("report page renders with patient name", report.includes("Pregnancy summary") && report.includes("E2E Mama"));
 
+console.log("\n— Predictive risk engine —");
+const { assessRisk } = await import("../lib/risk.ts");
+const highBpReport = assessRisk({ week: 30, firstPregnancy: true, vitals: [{ kind: "bp", value: 165, value2: 112, created_at: new Date().toISOString() } as never], journal: [] });
+ok("severe BP → elevated/high pre-eclampsia risk", ["elevated", "high"].includes(highBpReport.assessments.find((a: { condition: string }) => a.condition === "preeclampsia")!.level));
+const calmReport = assessRisk({ week: 30, firstPregnancy: false, vitals: [{ kind: "bp", value: 115, value2: 75, created_at: new Date().toISOString() } as never], journal: [] });
+ok("normal BP → low pre-eclampsia risk", calmReport.assessments.find((a: { condition: string }) => a.condition === "preeclampsia")!.level === "low");
+
 console.log("\n— Symptom triage —");
 ok("triage page 200", (await req(mom, "GET", "/triage")).status === 200);
 const triEmerg = await (await req(mom, "POST", "/api/triage", { json: { symptomId: "bleeding", yes: ["heavy"] } })).json();

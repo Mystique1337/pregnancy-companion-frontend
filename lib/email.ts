@@ -27,6 +27,17 @@ export async function sendEmail(
   html: string,
   attachments?: EmailAttachment[]
 ): Promise<{ sent: boolean; skipped?: boolean; error?: string; id?: string }> {
+  // MVP/demo mode: while the sender is the shared `onboarding@resend.dev` (which
+  // only delivers to the Resend account owner), EMAIL_OVERRIDE_TO reroutes EVERY
+  // email — welcome, reminders, weekly, alerts — to that one inbox so they all
+  // actually arrive. The intended recipient is preserved in the subject + a banner.
+  const override = process.env.EMAIL_OVERRIDE_TO?.trim();
+  if (override && override.toLowerCase() !== to.toLowerCase()) {
+    subject = `[→ ${to}] ${subject}`;
+    html = `<div style="background:#FBF1DC;border:1px solid #E8B96F;border-radius:10px;padding:10px 14px;margin:0 0 16px;font-family:'DM Sans',system-ui,Arial,sans-serif;font-size:12px;color:#5B4A3E">📬 Demo mode — this email was meant for <strong>${to}</strong>, routed here because Bumply is still on Resend's shared sender.</div>${html}`;
+    to = override;
+  }
+
   // Prefer Gmail when configured, otherwise fall back to Resend.
   if (gmailConfigured()) return sendViaGmail(to, subject, html, attachments);
   const c = getClient();

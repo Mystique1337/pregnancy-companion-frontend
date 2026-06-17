@@ -163,3 +163,15 @@ create table if not exists preg_companion.clinicians (
   name          text not null,
   created_at    timestamptz not null default now()
 );
+
+-- Bump photo diary: weekly progress photos (image bytes stored in Postgres)
+create table if not exists preg_companion.bump_photos (
+  id          uuid primary key default gen_random_uuid(),
+  mother_id   uuid not null references preg_companion.mothers(id) on delete cascade,
+  week_number int,
+  note        text,
+  mime        text not null default 'image/jpeg',
+  data        bytea not null,
+  created_at  timestamptz not null default now()
+);
+create index if not exists idx_bump_mother on preg_companion.bump_photos(mother_id, created_at desc);

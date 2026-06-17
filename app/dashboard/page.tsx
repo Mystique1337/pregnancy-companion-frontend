@@ -165,6 +165,16 @@ export default async function Dashboard() {
               <p style={{ fontFamily: "var(--serif)", fontSize: 18 }}>{t("nav.hospitals", L)}</p>
               <p className="muted">{t("dash.hospitalsDesc", L)}</p>
             </a>
+            <a className="card" href="/triage" style={{ display: "block" }}>
+              <div style={{ fontSize: 24, marginBottom: 6 }}>🩺</div>
+              <p style={{ fontFamily: "var(--serif)", fontSize: 18 }}>Symptom check</p>
+              <p className="muted">Not sure if something&apos;s serious? Get quick guidance.</p>
+            </a>
+            <a className="card" href="/bump" style={{ display: "block" }}>
+              <div style={{ fontSize: 24, marginBottom: 6 }}>📸</div>
+              <p style={{ fontFamily: "var(--serif)", fontSize: 18 }}>Bump diary</p>
+              <p className="muted">Capture your growing bump week by week.</p>
+            </a>
             {telegramConfigured() && (
               <a
                 className="card"

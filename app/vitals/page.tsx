@@ -53,7 +53,10 @@ export default async function VitalsPage() {
           provider&apos;s attention — but always trust your own body and your clinic.
         </p>
 
-        <a className="btn-ghost" href="/report" style={{ display: "inline-flex", marginBottom: 18 }}>📄 Generate a report for your doctor</a>
+        <div style={{ display: "flex", gap: 18, flexWrap: "wrap", marginBottom: 18 }}>
+          <a className="btn-ghost" href="/triage" style={{ display: "inline-flex" }}>🩺 Check a symptom</a>
+          <a className="btn-ghost" href="/report" style={{ display: "inline-flex" }}>📄 Generate a report for your doctor</a>
+        </div>
 
         <VitalsForm />
 

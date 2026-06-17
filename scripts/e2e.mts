@@ -89,6 +89,32 @@ console.log("\n— Doctor report —");
 const report = await (await req(mom, "GET", "/report")).text();
 ok("report page renders with patient name", report.includes("Pregnancy summary") && report.includes("E2E Mama"));
 
+console.log("\n— Symptom triage —");
+ok("triage page 200", (await req(mom, "GET", "/triage")).status === 200);
+const triEmerg = await (await req(mom, "POST", "/api/triage", { json: { symptomId: "bleeding", yes: ["heavy"] } })).json();
+ok("heavy bleeding → emergency", triEmerg?.level === "emergency", JSON.stringify(triEmerg));
+ok("emergency triage raises an alert", !!triEmerg?.alertId);
+const triSelf = await (await req(mom, "POST", "/api/triage", { json: { symptomId: "itching", yes: [] } })).json();
+ok("mild itching → selfcare (no alert)", triSelf?.level === "selfcare" && !triSelf?.alertId, JSON.stringify(triSelf));
+const triBad = await req(mom, "POST", "/api/triage", { json: { symptomId: "nope", yes: [] } });
+ok("invalid symptom rejected", triBad.status === 400);
+
+console.log("\n— Bump photo diary —");
+ok("bump page 200", (await req(mom, "GET", "/bump")).status === 200);
+const PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+const up = await (await req(mom, "POST", "/api/bump", { json: { dataUrl: PNG, week: 24, note: "e2e bump" } })).json();
+ok("upload bump photo", up?.ok === true && !!up?.photo?.id, JSON.stringify(up));
+const photoId = up?.photo?.id;
+const listB = await (await req(mom, "GET", "/api/bump")).json();
+ok("bump photo listed", (listB?.photos || []).some((p: { id: string }) => p.id === photoId));
+const img = await req(mom, "GET", `/api/bump/photo?id=${photoId}`);
+ok("bump photo bytes served as image", img.status === 200 && (img.headers.get("content-type") || "").startsWith("image/"));
+const imgNoauth = await req(null, "GET", `/api/bump/photo?id=${photoId}`);
+ok("bump photo bytes require auth", imgNoauth.status === 401);
+const badImg = await req(mom, "POST", "/api/bump", { json: { dataUrl: "data:text/plain;base64,aGVsbG8=" } });
+ok("non-image upload rejected", badImg.status === 400);
+ok("delete bump photo", (await req(mom, "DELETE", `/api/bump?id=${photoId}`)).status === 200);
+
 console.log("\n— RAG / Meili search —");
 const search = await (await req(mom, "POST", "/api/search", { json: { q: "nausea" } })).json();
 ok("library search returns hits", (search?.hits?.length || 0) > 0, `${search?.hits?.length} hits`);

@@ -361,6 +361,34 @@ export async function listJournalEntries(motherId: string, limit = 60): Promise<
     select * from journal_entries where mother_id = ${motherId} order by created_at desc limit ${limit}`;
 }
 
+// --- Bump photo diary ---
+export type BumpPhoto = { id: string; mother_id: string; week_number: number | null; note: string | null; mime: string; created_at: string };
+
+export async function addBumpPhoto(motherId: string, p: { week: number | null; note?: string; mime: string; data: Buffer }): Promise<BumpPhoto> {
+  const rows = await sql<BumpPhoto[]>`
+    insert into bump_photos (mother_id, week_number, note, mime, data)
+    values (${motherId}, ${p.week ?? null}, ${p.note ?? null}, ${p.mime}, ${p.data})
+    returning id, mother_id, week_number, note, mime, created_at`;
+  return rows[0];
+}
+
+export async function listBumpPhotos(motherId: string, limit = 60): Promise<BumpPhoto[]> {
+  // never selects the bytea blob — only metadata; image bytes are streamed separately
+  return sql<BumpPhoto[]>`
+    select id, mother_id, week_number, note, mime, created_at
+    from bump_photos where mother_id = ${motherId} order by created_at desc limit ${limit}`;
+}
+
+export async function getBumpPhotoData(id: string, motherId: string): Promise<{ mime: string; data: Buffer } | null> {
+  const rows = await sql<{ mime: string; data: Buffer }[]>`
+    select mime, data from bump_photos where id = ${id} and mother_id = ${motherId} limit 1`;
+  return rows[0] ?? null;
+}
+
+export async function deleteBumpPhoto(id: string, motherId: string): Promise<void> {
+  await sql`delete from bump_photos where id = ${id} and mother_id = ${motherId}`;
+}
+
 export async function recentJournalSummary(motherId: string, limit = 5): Promise<string> {
   const rows = await sql<JournalEntry[]>`
     select * from journal_entries where mother_id = ${motherId} order by created_at desc limit ${limit}`;

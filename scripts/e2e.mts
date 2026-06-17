@@ -8,7 +8,7 @@ for (const line of env.split("\n")) {
 }
 const q = await import("../lib/queries.ts");
 
-const BASE = "http://localhost:8080";
+const BASE = process.env.E2E_BASE || "http://localhost:8080";
 const ADMIN_PW = process.env.ADMIN_PASSWORD || "nerveadmin2026";
 
 class Jar {

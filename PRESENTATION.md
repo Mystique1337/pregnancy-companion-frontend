@@ -43,6 +43,17 @@ A subscription pregnancy companion that gives each mother:
 
 Group these into slides however you like. ⭐ = strongest demo moments.
 
+### ⭐⭐ Hero / award features (lead with these)
+
+- **Predictive risk engine + proactive agent** — Bumply doesn't wait to be asked. From her own logged vitals + journal it computes an *explainable* risk score for **pre-eclampsia, gestational diabetes and preterm labour**, shows it on her vitals page and the doctor report, and the daily agent **reaches out first** when risk rises — and raises a **clinician alert**. *"It watches, and it escalates to a human."*
+- **Emergency Mode (one tap)** — a big red SOS that geolocates the **nearest hospitals with directions**, lets her **alert her next-of-kin with one tap** (prefilled WhatsApp + live location), and **notifies her clinician**. Also on Telegram via `/emergency`. The emotional peak of the demo.
+- **Voice-first in her language** — she can **speak a question** (Yoruba/Hausa/Igbo/Pidgin/English) and **hear Bumply answer aloud**, hands-free — in the app and on Telegram. For the mother who has a phone but can't read.
+- **Maternal wellbeing screen** — a private 10-item mood check (EPDS-style); low mood or any self-harm signal routes her to support and alerts a clinician.
+- **Family / partner companion** — a private read-only link she shares so her partner/family follow along and learn *how to support her this week* (no account, no medical data).
+- **Cited answers** — every grounded chat answer footnotes the vetted sources it drew on.
+- **Population-health dashboard** (admin) — anonymised cohort signal (trimester, language, alert/risk distribution) — the B2B2C / health-authority story.
+
+
 ### A. Personalized weekly journey ⭐
 - Knows the mother's **current week & trimester** and counts down to her due date.
 - A **"watch your baby grow"** visual + size comparison each week.

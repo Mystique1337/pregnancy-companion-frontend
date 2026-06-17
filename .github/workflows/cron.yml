@@ -1,0 +1,23 @@
+# Scheduled jobs — fires the daily/weekly notification endpoints on the live app.
+# Set these in the repo: Variables → APP_URL (e.g. https://bumply-production.up.railway.app),
+# Secrets → CRON_SECRET (same value as the app's CRON_SECRET env).
+name: Scheduled jobs
+
+on:
+  schedule:
+    - cron: "0 6 * * *"   # daily 06:00 UTC — tips, ANC reminders, milestones
+    - cron: "0 7 * * 1"   # Mondays 07:00 UTC — generate + deliver weekly updates
+  workflow_dispatch: {}
+
+jobs:
+  daily:
+    if: github.event.schedule == '0 6 * * *' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl -fsS --max-time 280 "${{ vars.APP_URL }}/api/cron/daily?secret=${{ secrets.CRON_SECRET }}"
+
+  weekly:
+    if: github.event.schedule == '0 7 * * 1' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl -fsS --max-time 280 "${{ vars.APP_URL }}/api/cron/weekly?secret=${{ secrets.CRON_SECRET }}"

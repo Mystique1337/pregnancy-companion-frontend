@@ -106,6 +106,15 @@ ok("mild itching → selfcare (no alert)", triSelf?.level === "selfcare" && !tri
 const triBad = await req(mom, "POST", "/api/triage", { json: { symptomId: "nope", yes: [] } });
 ok("invalid symptom rejected", triBad.status === 400);
 
+console.log("\n— Wellbeing (mood) screen —");
+ok("wellbeing page 200", (await req(mom, "GET", "/wellbeing")).status === 200);
+const moodOk = await (await req(mom, "POST", "/api/wellbeing", { json: { answers: { q1:0,q2:0,q3:0,q4:0,q5:0,q6:0,q7:0,q8:0,q9:0,q10:0 } } })).json();
+ok("all-zero answers → 'ok' band", moodOk?.result?.band === "ok", JSON.stringify(moodOk?.result?.band));
+const moodSH = await (await req(mom, "POST", "/api/wellbeing", { json: { answers: { q1:0,q2:0,q3:0,q4:0,q5:0,q6:0,q7:0,q8:0,q9:0,q10:2 } } })).json();
+ok("self-harm signal → urgent band", moodSH?.result?.band === "urgent" && moodSH?.result?.selfHarmFlag === true);
+const moodAlerts = await q.listAlertsForMother(id);
+ok("urgent mood raises a 'mood' alert", moodAlerts.some((a: { kind: string }) => a.kind === "mood"));
+
 console.log("\n— Emergency Mode —");
 ok("emergency page 200", (await req(mom, "GET", "/emergency")).status === 200);
 ok("save emergency contact", (await req(mom, "PUT", "/api/emergency", { json: { name: "Emeka", phone: "+2348030000000" } })).status === 200);

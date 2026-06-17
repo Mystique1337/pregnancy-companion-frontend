@@ -180,6 +180,11 @@ export default async function Dashboard() {
               <p style={{ fontFamily: "var(--serif)", fontSize: 18 }}>Bump diary</p>
               <p className="muted">Capture your growing bump week by week.</p>
             </a>
+            <a className="card" href="/wellbeing" style={{ display: "block" }}>
+              <div style={{ fontSize: 24, marginBottom: 6 }}>💛</div>
+              <p style={{ fontFamily: "var(--serif)", fontSize: 18 }}>Wellbeing check</p>
+              <p className="muted">A private mood check-in — how are you, really?</p>
+            </a>
             {telegramConfigured() && (
               <a
                 className="card"

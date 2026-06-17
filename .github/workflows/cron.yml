@@ -17,7 +17,7 @@ jobs:
       - run: curl -fsS --max-time 280 "${{ vars.APP_URL }}/api/cron/daily?secret=${{ secrets.CRON_SECRET }}"
 
   weekly:
-    if: github.event.schedule == '0 7 * * 1' || github.event_name == 'workflow_dispatch'
+    if: github.event.schedule == '0 7 * * 1'
     runs-on: ubuntu-latest
     steps:
       - run: curl -fsS --max-time 280 "${{ vars.APP_URL }}/api/cron/weekly?secret=${{ secrets.CRON_SECRET }}"

@@ -31,6 +31,22 @@ export async function retrieve(query: string, k = 4): Promise<KbHit[]> {
     limit ${k}`;
 }
 
+export type KbKeywordHit = { id: string; title: string; source: string; content: string };
+
+// Keyword search straight over the knowledge base in Postgres — used as a resilient
+// fallback when Meilisearch is unavailable (so library search never goes dark).
+export async function kbKeywordSearch(query: string, limit = 8): Promise<KbKeywordHit[]> {
+  const q = query.trim();
+  if (!q) return [];
+  const like = `%${q}%`;
+  return sql<KbKeywordHit[]>`
+    select id::text as id, coalesce(title, '') as title, coalesce(source, '') as source, content
+    from kb_chunks
+    where content ilike ${like} or title ilike ${like}
+    order by (title ilike ${like}) desc
+    limit ${limit}`;
+}
+
 // Hybrid retrieval as a ready-to-inject grounding block: semantic (pgvector) +
 // keyword (Meilisearch), merged and de-duplicated. Either source can be empty.
 export async function groundingBlock(query: string, k = 4): Promise<string> {

@@ -449,9 +449,13 @@ export async function listBumpPhotos(motherId: string, limit = 60): Promise<Bump
 }
 
 export async function getBumpPhotoData(id: string, motherId: string): Promise<{ mime: string; data: Buffer } | null> {
-  const rows = await sql<{ mime: string; data: Buffer }[]>`
-    select mime, data from bump_photos where id = ${id} and mother_id = ${motherId} limit 1`;
-  return rows[0] ?? null;
+  const rows = await sql<{ mime: string; data: Buffer | string }[]>`
+    select mime, encode(data, 'hex') as data from bump_photos where id = ${id} and mother_id = ${motherId} limit 1`;
+  const row = rows[0];
+  if (!row) return null;
+  // Direct-PG returns a Buffer; the REST bridge returns a hex string — normalise to Buffer.
+  const data = Buffer.isBuffer(row.data) ? row.data : Buffer.from(String(row.data), "hex");
+  return { mime: row.mime, data };
 }
 
 export async function deleteBumpPhoto(id: string, motherId: string): Promise<void> {

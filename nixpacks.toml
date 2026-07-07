@@ -1,4 +1,3 @@
-# Pin Node 22 + bundle cloudflared (for the optional Cloudflare Tunnel DB sidecar).
-# Install + build are auto-detected for Next.js; start is scripts/start.sh.
+# Pin Node 22 for the Railway/Nixpacks build. Install + build + start are auto-detected for Next.js.
 [phases.setup]
-nixPkgs = ["nodejs_22", "cloudflared"]
+nixPkgs = ["nodejs_22"]

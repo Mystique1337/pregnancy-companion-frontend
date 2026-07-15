@@ -376,6 +376,96 @@ export async function outcomeStats(): Promise<OutcomeStats> {
   return { total: Number(r.total), with_outcome: Number(r.with_outcome), sought_care: Number(r.sought_care) };
 }
 
+// --- CHW / clinician impact report ---
+// Aggregated program-impact metrics for the clinic dashboard + CSV export.
+export type ImpactReport = {
+  totalMothers: number;
+  whatsappEnrolled: number;   // source in ('whatsapp','chw')
+  withWhatsappNumber: number;
+  delivered: number;          // birth_date is not null
+  alertsUrgent: number;
+  alertsWarning: number;
+  alertsTotal: number;        // urgent + warning
+  withOutcome: number;        // alerts (any level) with a recorded outcome
+  soughtCare: number;
+  referred: number;
+  ok: number;
+  noResponse: number;
+  reachedCarePct: number;     // (sought_care + referred) / with_outcome
+  avgHoursToOutcome: number;  // mean created_at -> outcome_at, in hours
+};
+
+export async function impactReport(): Promise<ImpactReport> {
+  const [mothers, alerts] = await Promise.all([
+    sql<{ total: string; whatsapp_enrolled: string; with_whatsapp: string; delivered: string }[]>`
+      select count(*)                                                          as total,
+             count(*) filter (where source in ('whatsapp','chw'))              as whatsapp_enrolled,
+             count(*) filter (where whatsapp_number is not null)               as with_whatsapp,
+             count(*) filter (where birth_date is not null)                    as delivered
+      from mothers`,
+    sql<{
+      urgent: string; warning: string; with_outcome: string;
+      sought_care: string; referred: string; ok: string; no_response: string;
+      avg_hours: string | null;
+    }[]>`
+      select count(*) filter (where level = 'urgent')                          as urgent,
+             count(*) filter (where level = 'warning')                         as warning,
+             count(*) filter (where outcome is not null)                       as with_outcome,
+             count(*) filter (where outcome = 'sought_care')                   as sought_care,
+             count(*) filter (where outcome = 'referred')                      as referred,
+             count(*) filter (where outcome = 'ok')                            as ok,
+             count(*) filter (where outcome = 'no_response')                   as no_response,
+             avg(extract(epoch from (outcome_at - created_at)) / 3600.0)
+               filter (where outcome_at is not null)                           as avg_hours
+      from alerts`,
+  ]);
+  const m = mothers[0] || {};
+  const a = alerts[0] || {};
+  const n = (v: string | null | undefined) => Number(v || 0);
+  const withOutcome = n(a.with_outcome);
+  const reached = n(a.sought_care) + n(a.referred);
+  return {
+    totalMothers: n(m.total),
+    whatsappEnrolled: n(m.whatsapp_enrolled),
+    withWhatsappNumber: n(m.with_whatsapp),
+    delivered: n(m.delivered),
+    alertsUrgent: n(a.urgent),
+    alertsWarning: n(a.warning),
+    alertsTotal: n(a.urgent) + n(a.warning),
+    withOutcome,
+    soughtCare: n(a.sought_care),
+    referred: n(a.referred),
+    ok: n(a.ok),
+    noResponse: n(a.no_response),
+    reachedCarePct: withOutcome ? Math.round((reached / withOutcome) * 100) : 0,
+    avgHoursToOutcome: a.avg_hours != null ? Math.round(n(a.avg_hours) * 10) / 10 : 0,
+  };
+}
+
+// Flat alert rows for CSV export (alerts joined to mothers).
+export type AlertExportRow = {
+  full_name: string;
+  phone: string | null;
+  whatsapp_number: string | null;
+  level: string;
+  kind: string;
+  message: string;
+  status: string;
+  outcome: string | null;
+  created_at: string;
+  outcome_at: string | null;
+  outcome_by: string | null;
+};
+
+export async function alertsForExport(limit = 1000): Promise<AlertExportRow[]> {
+  return sql<AlertExportRow[]>`
+    select m.full_name, m.phone, m.whatsapp_number,
+           a.level, a.kind, a.message, a.status,
+           a.outcome, a.created_at, a.outcome_at, a.outcome_by
+    from alerts a join mothers m on m.id = a.mother_id
+    order by a.created_at desc limit ${limit}`;
+}
+
 // --- WhatsApp self-onboarding state ---
 export type Onboarding = { phone: string; step: string; data: Record<string, unknown> };
 export async function getOnboarding(phone: string): Promise<Onboarding | null> {

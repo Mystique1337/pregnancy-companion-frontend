@@ -2,14 +2,15 @@ import { Resend } from "resend";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { gmailConfigured, sendViaGmail } from "./gmail";
+import { plunkConfigured, sendViaPlunk } from "./plunk";
 
 function resendConfigured(): boolean {
   return !!process.env.RESEND_API_KEY;
 }
 
-// Email is "configured" if either provider is set up.
+// Email is "configured" if any provider is set up.
 export function emailConfigured(): boolean {
-  return gmailConfigured() || resendConfigured();
+  return plunkConfigured() || gmailConfigured() || resendConfigured();
 }
 
 let client: Resend | null = null;
@@ -38,7 +39,14 @@ export async function sendEmail(
     to = override;
   }
 
-  // Prefer Gmail when configured, otherwise fall back to Resend.
+  // Provider order: Plunk (preferred) → Gmail → Resend. Note: Plunk's send API
+  // doesn't take attachments, so inline-image emails should reference a hosted URL.
+  // If Plunk fails (misconfigured/down), fall through to the next provider.
+  if (plunkConfigured()) {
+    const r = await sendViaPlunk(to, subject, html);
+    if (r.sent || (!gmailConfigured() && !resendConfigured())) return r;
+    console.warn("[email] Plunk failed, falling back:", r.error);
+  }
   if (gmailConfigured()) return sendViaGmail(to, subject, html, attachments);
   const c = getClient();
   if (!c) return { sent: false, skipped: true };

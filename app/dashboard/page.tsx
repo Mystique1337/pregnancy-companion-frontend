@@ -175,6 +175,11 @@ export default async function Dashboard() {
               <p style={{ fontFamily: "var(--serif)", fontSize: 18, color: "#C0392B" }}>Emergency help</p>
               <p className="muted">Nearest hospital, alert your people, notify your clinician.</p>
             </a>
+            <a className="card" href="/sos" style={{ display: "block" }}>
+              <div style={{ fontSize: 24, marginBottom: 6 }}>📴</div>
+              <p style={{ fontFamily: "var(--serif)", fontSize: 18 }}>Am I okay? (works offline)</p>
+              <p className="muted">Danger-sign check + ANC visits — even with no network.</p>
+            </a>
             <a className="card" href="/bump" style={{ display: "block" }}>
               <div style={{ fontSize: 24, marginBottom: 6 }}>📸</div>
               <p style={{ fontFamily: "var(--serif)", fontSize: 18 }}>Bump diary</p>

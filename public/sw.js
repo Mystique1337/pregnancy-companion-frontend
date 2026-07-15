@@ -1,5 +1,5 @@
-const CACHE = "bumply-v2";
-const ASSETS = ["/", "/icon.svg"];
+const CACHE = "bumply-v3";
+const ASSETS = ["/", "/sos", "/icon.svg"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));
@@ -47,9 +47,14 @@ self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET" || new URL(req.url).origin !== location.origin) return;
 
-  // Network-first for page navigations, falling back to the cached shell when offline.
+  // Network-first for page navigations. Offline: serve the cached page if we have
+  // it, else the always-available /sos (danger-sign check + ANC), else the shell.
   if (req.mode === "navigate") {
-    e.respondWith(fetch(req).catch(() => caches.match("/")));
+    e.respondWith(
+      fetch(req).catch(() =>
+        caches.match(req).then((c) => c || caches.match("/sos")).then((c) => c || caches.match("/"))
+      )
+    );
     return;
   }
 

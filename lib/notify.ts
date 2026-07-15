@@ -17,6 +17,7 @@ import { sendEmail, emailConfigured, FROM } from "./email";
 import { sendWhatsApp, whatsappConfigured } from "./whatsapp";
 import { sendTelegram } from "./telegram";
 import { sendSms, smsConfigured } from "./sms";
+import { nextImmunization, immunizationReminder } from "./immunization";
 
 function firstName(m: Mother): string {
   return (m.full_name || "mama").split(" ")[0];
@@ -88,7 +89,7 @@ function daySeed(dateStr: string): number {
   return Number.isNaN(ms) ? 0 : Math.floor(ms / 86400000);
 }
 
-export type DailyResult = { mothers: number; anc: number; milestone: number; daily: number; proactive: number };
+export type DailyResult = { mothers: number; anc: number; milestone: number; daily: number; proactive: number; immunization: number };
 
 /**
  * Daily engagement pass: ANC reminders + milestone celebrations + a daily tip,
@@ -96,12 +97,33 @@ export type DailyResult = { mothers: number; anc: number; milestone: number; dai
  */
 export async function runDailyEngagement(dateStr: string): Promise<DailyResult> {
   const mothers = await listAllMothers();
+  const now = new Date(dateStr);
   let anc = 0,
     milestone = 0,
     daily = 0,
-    proactive = 0;
+    proactive = 0,
+    immunization = 0;
 
   for (const m of mothers) {
+    // Postpartum: her baby is born → immunization reminders instead of pregnancy
+    // nudges. Deduped per visit so she's reminded once when each becomes due.
+    if (m.birth_date) {
+      const next = nextImmunization(m.birth_date, now);
+      if (next && next.status === "due") {
+        const ref = `imm-${next.label}`;
+        if (!(await alreadyNotified(m.id, "immunization", ref))) {
+          const msg = immunizationReminder(firstName(m), m.birth_date, now)!;
+          await sendPushToMother(m.id, { title: "💉 Baby immunization due", body: msg.slice(0, 140), url: "/immunization", tag: "immunization" });
+          const wa = m.whatsapp_number || m.phone;
+          if (whatsappConfigured() && wa) await sendWhatsApp(wa, msg).catch(() => {});
+          await tgNotify(m, msg);
+          await markNotified(m.id, "immunization", ref);
+          immunization++;
+        }
+      }
+      continue;
+    }
+
     const week = currentWeekFrom({ dueDate: m.due_date, enteredWeek: m.current_week, createdAt: m.created_at });
 
     // 1) ANC visit reminders for this week
@@ -143,7 +165,7 @@ export async function runDailyEngagement(dateStr: string): Promise<DailyResult> 
     if (await runProactiveRiskCheck(m, week)) proactive++;
   }
 
-  return { mothers: mothers.length, anc, milestone, daily, proactive };
+  return { mothers: mothers.length, anc, milestone, daily, proactive, immunization };
 }
 
 /**

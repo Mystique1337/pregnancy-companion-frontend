@@ -20,6 +20,18 @@ const RULES: Rule[] = [
   { sign: "difficulty breathing / chest pain", level: "emergency", any: [/can.?t\s+breath/i, /hard.*to.*breath/i, /breathless/i, /chest.*pain/i, /short(ness)?\s+of\s+breath/i, /no\s+fit\s+breath/i, /breath.*(hard|difficult)/i] },
   { sign: "fainting / collapse", level: "urgent", any: [/faint/i, /pass(ed)?\s+out/i, /collaps/i, /black\s*out/i, /dizzy.*fall/i] },
   { sign: "high fever", level: "urgent", any: [/high\s+fever/i, /fever.*(high|bad|hot)/i, /body.*(hot).*(well|too|very)/i, /39\s*°?c/i, /40\s*°?c/i] },
+
+  // --- Postpartum (after birth) danger signs for the mother ---
+  { sign: "foul-smelling discharge (infection)", level: "urgent", any: [/(discharge|lochia|blood|comot for down).*(smell|foul|stink|odou?r)/i, /(smell|foul).*(discharge|down there)/i] },
+  { sign: "painful/swollen breast with fever (mastitis)", level: "urgent", any: [/breast.*(red|hot|hard|swollen|lump).*(fever|pain|hot)/i, /(mastitis)/i] },
+
+  // --- Newborn danger signs (baby just born) ---
+  { sign: "newborn: not breathing / fast or hard breathing", level: "emergency", any: [/baby.*(not|no|stop|can.?t|hard\s*to).*breath/i, /baby.*(breath.*(fast|hard|quick)|fast\s*breath|grunt)/i, /pikin.*(no|hard).*breath/i, /newborn.*breath/i] },
+  { sign: "newborn: cold, floppy or won't wake", level: "emergency", any: [/baby.*(cold|floppy|limp|won.?t\s*wake|not\s*waking|unconscious|not\s*respond)/i, /pikin.*(cold|no\s*dey\s*wake)/i] },
+  { sign: "newborn: not feeding / refusing breast", level: "urgent", any: [/baby.*(not|no|refus|won.?t|stop|can.?t).*(feed|suck|breast|latch)/i, /pikin.*(no\s*dey|refuse).*(suck|breast|chop)/i] },
+  { sign: "newborn: yellow skin or eyes (jaundice)", level: "urgent", any: [/baby.*(yellow|jaundice)/i, /(baby|pikin).*(eye|skin).*yellow/i, /(eye|skin).*(dey\s*)?yellow/i] },
+  { sign: "newborn: fever or body too hot/cold", level: "urgent", any: [/baby.*(fever|hot|high\s*temp|too\s*cold)/i, /pikin.*(body\s*hot|fever)/i] },
+  { sign: "newborn: cord bleeding, smelling or with pus", level: "urgent", any: [/(cord|navel|belly\s*button).*(bleed|smell|pus|red|swollen|discharge)/i] },
 ];
 
 export function detectDangerSign(text: string): DangerHit | null {
@@ -38,8 +50,11 @@ export function detectDangerSign(text: string): DangerHit | null {
 // The urgent reply, in simple English + Pidgin so a low-literacy mother gets it fast.
 export function dangerReply(firstName: string, hit: DangerHit): string {
   const name = firstName || "mama";
+  const baby = hit.sign.startsWith("newborn:");
   if (hit.level === "emergency") {
+    if (baby) return `🚨 ${name}, your baby need help NOW. Carry am go the nearest hospital immediately — no wait at all.\n\nKeep the baby warm on your chest (skin to skin) while you dey go. Make somebody follow you.\n\n(This na safety warning, no be diagnosis.)`;
     return `🚨 ${name}, this can be very serious. Abeg, GO to the nearest hospital NOW — no wait.\n\nIf you fit, make somebody follow you. I don tell your health worker.\n\n(This na safety warning, no be diagnosis.)`;
   }
+  if (baby) return `⚠️ ${name}, your baby need to see a health worker today — no wait for am to worse.\n\nKeep the baby warm and keep trying to breastfeed small small. If baby stop breathing well, go floppy, or no dey wake, rush to hospital NOW.\n\nI don also alert your health worker. (Safety info, no be diagnosis.)`;
   return `⚠️ ${name}, this one need checking today. Please go to your clinic or nearest hospital before evening — no wait for am to worse.\n\nWatch for: plenty bleeding, bad belle pain, baby wey no dey move, or eye wey dey blur — if any happen, go hospital NOW.\n\nI don also alert your health worker. (Safety info, no be diagnosis.)`;
 }

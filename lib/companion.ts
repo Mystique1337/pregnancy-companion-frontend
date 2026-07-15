@@ -28,12 +28,20 @@ export async function bumplyReply(mother: Mother, userText: string): Promise<str
     ? "Reply in clear, simple English (it will be translated to Yoruba for her)."
     : languageInstruction(mother.language || "en");
 
+  // Postpartum: after birth the conversation is about the newborn + her recovery,
+  // not fetal development.
+  const postpartum = !!mother.birth_date;
+  const stage = postpartum
+    ? `She has GIVEN BIRTH (baby born ${mother.birth_date}). This is now POSTPARTUM care: focus on her recovery, breastfeeding, newborn care, and the baby's free immunizations. Do NOT talk about fetal development.`
+    : `She is in week ${week} (${trimesterFor(week)} trimester)${mother.due_date ? `, due ${mother.due_date}` : ""}. First pregnancy: ${mother.first_pregnancy ? "yes" : "no"}.`;
+  const warnLine = postpartum
+    ? "For any newborn warning signs (baby not breathing well, too cold/floppy, not feeding, yellow skin/eyes, cord smelling or bleeding) or her own (heavy bleeding, foul-smelling discharge, fever, painful swollen breast), urge her to get to a clinic or hospital fast."
+    : "For any warning signs (heavy bleeding, severe or persistent pain, reduced fetal movement, fever, vision changes, severe swelling), clearly and gently urge her to contact her healthcare provider or go to a clinic.";
+
   const system = `You are Bumply, a warm, caring AI pregnancy companion, chatting with ${mother.full_name} over WhatsApp.
-She is in week ${week} (${trimesterFor(week)} trimester)${mother.due_date ? `, due ${mother.due_date}` : ""}. First pregnancy: ${
-    mother.first_pregnancy ? "yes" : "no"
-  }. Dietary notes: ${mother.dietary_restrictions || "none"}. ${context}${journalBlock}${groundingBlk}
-Reply like a caring friend on WhatsApp: warm, brief (1–3 short sentences), an occasional emoji, and use her first name sometimes. Give practical, trimester-appropriate guidance. BE CONCISE — no preamble or filler, get straight to the helpful point.
-You are NOT a doctor: for any warning signs (heavy bleeding, severe or persistent pain, reduced fetal movement, fever, vision changes, severe swelling), clearly and gently urge her to contact her healthcare provider or go to a clinic. Never diagnose or prescribe.
+${stage} Dietary notes: ${mother.dietary_restrictions || "none"}. ${context}${journalBlock}${groundingBlk}
+Reply like a caring friend on WhatsApp: warm, brief (1–3 short sentences), an occasional emoji, and use her first name sometimes. Give practical, ${postpartum ? "postpartum/newborn" : "trimester"}-appropriate guidance. BE CONCISE — no preamble or filler, get straight to the helpful point.
+You are NOT a doctor: ${warnLine} Never diagnose or prescribe.
 ${langLine}${preferencesBlock(mother)}`;
 
   const history = await recentChat(mother.id, 12);

@@ -89,7 +89,7 @@ function daySeed(dateStr: string): number {
   return Number.isNaN(ms) ? 0 : Math.floor(ms / 86400000);
 }
 
-export type DailyResult = { mothers: number; anc: number; milestone: number; daily: number; proactive: number; immunization: number };
+export type DailyResult = { mothers: number; anc: number; milestone: number; daily: number; proactive: number; immunization: number; checkin: number };
 
 /**
  * Daily engagement pass: ANC reminders + milestone celebrations + a daily tip,
@@ -102,7 +102,8 @@ export async function runDailyEngagement(dateStr: string): Promise<DailyResult> 
     milestone = 0,
     daily = 0,
     proactive = 0,
-    immunization = 0;
+    immunization = 0,
+    checkin = 0;
 
   for (const m of mothers) {
     // Postpartum: her baby is born → immunization reminders instead of pregnancy
@@ -163,9 +164,23 @@ export async function runDailyEngagement(dateStr: string): Promise<DailyResult> 
 
     // 4) Proactive risk watch — predict from her own data and reach out FIRST
     if (await runProactiveRiskCheck(m, week)) proactive++;
+
+    // 5) Weekly WhatsApp/Telegram check-in — a gentle "how are you feeling?" whose
+    //    reply runs through the inbound danger-sign checker automatically. Plain text
+    //    over Evolution (no interactive buttons). Deduped once per rolling 7-day bucket.
+    const wkBucket = Math.floor(now.getTime() / (7 * 24 * 3600 * 1000));
+    const cref = `checkin-${wkBucket}`;
+    const wa = m.whatsapp_number || m.phone;
+    if ((wa || m.telegram_chat_id) && !(await alreadyNotified(m.id, "checkin", cref))) {
+      const msg = `Hi ${firstName(m)} 🌸 How are you feeling this week? Reply and tell me — you can send a voice note too. I'll check if anything needs attention. 💛`;
+      let sent = false;
+      if (whatsappConfigured() && wa) sent = (await sendWhatsApp(wa, msg).catch(() => ({ sent: false }))).sent === true;
+      if (!sent) sent = await tgNotify(m, msg);
+      if (sent) { await markNotified(m.id, "checkin", cref); checkin++; }
+    }
   }
 
-  return { mothers: mothers.length, anc, milestone, daily, proactive, immunization };
+  return { mothers: mothers.length, anc, milestone, daily, proactive, immunization, checkin };
 }
 
 /**

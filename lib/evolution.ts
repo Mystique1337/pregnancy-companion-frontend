@@ -71,7 +71,10 @@ export async function createInstance(): Promise<Result> {
       qrcode: true,
     }),
   });
-  if (!r.ok && /already in use|already exists/i.test(r.error || "")) return { ok: true, data: r.data };
+  // "already in use" is fine — the instance exists. Evolution nests that message
+  // under data.response.message, so check the whole payload, not just r.error.
+  const blob = `${r.error || ""} ${JSON.stringify(r.data || "")}`;
+  if (!r.ok && /already in use|already exists/i.test(blob)) return { ok: true, data: r.data };
   return r;
 }
 

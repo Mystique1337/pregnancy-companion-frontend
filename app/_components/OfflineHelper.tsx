@@ -6,6 +6,7 @@
 // when there's no signal.
 import { useRef, useState } from "react";
 import { detectDangerSign, dangerReply } from "@/lib/dangerSigns";
+import { loadKb, retrieve, type Kb } from "@/lib/offlineKb";
 import { readCachedProfile } from "./ProfileCache";
 
 // Runtime dynamic import from CDN, hidden from the bundler (keeps it out of the app bundle).
@@ -13,6 +14,7 @@ const cdnImport = (u: string) => (new Function("u", "return import(u)"))(u) as P
 const TRANSFORMERS = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1";
 const MODEL = "HuggingFaceTB/SmolLM2-135M-Instruct";
 const ASR_MODEL = "onnx-community/whisper-tiny.en"; // ~75MB, offline speech-to-text
+const VLM_MODEL = "HuggingFaceTB/SmolVLM-256M-Instruct"; // ~256M, offline photo reading
 
 // Decode a recorded audio Blob to 16kHz mono Float32 for Whisper.
 async function blobTo16k(blob: Blob): Promise<Float32Array> {
@@ -44,12 +46,16 @@ export default function OfflineHelper() {
   const [needOnline, setNeedOnline] = useState(false);
   const [recording, setRecording] = useState(false);
   const [hearing, setHearing] = useState(false);
+  const [reading, setReading] = useState(false);
   const [err, setErr] = useState("");
   const gen = useRef<((m: Msg[], o: Record<string, unknown>) => Promise<{ generated_text: Msg[] }[]>) | null>(null);
   const asr = useRef<((pcm: Float32Array) => Promise<{ text: string }>) | null>(null);
+  const vlm = useRef<((msgs: unknown, o: Record<string, unknown>) => Promise<{ generated_text: string }[]>) | null>(null);
   const rec = useRef<MediaRecorder | null>(null);
   const chunks = useRef<Blob[]>([]);
+  const kbRef = useRef<Kb | null>(null);
   const spokeRef = useRef(false);
+  const photoInput = useRef<HTMLInputElement | null>(null);
 
   async function load() {
     setState("loading"); setErr("");
@@ -108,6 +114,44 @@ export default function OfflineHelper() {
     } catch { setErr("Microphone not available."); setHearing(false); }
   }
 
+  // On-device photo reading: SmolVLM-256M via transformers.js (WASM/WebGPU). Lets her
+  // point her camera at an ANC card / drug / test result and get a plain explanation —
+  // fully offline once downloaded. Slower than the cloud path, so it's opt-in.
+  async function onPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setErr(""); setNeedOnline(false); setAnswer(""); setReading(true);
+    try {
+      if (!vlm.current) {
+        const t = (await cdnImport(TRANSFORMERS)) as { pipeline: (...a: unknown[]) => Promise<unknown> };
+        vlm.current = (await t.pipeline("image-text-to-text", VLM_MODEL, {
+          dtype: "q4", device: "wasm",
+          progress_callback: (p: { status?: string; progress?: number }) => {
+            if (p.status === "progress" && typeof p.progress === "number") setProgress(Math.round(p.progress));
+          },
+        })) as typeof vlm.current;
+      }
+      const url = URL.createObjectURL(file);
+      const messages = [{
+        role: "user",
+        content: [
+          { type: "image", image: url },
+          { type: "text", text: "Read this photo for a Nigerian mother. Say simply what it is (ANC card, medicine, or test) and the key details. If anything looks worrying, tell her to see a health worker. Be brief." },
+        ],
+      }];
+      const out = await vlm.current!(messages, { max_new_tokens: 160 });
+      URL.revokeObjectURL(url);
+      const txt = (out?.[0]?.generated_text || "").toString().split("Assistant:").pop()?.trim() || "";
+      if (txt) { setAnswer(txt); if ("speechSynthesis" in window) speakOut(txt); }
+      else setErr("Couldn't read that photo — try a clearer, well-lit one.");
+    } catch (e2) {
+      console.error(e2);
+      setErr("Offline photo reading needs one online download first (use WiFi), or go online.");
+    }
+    setReading(false);
+  }
+
   async function ask(override?: string) {
     const question = (override ?? q).trim();
     if (!question) return;
@@ -125,19 +169,37 @@ export default function OfflineHelper() {
       return;
     }
 
-    if (!gen.current) { setNeedOnline(true); return; }
+    // 2) On-device knowledge base — curated Nigerian maternal answers, no model, no
+    //    network needed. A strong match answers directly; a weaker one grounds the model.
+    if (!kbRef.current) kbRef.current = await loadKb();
+    const hit = kbRef.current ? retrieve(kbRef.current, question) : null;
+    if (hit && hit.score >= 6) {
+      setAnswer(hit.item.a); if (spoke) speakOut(hit.item.a);
+      return;
+    }
+    const grounding = hit && hit.score >= 3 ? hit.item.a : "";
+
+    // No model yet: if we have a decent curated match, use it; else send her online.
+    if (!gen.current) {
+      if (grounding) { setAnswer(grounding); if (spoke) speakOut(grounding); }
+      else setNeedOnline(true);
+      return;
+    }
     setState("thinking");
     try {
       const ctx = profile ? ` She is ${name}, in week ${profile.week} (${profile.trimester} trimester)${profile.firstPregnancy ? ", first pregnancy" : ""}.` : "";
+      const groundLine = grounding ? ` Use this trusted note to answer: "${grounding}"` : "";
       const messages: Msg[] = [
-        { role: "system", content: `You are Bumply, a kind pregnancy helper for Nigerian mothers.${ctx} Answer in 1-2 short, simple sentences. For any warning sign (bleeding, severe pain, baby not moving, fits, fever), tell her to go to a clinic now. If you are unsure, say "I'm not sure".` },
+        { role: "system", content: `You are Bumply, a kind pregnancy helper for Nigerian mothers.${ctx} Answer in 1-2 short, simple sentences.${groundLine} For any warning sign (bleeding, severe pain, baby not moving, fits, fever), tell her to go to a clinic now. If you are unsure, say "I'm not sure".` },
         { role: "user", content: question },
       ];
       const out = await gen.current(messages, { max_new_tokens: 80, do_sample: false, temperature: 0.3 });
       const reply = (out?.[0]?.generated_text?.at?.(-1)?.content || "").trim();
-      // 2) Weak answer → redirect her to the full (online) Bumply.
-      if (weak(reply)) { setNeedOnline(true); }
-      else { setAnswer(reply); if (spoke) speakOut(reply); }
+      // Weak model answer → fall back to the curated note if we have one, else send online.
+      if (weak(reply)) {
+        if (grounding) { setAnswer(grounding); if (spoke) speakOut(grounding); }
+        else setNeedOnline(true);
+      } else { setAnswer(reply); if (spoke) speakOut(reply); }
     } catch {
       setNeedOnline(true);
     }
@@ -160,6 +222,13 @@ export default function OfflineHelper() {
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={hearing ? "Listening…" : "Ask, or tap 🎤 to speak…"} onKeyDown={(e) => e.key === "Enter" && ask()} style={{ flex: 1, padding: "10px 12px", borderRadius: 10, border: "1px solid var(--border)", fontSize: 14 }} disabled={state === "thinking" || state === "loading"} />
         <button className="f-submit" style={{ maxWidth: 80 }} onClick={() => ask()} disabled={!canAsk}>{state === "thinking" ? "…" : "Ask"}</button>
       </div>
+
+      {/* On-device photo reading (ANC card / medicine / test result). */}
+      <input ref={photoInput} type="file" accept="image/*" capture="environment" onChange={onPhoto} style={{ display: "none" }} />
+      <button onClick={() => photoInput.current?.click()} disabled={reading || state === "thinking"}
+        style={{ marginTop: 8, width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px dashed var(--border)", background: "white", cursor: "pointer", fontSize: 13 }}>
+        {reading ? `Reading your photo… ${progress ? progress + "%" : ""}` : "📷 Read a photo (ANC card, medicine, test) — offline"}
+      </button>
 
       {state === "idle" && (
         <p className="muted" style={{ fontSize: 12, marginTop: 10 }}>

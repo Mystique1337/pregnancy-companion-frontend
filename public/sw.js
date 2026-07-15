@@ -1,5 +1,5 @@
-const CACHE = "bumply-v3";
-const ASSETS = ["/", "/sos", "/icon.svg"];
+const CACHE = "bumply-v4";
+const ASSETS = ["/", "/sos", "/icon.svg", "/offline/maternal-qa.json"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));

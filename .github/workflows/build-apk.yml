@@ -35,13 +35,9 @@ jobs:
           printf '{"jdkPath":"%s","androidSdkPath":"%s"}' "$JAVA_HOME" "$ANDROID_HOME" > ~/.bubblewrap/config.json
           cat ~/.bubblewrap/config.json
 
-      - name: Generate signing keystore
+      - name: Restore stable signing keystore (matches assetlinks.json for fullscreen TWA)
         working-directory: android
-        run: |
-          keytool -genkeypair -v -keystore android.keystore -alias bumply \
-            -keyalg RSA -keysize 2048 -validity 10000 \
-            -storepass bumplySigning123 -keypass bumplySigning123 \
-            -dname "CN=Bumply, O=Bumply, L=Lagos, C=NG"
+        run: echo "${{ secrets.ANDROID_KEYSTORE_B64 }}" | base64 -d > android.keystore
 
       - name: Generate Android project from twa-manifest.json
         working-directory: android

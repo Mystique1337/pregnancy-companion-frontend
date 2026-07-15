@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "mom.bumply.twa",
+    "sha256_cert_fingerprints": ["78:5E:C3:D5:B3:83:89:F6:57:8C:34:BF:0B:12:78:6D:68:90:A2:2C:E6:7D:C5:CD:7A:7C:05:56:0A:C1:23:12"]
+  }
+}]

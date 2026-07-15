@@ -1,8 +1,9 @@
 import { NextResponse, after } from "next/server";
-import { getMotherByPhone } from "@/lib/queries";
+import { getMotherByPhone, createAlert } from "@/lib/queries";
 import { getSettings } from "@/lib/settings";
 import { bumplyReply } from "@/lib/companion";
 import { sendText, webhookSecret } from "@/lib/evolution";
+import { detectDangerSign, dangerReply } from "@/lib/dangerSigns";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120; // give the AI round-trip + delayed send room to finish in after()
@@ -67,6 +68,22 @@ export async function POST(req: Request) {
           const first = mother.full_name.split(" ")[0];
           const link = process.env.APP_URL ? ` ${process.env.APP_URL}/pricing` : "";
           await sendText(phone, `Hi ${first} 🌸 One-on-one chat with me is a premium feature. Upgrade in your Bumply dashboard and I'll be here any time, day or night!${link}`);
+          continue;
+        }
+
+        // Danger-sign fast path: deterministic, BEFORE the AI. A red flag always
+        // gets an immediate, correct urgent reply + a clinician alert.
+        const danger = detectDangerSign(text);
+        if (danger) {
+          const first = mother.full_name.split(" ")[0];
+          await sendText(phone, dangerReply(first, danger));
+          const level = danger.level === "emergency" ? "urgent" : "warning";
+          await createAlert(mother.id, {
+            level,
+            kind: "danger-sign",
+            message: `WhatsApp danger sign — ${danger.sign}: "${text.slice(0, 160)}"`,
+          }).catch(() => {});
+          console.log(`[wa] DANGER (${danger.sign}) from ${phone} (${mother.full_name})`);
           continue;
         }
 

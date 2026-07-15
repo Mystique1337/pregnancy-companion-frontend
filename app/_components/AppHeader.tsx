@@ -67,7 +67,7 @@ export default function AppHeader({
           </button>
         </div>
       </div>
-      <BottomNav active={active} features={features} lang={L} />
+      <BottomNav active={active} features={features} lang={L} plan={plan} />
     </div>
   );
 }

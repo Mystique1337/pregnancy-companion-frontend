@@ -66,8 +66,11 @@ export default function ChatPanel({
     } catch { /* mic denied/unavailable */ }
   }
 
-  // Read a reply aloud in her language (SoroTTS).
+  // Read a reply aloud in her language (SoroTTS). Tapping again stops playback.
   async function playMsg(i: number, text: string) {
+    // Toggle off if this message is already playing.
+    if (voiceMsg === i) { audioRef.current?.pause(); audioRef.current = null; setVoiceMsg(null); return; }
+    audioRef.current?.pause();
     setVoiceMsg(i);
     try {
       const res = await fetch("/api/tts", {
@@ -77,11 +80,11 @@ export default function ChatPanel({
       });
       if (res.ok) {
         const url = URL.createObjectURL(await res.blob());
-        audioRef.current?.pause();
         const audio = new Audio(url);
         audioRef.current = audio;
-        audio.onended = () => URL.revokeObjectURL(url);
+        audio.onended = () => { URL.revokeObjectURL(url); setVoiceMsg(null); };
         await audio.play();
+        return; // keep the "playing" state until it ends
       }
     } catch { /* ignore */ }
     setVoiceMsg(null);
@@ -140,19 +143,18 @@ export default function ChatPanel({
   }, [pendingVoiceSend]);
 
   return (
-    <div className="card" style={{ padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", height: "68vh" }}>
+    <div className="card" style={{ padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", height: "min(68dvh, 640px)" }}>
       <div ref={boxRef} className="np-messages" style={{ flex: 1, height: "auto" }}>
         {msgs.map((m, i) => (
           <div key={i} className={"np-msg " + (m.role === "user" ? "user" : "bumply")} style={{ maxWidth: "80%" }}>
-            {m.content || "…"}
+            <div>{m.content || "…"}</div>
             {m.role === "assistant" && m.content && (
               <button
+                className="np-listen"
                 onClick={() => playMsg(i, m.content)}
-                title="Listen"
-                disabled={voiceMsg !== null}
-                style={{ marginLeft: 8, background: "none", border: "none", cursor: "pointer", fontSize: 13, opacity: 0.7 }}
+                aria-label={voiceMsg === i ? t("chat.stop", L) : t("chat.listen", L)}
               >
-                {voiceMsg === i ? "⏳" : "🔊"}
+                {voiceMsg === i ? `⏹ ${t("chat.stop", L)}` : `🔊 ${t("chat.listen", L)}`}
               </button>
             )}
           </div>
@@ -172,26 +174,31 @@ export default function ChatPanel({
         </div>
       )}
 
+      {(recording || transcribing) && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 16px 0", color: "var(--pink)", fontSize: 14, fontWeight: 600 }}>
+          <span style={{ width: 9, height: 9, borderRadius: "50%", background: "var(--pink)", animation: recording ? "micPulse 1.1s infinite" : "none" }} />
+          {recording ? `🎙 ${t("chat.listening", L)}` : `⏳ ${t("chat.transcribing", L)}`}
+        </div>
+      )}
       <div className="np-input-area">
         <button
-          className="np-send"
+          className={"np-send" + (recording ? " recording" : "")}
           onClick={toggleMic}
-          aria-label="Speak"
-          title={recording ? "Stop" : "Speak"}
+          aria-label={recording ? t("chat.stop", L) : t("chat.speak", L)}
+          title={recording ? t("chat.stop", L) : t("chat.speak", L)}
           disabled={transcribing}
-          style={recording ? { background: "var(--pink)", color: "#fff" } : undefined}
         >
           {transcribing ? "⏳" : recording ? "■" : "🎤"}
         </button>
         <input
           className="np-input"
-          placeholder={transcribing ? "Transcribing…" : `${t("chat.placeholder", L)}, ${name}…`}
+          placeholder={transcribing ? `${t("chat.transcribing", L)}…` : `${t("chat.placeholder", L)}, ${name}…`}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && send()}
           disabled={busy}
         />
-        <button className="np-send" onClick={() => send()} aria-label="Send" disabled={busy}>→</button>
+        <button className="np-send" onClick={() => send()} aria-label={t("chat.send", L)} title={t("chat.send", L)} disabled={busy || !input.trim()}>→</button>
       </div>
     </div>
   );

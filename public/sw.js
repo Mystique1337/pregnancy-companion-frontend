@@ -1,5 +1,11 @@
-const CACHE = "bumply-v4";
+const CACHE = "bumply-v5";
 const ASSETS = ["/", "/sos", "/icon.svg", "/offline/maternal-qa.json"];
+
+// Only these are safe to serve cache-first. Hashed Next chunks are immutable; the
+// rest are static media. EVERYTHING else (especially /api/*) must hit the network —
+// v4 cached /api/generate's "not ready" poll response forever, freezing the
+// "writing your week…" state and serving stale data across the app.
+const STATIC_RE = /^\/(_next\/static\/|_next\/image|icon|baby\/|offline\/|share\/|favicon|apple-touch|manifest)|\.(png|jpg|jpeg|webp|svg|gif|woff2?|ttf|mp3|mp4|wasm)$/;
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));
@@ -58,16 +64,23 @@ self.addEventListener("fetch", (e) => {
     return;
   }
 
-  // Cache-first for static assets.
+  const path = new URL(req.url).pathname;
+
+  // APIs and anything dynamic: network only — never serve a cached API response.
+  if (!STATIC_RE.test(path)) return;
+
+  // Cache-first for true static assets only (immutable chunks, images, fonts, KB).
   e.respondWith(
     caches.match(req).then(
       (cached) =>
         cached ||
         fetch(req).then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put(req, copy));
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(req, copy));
+          }
           return res;
-        }).catch(() => cached)
+        })
     )
   );
 });

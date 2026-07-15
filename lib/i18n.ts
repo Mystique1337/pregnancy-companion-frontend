@@ -269,6 +269,7 @@ const STRINGS: Dict = {
   "chat.stop": { en: "Stop", pcm: "Stop", yo: "Dúró", ha: "Tsaya", ig: "Kwụsị" },
   "chat.send": { en: "Send", pcm: "Send am", yo: "Fi ránṣẹ́", ha: "Aika", ig: "Zipu" },
   "chat.listen": { en: "Listen", pcm: "Hear am", yo: "Tẹ́tí sí i", ha: "Saurara", ig: "Gee ntị" },
+  "chat.voicePrep": { en: "Preparing your voice…", pcm: "Voice dey come…", yo: "Ohùn rẹ ń bọ̀…", ha: "Muryar tana zuwa…", ig: "Olu gị na-abịa…" },
   "chat.listening": { en: "Listening…", pcm: "I dey hear you…", yo: "Ń gbọ́…", ha: "Ina saurara…", ig: "Ana ege ntị…" },
   "chat.transcribing": { en: "Getting your words", pcm: "I dey get your words", yo: "Ń gba ọ̀rọ̀ rẹ", ha: "Ina ɗaukar maganarki", ig: "Ana enweta okwu gị" },
   "chat.s.first1": { en: "Is it normal to feel this tired?", pcm: "E normal to dey tired like dis?", yo: "Ǹjẹ́ ó wọ́pọ̀ láti rẹ̀ mí bayìí?", ha: "Al'ada ne a ji gajiya haka?", ig: "Ọ dị mma inwe ike ọgwụgwụ otu a?" },

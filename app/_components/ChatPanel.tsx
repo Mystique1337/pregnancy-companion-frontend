@@ -24,6 +24,9 @@ export default function ChatPanel({
   const [recording, setRecording] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
   const [voiceMsg, setVoiceMsg] = useState<number | null>(null);
+  const [voiceStage, setVoiceStage] = useState<"loading" | "playing" | null>(null);
+  const ttsAbort = useRef<AbortController | null>(null);
+  const userCancelledTts = useRef(false);
   const [pendingVoiceSend, setPendingVoiceSend] = useState<string | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const recRef = useRef<MediaRecorder | null>(null);
@@ -35,6 +38,12 @@ export default function ChatPanel({
     if (boxRef.current) boxRef.current.scrollTop = boxRef.current.scrollHeight;
   }, [msgs, busy]);
 
+  // Wake SoroTTS (the Nigerian voices on Modal) the moment she opens the chat, so
+  // the first "Listen" is her voice, fast — not a cold start.
+  useEffect(() => {
+    fetch("/api/voice/warm", { method: "POST" }).catch(() => {});
+  }, []);
+
   // Tap to talk: record → transcribe → auto-send. Prefers server Whisper (best,
   // supports her language); when offline, uses the phone's on-device recognition.
   async function toggleMic() {
@@ -42,7 +51,7 @@ export default function ChatPanel({
     // CRITICAL: silence any playing reply first — on speakerphone the mic would
     // record Bumply's own voice, Whisper would transcribe it as her next question,
     // and the chat would loop, repeating questions and answers.
-    audioRef.current?.pause(); audioRef.current = null; stopLocalTts(); setVoiceMsg(null);
+    stopVoice();
     // Offline → on-device speech recognition (no network, no Modal).
     if (!navigator.onLine && localAsrSupported()) {
       const handle = startLocalAsr(
@@ -82,36 +91,56 @@ export default function ChatPanel({
     } catch { /* mic denied/unavailable */ }
   }
 
-  // Read a reply aloud in her language. Prefers server SoroTTS (best quality);
-  // falls back to the phone's on-device voice when the server is unreachable/offline.
-  // Tapping again stops playback.
+  // Read a reply aloud in HER voice — SoroTTS (Nigerian English/languages) is the
+  // product's voice and always comes first. If it's cold-starting we WAIT and show
+  // "preparing your voice…" (tap to cancel); the phone's generic voice is only a
+  // last resort when SoroTTS genuinely fails or she's offline.
   async function playMsg(i: number, text: string) {
-    if (voiceMsg === i) { audioRef.current?.pause(); audioRef.current = null; stopLocalTts(); setVoiceMsg(null); return; }
-    audioRef.current?.pause(); stopLocalTts();
+    if (voiceMsg === i) { stopVoice(); return; } // tap again = cancel/stop
+    stopVoice();
+    userCancelledTts.current = false;
     setVoiceMsg(i);
     if (navigator.onLine) {
       try {
-        // The server voice (SoroTTS) scales to zero — a cold start is ~25s of
-        // silence. Give it a short budget, then fall back to the phone's voice.
+        setVoiceStage("loading");
+        const ctl = new AbortController();
+        ttsAbort.current = ctl;
+        const timer = setTimeout(() => ctl.abort(), 75000); // generous cold-start budget
         const res = await fetch("/api/tts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text, voice: L }),
-          signal: AbortSignal.timeout(9000),
+          signal: ctl.signal,
         });
+        clearTimeout(timer);
+        ttsAbort.current = null;
         if (res.ok) {
           const url = URL.createObjectURL(await res.blob());
           const audio = new Audio(url);
           audioRef.current = audio;
-          audio.onended = () => { URL.revokeObjectURL(url); setVoiceMsg(null); };
+          setVoiceStage("playing");
+          audio.onended = () => { URL.revokeObjectURL(url); setVoiceMsg(null); setVoiceStage(null); };
           await audio.play();
           return; // keep the "playing" state until it ends
         }
-      } catch { /* slow/unavailable server voice → local fallback below */ }
+      } catch {
+        ttsAbort.current = null;
+        // She cancelled → stop silently; do NOT switch to the generic voice.
+        if (userCancelledTts.current) return;
+      }
     }
-    // On-device voice (no network / cold or down server).
+    // Last resort ONLY (offline / SoroTTS down): the phone's generic voice.
+    setVoiceStage("playing");
     await speakLocal(text, L);
-    setVoiceMsg(null);
+    setVoiceMsg(null); setVoiceStage(null);
+  }
+
+  function stopVoice() {
+    userCancelledTts.current = true;
+    ttsAbort.current?.abort(); ttsAbort.current = null;
+    audioRef.current?.pause(); audioRef.current = null;
+    stopLocalTts();
+    setVoiceMsg(null); setVoiceStage(null);
   }
 
   async function send(text?: string, spoken = false) {
@@ -178,7 +207,11 @@ export default function ChatPanel({
                 onClick={() => playMsg(i, m.content)}
                 aria-label={voiceMsg === i ? t("chat.stop", L) : t("chat.listen", L)}
               >
-                {voiceMsg === i ? `⏹ ${t("chat.stop", L)}` : `🔊 ${t("chat.listen", L)}`}
+                {voiceMsg === i
+                  ? voiceStage === "loading"
+                    ? `⏳ ${t("chat.voicePrep", L)}`
+                    : `⏹ ${t("chat.stop", L)}`
+                  : `🔊 ${t("chat.listen", L)}`}
               </button>
             )}
           </div>

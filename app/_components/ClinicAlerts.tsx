@@ -1,5 +1,8 @@
 "use client";
 import { useState } from "react";
+import ChwDashboard from "./ChwDashboard";
+
+type ChwMother = { id: string; full_name: string; phone: string | null; whatsapp_number: string | null; current_week: number; language: string | null; open_alerts: number; last_alert_at: string | null };
 
 type Alert = {
   id: string; level: string; kind: string; message: string; status: string;
@@ -7,7 +10,7 @@ type Alert = {
   reviewed_by: string | null;
 };
 
-export default function ClinicAlerts({ clinicianName, alerts }: { clinicianName: string; alerts: Alert[] }) {
+export default function ClinicAlerts({ clinicianName, alerts, chwMothers = [] }: { clinicianName: string; alerts: Alert[]; chwMothers?: ChwMother[] }) {
   const [busy, setBusy] = useState<string | null>(null);
 
   async function setStatus(id: string, status: string) {
@@ -74,8 +77,9 @@ export default function ClinicAlerts({ clinicianName, alerts }: { clinicianName:
         </div>
       </div>
       <div className="app-shell" style={{ maxWidth: 760 }}>
+        <ChwDashboard mothers={chwMothers} />
         <p className="s-label">Human-in-the-loop</p>
-        <h1 className="s-title" style={{ marginBottom: 8 }}>Open alerts</h1>
+        <h1 className="s-title" style={{ marginBottom: 8 }}>All open alerts</h1>
         <p className="muted" style={{ marginBottom: 24 }}>Flagged vitals needing review. Reach out, then mark reviewed or resolved.</p>
 
         {open.length === 0 ? (

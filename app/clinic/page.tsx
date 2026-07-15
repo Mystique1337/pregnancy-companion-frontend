@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getClinician } from "@/lib/clinicianSession";
-import { listAlerts } from "@/lib/queries";
+import { listAlerts, listMothersForChw } from "@/lib/queries";
 import ClinicAlerts from "../_components/ClinicAlerts";
 
 export const dynamic = "force-dynamic";
@@ -8,6 +8,9 @@ export const dynamic = "force-dynamic";
 export default async function ClinicPage() {
   const clin = await getClinician();
   if (!clin) redirect("/clinic/login");
-  const alerts = await listAlerts(undefined, 100);
-  return <ClinicAlerts clinicianName={clin.name} alerts={alerts} />;
+  const [alerts, myMothers] = await Promise.all([
+    listAlerts(undefined, 100),
+    listMothersForChw(clin.sub),
+  ]);
+  return <ClinicAlerts clinicianName={clin.name} alerts={alerts} chwMothers={myMothers} />;
 }

@@ -343,6 +343,30 @@ export async function setAlertStatus(id: string, status: string, reviewedBy: str
   await sql`update alerts set status = ${status}, reviewed_by = ${reviewedBy} where id = ${id}`;
 }
 
+// --- CHW co-pilot: a community health worker enrolls + monitors her own mothers ---
+export async function assignChw(motherId: string, chwId: string): Promise<void> {
+  await sql`update mothers set chw_id = ${chwId} where id = ${motherId}`;
+}
+
+export type ChwMother = Mother & { open_alerts: number; last_alert_at: string | null };
+export async function listMothersForChw(chwId: string): Promise<ChwMother[]> {
+  return sql<ChwMother[]>`
+    select m.*,
+      (select count(*) from alerts a where a.mother_id = m.id and a.status = 'open')::int as open_alerts,
+      (select max(a.created_at) from alerts a where a.mother_id = m.id) as last_alert_at
+    from mothers m
+    where m.chw_id = ${chwId}
+    order by open_alerts desc, m.created_at desc`;
+}
+
+export async function listAlertsForChw(chwId: string, limit = 100): Promise<AlertWithMother[]> {
+  return sql<AlertWithMother[]>`
+    select a.*, m.full_name, m.email, m.phone, m.whatsapp_number
+    from alerts a join mothers m on m.id = a.mother_id
+    where m.chw_id = ${chwId}
+    order by a.created_at desc limit ${limit}`;
+}
+
 // --- Clinicians ---
 export type Clinician = { id: string; email: string; password_hash: string; name: string; created_at: string };
 

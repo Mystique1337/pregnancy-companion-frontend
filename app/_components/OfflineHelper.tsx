@@ -7,6 +7,7 @@
 import { useRef, useState } from "react";
 import { detectDangerSign, dangerReply } from "@/lib/dangerSigns";
 import { loadKb, retrieve, type Kb } from "@/lib/offlineKb";
+import { speakLocal } from "@/lib/localVoice";
 import { readCachedProfile } from "./ProfileCache";
 
 // Runtime dynamic import from CDN, hidden from the bundler (keeps it out of the app bundle).
@@ -27,13 +28,9 @@ async function blobTo16k(blob: Blob): Promise<Float32Array> {
   return (await off.startRendering()).getChannelData(0);
 }
 
-// Speak text offline via the device's built-in TTS (Android speech engine).
+// Speak text offline via the device's built-in TTS, in her language when possible.
 function speakOut(text: string) {
-  try {
-    if (!("speechSynthesis" in window)) return;
-    speechSynthesis.cancel();
-    speechSynthesis.speak(new SpeechSynthesisUtterance(text.slice(0, 300)));
-  } catch { /* ignore */ }
+  try { speakLocal(text, readCachedProfile()?.language); } catch { /* ignore */ }
 }
 
 type Msg = { role: "system" | "user" | "assistant"; content: string };
@@ -232,11 +229,12 @@ export default function OfflineHelper() {
       </button>
 
       {state === "idle" && (
-        <p className="muted" style={{ fontSize: 13, marginTop: 10 }}>
-          Danger-sign checks and common answers work now, offline. Want more?{" "}
-          <button onClick={load} style={{ background: "none", border: "none", color: "var(--pink)", cursor: "pointer", padding: 0, textDecoration: "underline", fontSize: 13, fontWeight: 600 }}>Add the offline helper</button>{" "}
-          <span style={{ fontSize: 12 }}>(one-time, use WiFi).</span>
-        </p>
+        <div style={{ marginTop: 10 }}>
+          <p className="muted" style={{ fontSize: 13 }}>Danger-sign checks and common answers work now, offline.</p>
+          <button onClick={load} style={{ marginTop: 8, width: "100%", minHeight: 44, padding: "10px 12px", borderRadius: 10, border: "1px dashed var(--pink)", background: "var(--pink-pale)", color: "var(--pink)", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
+            ⬇️ Add the offline helper <span style={{ fontWeight: 400 }}>(one-time, use WiFi)</span>
+          </button>
+        </div>
       )}
       {state === "loading" && <p className="muted" style={{ marginTop: 10 }}>Downloading the offline helper… {progress}%</p>}
 

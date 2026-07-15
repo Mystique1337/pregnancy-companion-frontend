@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { normalizeLang } from "@/lib/languages";
 import { t } from "@/lib/i18n";
+import { speakLocal, stopLocalTts, startLocalAsr, localAsrSupported } from "@/lib/localVoice";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -28,14 +29,25 @@ export default function ChatPanel({
   const recRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const localRecRef = useRef<{ stop: () => void } | null>(null);
 
   useEffect(() => {
     if (boxRef.current) boxRef.current.scrollTop = boxRef.current.scrollHeight;
   }, [msgs, busy]);
 
-  // Hold-to-talk: record → transcribe (Whisper) → drop into the input for review.
+  // Tap to talk: record → transcribe → auto-send. Prefers server Whisper (best,
+  // supports her language); when offline, uses the phone's on-device recognition.
   async function toggleMic() {
-    if (recording) { recRef.current?.stop(); return; }
+    if (recording) { localRecRef.current?.stop(); recRef.current?.stop(); return; }
+    // Offline → on-device speech recognition (no network, no Modal).
+    if (!navigator.onLine && localAsrSupported()) {
+      const handle = startLocalAsr(
+        L,
+        (tx) => { if (tx.length > 1) setPendingVoiceSend(tx); },
+        () => { setRecording(false); localRecRef.current = null; },
+      );
+      if (handle) { localRecRef.current = handle; setRecording(true); return; }
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const rec = new MediaRecorder(stream);
@@ -66,27 +78,32 @@ export default function ChatPanel({
     } catch { /* mic denied/unavailable */ }
   }
 
-  // Read a reply aloud in her language (SoroTTS). Tapping again stops playback.
+  // Read a reply aloud in her language. Prefers server SoroTTS (best quality);
+  // falls back to the phone's on-device voice when the server is unreachable/offline.
+  // Tapping again stops playback.
   async function playMsg(i: number, text: string) {
-    // Toggle off if this message is already playing.
-    if (voiceMsg === i) { audioRef.current?.pause(); audioRef.current = null; setVoiceMsg(null); return; }
-    audioRef.current?.pause();
+    if (voiceMsg === i) { audioRef.current?.pause(); audioRef.current = null; stopLocalTts(); setVoiceMsg(null); return; }
+    audioRef.current?.pause(); stopLocalTts();
     setVoiceMsg(i);
-    try {
-      const res = await fetch("/api/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, voice: L }),
-      });
-      if (res.ok) {
-        const url = URL.createObjectURL(await res.blob());
-        const audio = new Audio(url);
-        audioRef.current = audio;
-        audio.onended = () => { URL.revokeObjectURL(url); setVoiceMsg(null); };
-        await audio.play();
-        return; // keep the "playing" state until it ends
-      }
-    } catch { /* ignore */ }
+    if (navigator.onLine) {
+      try {
+        const res = await fetch("/api/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, voice: L }),
+        });
+        if (res.ok) {
+          const url = URL.createObjectURL(await res.blob());
+          const audio = new Audio(url);
+          audioRef.current = audio;
+          audio.onended = () => { URL.revokeObjectURL(url); setVoiceMsg(null); };
+          await audio.play();
+          return; // keep the "playing" state until it ends
+        }
+      } catch { /* server voice unavailable → local fallback below */ }
+    }
+    // On-device voice (no network / server down).
+    await speakLocal(text, L);
     setVoiceMsg(null);
   }
 

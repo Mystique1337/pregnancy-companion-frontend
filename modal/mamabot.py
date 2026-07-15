@@ -26,7 +26,8 @@ app = modal.App("bumply-mamabot")
 # vLLM image. Pin versions so deploys are reproducible.
 image = (
     modal.Image.debian_slim(python_version="3.12")
-    .pip_install("vllm==0.7.2", "huggingface_hub[hf_transfer]==0.28.1")
+    # bitsandbytes: mamabot-llama-1 ships as a 4-bit BnB-quantized checkpoint.
+    .pip_install("vllm==0.7.2", "huggingface_hub[hf_transfer]==0.28.1", "bitsandbytes>=0.45.0")
     .env({"HF_HUB_ENABLE_HF_TRANSFER": "1"})
 )
 
@@ -55,6 +56,7 @@ def serve():
         f"--host 0.0.0.0 --port {PORT} "
         f"--served-model-name mamabot "
         f"--api-key {os.environ['LLM_API_KEY']} "
+        f"--quantization bitsandbytes --load-format bitsandbytes "  # 4-bit BnB checkpoint
         f"--max-model-len 4096 --gpu-memory-utilization 0.92"
     )
     subprocess.Popen(cmd, shell=True)

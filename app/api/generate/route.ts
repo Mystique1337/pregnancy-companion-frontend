@@ -27,7 +27,9 @@ export async function POST(req: Request) {
   if (!mother) return NextResponse.json({ error: "Account not found." }, { status: 404 });
 
   const body = await req.json().catch(() => ({}));
-  const week = Number.isInteger(body.week) ? body.week : weekFor(mother);
+  // Clamp to real gestational weeks — otherwise any signed-in user could burn LLM
+  // calls on arbitrary weeks and put "Week -5" junk cards on their dashboard.
+  const week = Number.isInteger(body.week) && body.week >= 1 && body.week <= 42 ? body.week : weekFor(mother);
 
   try {
     const update = await ensureWeeklyUpdate(mother, week);

@@ -20,13 +20,19 @@ export default function EmergencyMode({ contact: initialContact }: { contact: Co
       setCoords({ lat, lon });
     } catch { /* proceed without location */ }
 
-    const res = await fetch("/api/emergency", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ lat, lon }),
-    });
-    const d = await res.json().catch(() => ({}));
-    setHospitals(d.hospitals || []);
-    if (d.contact) setContact(d.contact);
+    // NEVER strand her on "Finding the nearest help…": if the network is down
+    // (very plausible in a real emergency), go straight to active mode with the
+    // guidance + alert-my-contact link we already have on-device.
+    try {
+      const res = await fetch("/api/emergency", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lat, lon }),
+        signal: AbortSignal.timeout(12000),
+      });
+      const d = await res.json().catch(() => ({}));
+      setHospitals(d.hospitals || []);
+      if (d.contact) setContact(d.contact);
+    } catch { /* offline — proceed with what we have */ }
     setStage("active");
   }
 

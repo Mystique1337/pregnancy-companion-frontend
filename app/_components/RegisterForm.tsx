@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { LANGUAGES } from "@/lib/languages";
+import { LANGUAGES, normalizeLang } from "@/lib/languages";
+import { t } from "@/lib/i18n";
 
 const WEEKS = Array.from({ length: 40 }, (_, i) => i + 1);
 const ETHNICITIES = [
@@ -23,20 +24,24 @@ export default function RegisterForm() {
     language: "en",
   });
   const [otherEth, setOtherEth] = useState("");
+  const [showMore, setShowMore] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
 
+  const L = normalizeLang(form.language);
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   async function submit() {
     setError("");
-    if (!form.full_name || !form.email || !form.password || !form.current_week || !form.due_date) {
-      setError("Please fill in your name, email, password, due date and current week.");
+    // Keep it light: just name, contact, password and how far along she is. A due
+    // date is optional — many mothers know weeks/months better than an exact date.
+    if (!form.full_name || !form.email || !form.password || !form.current_week) {
+      setError(t("reg.errRequired", L));
       return;
     }
     if (form.password.length < 8) {
-      setError("Please use a password of at least 8 characters.");
+      setError(t("reg.errPw", L));
       return;
     }
     setBusy(true);
@@ -62,8 +67,8 @@ export default function RegisterForm() {
       <div className="form-card">
         <div className="f-success show">
           <div className="fs-icon">🌸</div>
-          <h3 className="fs-title">Welcome to Bumply</h3>
-          <p className="fs-msg">You're registered! Taking you to your dashboard… 💕</p>
+          <h3 className="fs-title">{t("reg.successTitle", L)}</h3>
+          <p className="fs-msg">{t("reg.successMsg", L)}</p>
         </div>
       </div>
     );
@@ -71,87 +76,89 @@ export default function RegisterForm() {
 
   return (
     <div className="form-card">
-      <h3 className="fc-head">Register for Bumply</h3>
-      <p className="fc-sub">Create your account and your first weekly update is ready right away.</p>
+      <h3 className="fc-head">{t("reg.title", L)}</h3>
+      <p className="fc-sub">{t("reg.sub", L)}</p>
 
-      <div className="f-row">
-        <div className="fg">
-          <label>Your First Name</label>
-          <input value={form.full_name} onChange={(e) => set("full_name", e.target.value)} placeholder="Amara" />
-        </div>
-        <div className="fg">
-          <label>Partner&apos;s Name</label>
-          <input value={form.partner_name} onChange={(e) => set("partner_name", e.target.value)} placeholder="David" />
-        </div>
-      </div>
+      {/* Language FIRST — so the rest of the form is understood. */}
       <div className="fg">
-        <label>Email Address</label>
-        <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="amara@email.com" />
-      </div>
-      <div className="fg">
-        <label>Password</label>
-        <input type="password" value={form.password} onChange={(e) => set("password", e.target.value)} placeholder="At least 8 characters" />
-      </div>
-      <div className="fg">
-        <label>Phone / WhatsApp</label>
-        <input type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="+234 800 000 0000" />
-      </div>
-      <div className="fg">
-        <label>Due Date</label>
-        <input type="date" value={form.due_date} onChange={(e) => set("due_date", e.target.value)} />
-      </div>
-      <div className="fg">
-        <label>Current Week of Pregnancy</label>
-        <select value={form.current_week} onChange={(e) => set("current_week", e.target.value)}>
-          <option value="" disabled>
-            Select your current week
-          </option>
-          {WEEKS.map((w) => (
-            <option key={w} value={w}>
-              Week {w}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="fg">
-        <label>Is this your first pregnancy?</label>
-        <select value={form.first_pregnancy} onChange={(e) => set("first_pregnancy", e.target.value)}>
-          <option value="yes">Yes — first time 🌸</option>
-          <option value="no">No — I&apos;ve done this before</option>
-        </select>
-      </div>
-      <div className="fg">
-        <label>Ethnicity (for your meal plan)</label>
-        <select value={form.ethnicity} onChange={(e) => set("ethnicity", e.target.value)}>
-          <option value="">Select (so we curate local meals)</option>
-          {ETHNICITIES.map((e) => (
-            <option key={e} value={e}>{e}</option>
-          ))}
-        </select>
-        {form.ethnicity === "Other" && (
-          <input style={{ marginTop: 8 }} value={otherEth} onChange={(e) => setOtherEth(e.target.value)} placeholder="Type your ethnicity / cuisine" />
-        )}
-      </div>
-      <div className="fg">
-        <label>Dietary Restrictions (optional)</label>
-        <input value={form.dietary_restrictions} onChange={(e) => set("dietary_restrictions", e.target.value)} placeholder="e.g. vegetarian, no nuts, lactose intolerant" />
-      </div>
-      <div className="fg">
-        <label>Preferred Language</label>
+        <label>🌍 {t("reg.language", L)}</label>
         <select value={form.language} onChange={(e) => set("language", e.target.value)}>
           {LANGUAGES.map((l) => (
-            <option key={l.code} value={l.code}>
-              {l.native}
-            </option>
+            <option key={l.code} value={l.code}>{l.native}</option>
           ))}
         </select>
       </div>
+      <div className="fg">
+        <label>{t("reg.name", L)}</label>
+        <input value={form.full_name} onChange={(e) => set("full_name", e.target.value)} placeholder={t("reg.namePh", L)} />
+      </div>
+      <div className="fg">
+        <label>{t("reg.phone", L)}</label>
+        <input type="tel" inputMode="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="+234 800 000 0000" />
+      </div>
+      <div className="fg">
+        <label>{t("reg.week", L)}</label>
+        <select value={form.current_week} onChange={(e) => set("current_week", e.target.value)}>
+          <option value="" disabled>{t("reg.weekSel", L)}</option>
+          {WEEKS.map((w) => (
+            <option key={w} value={w}>{t("dash.week", L)} {w}</option>
+          ))}
+        </select>
+      </div>
+      <div className="fg">
+        <label>{t("reg.email", L)}</label>
+        <input type="email" inputMode="email" value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="amara@email.com" />
+      </div>
+      <div className="fg">
+        <label>{t("reg.password", L)}</label>
+        <input type="password" value={form.password} onChange={(e) => set("password", e.target.value)} placeholder={t("reg.passwordPh", L)} />
+      </div>
+
+      {/* Everything else is optional — hidden by default to keep the form short. */}
+      <button type="button" onClick={() => setShowMore((s) => !s)} className="auth-link" style={{ background: "none", border: "none", padding: "4px 0", fontSize: 14, cursor: "pointer", fontWeight: 600 }}>
+        {showMore ? "▲" : "▼"} {t("reg.more", L)}
+      </button>
+      {showMore && (
+        <div style={{ marginTop: 8 }}>
+          <div className="fg">
+            <label>Partner&apos;s name (optional)</label>
+            <input value={form.partner_name} onChange={(e) => set("partner_name", e.target.value)} placeholder="David" />
+          </div>
+          <div className="fg">
+            <label>Due date (optional)</label>
+            <input type="date" value={form.due_date} onChange={(e) => set("due_date", e.target.value)} />
+          </div>
+          <div className="fg">
+            <label>Is this your first pregnancy?</label>
+            <select value={form.first_pregnancy} onChange={(e) => set("first_pregnancy", e.target.value)}>
+              <option value="yes">Yes — first time 🌸</option>
+              <option value="no">No — I&apos;ve done this before</option>
+            </select>
+          </div>
+          <div className="fg">
+            <label>Ethnicity (for your meal plan)</label>
+            <select value={form.ethnicity} onChange={(e) => set("ethnicity", e.target.value)}>
+              <option value="">Select (so we curate local meals)</option>
+              {ETHNICITIES.map((e) => (
+                <option key={e} value={e}>{e}</option>
+              ))}
+            </select>
+            {form.ethnicity === "Other" && (
+              <input style={{ marginTop: 8 }} value={otherEth} onChange={(e) => setOtherEth(e.target.value)} placeholder="Type your ethnicity / cuisine" />
+            )}
+          </div>
+          <div className="fg">
+            <label>Dietary restrictions (optional)</label>
+            <input value={form.dietary_restrictions} onChange={(e) => set("dietary_restrictions", e.target.value)} placeholder="e.g. vegetarian, no nuts, lactose intolerant" />
+          </div>
+        </div>
+      )}
 
       <button className="f-submit" onClick={submit} disabled={busy}>
-        {busy ? "Creating your account…" : "Begin My Journey ✨"}
+        {busy ? t("reg.submitting", L) : t("reg.submit", L)}
       </button>
       {error && <p className="f-error">{error}</p>}
-      <p className="f-note">Your weekly companion, ready in seconds · Free during beta</p>
+      <p className="f-note">{t("reg.freeNote", L)}</p>
     </div>
   );
 }

@@ -16,6 +16,8 @@ import { handleOnboarding, telegramChannel } from "@/lib/waOnboard";
 import { detectBirthAnnouncement, birthCongratsReply } from "@/lib/postpartum";
 import { immunizationReminder } from "@/lib/immunization";
 import { readImage, safetyNote, visionConfigured } from "@/lib/vision";
+import { detectLanguageChange, isLanguageMenuRequest, LANG_CONFIRM, LANG_MENU } from "@/lib/langSwitch";
+import { updateMotherLanguage } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -37,8 +39,10 @@ async function handleCommand(chatId: string, mother: Mother, cmd: string) {
     await createAlert(mother.id, { level: "urgent", kind: "emergency", message: `🚨 EMERGENCY requested via Telegram by ${mother.full_name}.` }).catch(() => {});
     const base = publicBaseUrl();
     await sendTelegram(chatId, `🚨 If this is life-threatening — heavy bleeding, fits, severe pain, or your baby not moving — go to the nearest hospital NOW. Don't wait.\n\nI've alerted your clinician.${base ? `\n\nOpen Emergency Mode to find the nearest hospital and alert your loved one:\n${base}/emergency` : ""}`);
+  } else if (c === "/language" || c === "/lang") {
+    await sendTelegram(chatId, LANG_MENU);
   } else {
-    await sendTelegram(chatId, "I'm Bumply 🌸 your pregnancy companion. Just talk to me — type, send a voice note, or send a photo of your ANC card/medicine and I'll help. Try:\n• /week — your week & baby size\n• /tips — a tip for today\n• /emergency — get help fast\nOr ask me anything: symptoms, food, what's normal, how you're feeling.");
+    await sendTelegram(chatId, "I'm Bumply 🌸 your pregnancy companion. Just talk to me — type, send a voice note, or send a photo of your ANC card/medicine and I'll help. Try:\n• /week — your week & baby size\n• /tips — a tip for today\n• /language — chat in English, Pidgin, Yorùbá, Hausa or Igbo\n• /emergency — get help fast\nOr ask me anything: symptoms, food, what's normal, how you're feeling.");
   }
 }
 
@@ -149,6 +153,16 @@ export async function POST(req: Request) {
       // Voice that couldn't be transcribed.
       if (!userText) {
         await sendTelegram(chatId, "Sorry, I couldn't hear that clearly 🌸 Please try again, or type your message.");
+        return;
+      }
+
+      // Language switch: "speak yoruba", "/language hausa", or "/language" for the menu.
+      if (isLanguageMenuRequest(userText)) { await sendTelegram(chatId, LANG_MENU); return; }
+      const newLang = detectLanguageChange(userText);
+      if (newLang) {
+        await updateMotherLanguage(mother.id, newLang);
+        await sendTelegram(chatId, LANG_CONFIRM[newLang]);
+        console.log(`[tg] language → ${newLang} for ${mother.full_name}`);
         return;
       }
 

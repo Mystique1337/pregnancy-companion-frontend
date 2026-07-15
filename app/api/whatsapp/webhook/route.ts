@@ -9,6 +9,8 @@ import { detectBirthAnnouncement, birthCongratsReply } from "@/lib/postpartum";
 import { markDelivered } from "@/lib/queries";
 import { immunizationReminder } from "@/lib/immunization";
 import { readImage, safetyNote, visionConfigured } from "@/lib/vision";
+import { detectLanguageChange, isLanguageMenuRequest, LANG_CONFIRM, LANG_MENU } from "@/lib/langSwitch";
+import { updateMotherLanguage } from "@/lib/queries";
 import { transcribe, speak, normalizeVoice, warm } from "@/lib/voice";
 import { wavToMp3 } from "@/lib/audio";
 
@@ -161,6 +163,16 @@ export async function POST(req: Request) {
             message: `WhatsApp danger sign — ${danger.sign}: "${text.slice(0, 160)}"`,
           }).catch(() => {});
           console.log(`[wa] DANGER (${danger.sign}) from ${phone} (${mother.full_name}) voice=${viaVoice}`);
+          continue;
+        }
+
+        // Language switch: "speak yoruba", "language hausa", or "language" for the menu.
+        if (isLanguageMenuRequest(text)) { await sendText(phone, LANG_MENU); continue; }
+        const newLang = detectLanguageChange(text);
+        if (newLang) {
+          await updateMotherLanguage(mother.id, newLang);
+          await sendText(phone, LANG_CONFIRM[newLang]);
+          console.log(`[wa] language → ${newLang} for ${mother.full_name}`);
           continue;
         }
 

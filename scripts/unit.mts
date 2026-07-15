@@ -81,6 +81,21 @@ console.log("\n— Danger signs (detectDangerSign / dangerReply) —");
   ok("'I am bleeding' → still urgent", detectDangerSign("I am bleeding")?.level === "urgent");
 }
 
+// ─────────────────────────── langSwitch.ts ───────────────────────────
+console.log("\n— langSwitch (in-chat language change) —");
+{
+  const { detectLanguageChange, isLanguageMenuRequest } = await import("../lib/langSwitch.ts");
+  ok("'speak yoruba' → yo", detectLanguageChange("speak yoruba") === "yo");
+  ok("'/language hausa' → ha", detectLanguageChange("/language hausa") === "ha");
+  ok("'change language to igbo' → ig", detectLanguageChange("change language to igbo") === "ig");
+  ok("'abeg make we yarn pidgin' → pcm", detectLanguageChange("abeg make we yarn pidgin") === "pcm");
+  ok("'reply in english' → en", detectLanguageChange("reply in english") === "en");
+  ok("'I will speak to my doctor' → null", detectLanguageChange("I will speak to my doctor") === null);
+  ok("'my igbo friend visited me today' → null", detectLanguageChange("my igbo friend visited me today") === null);
+  ok("'language' shows the menu", isLanguageMenuRequest("language") === true && isLanguageMenuRequest("/language") === true);
+  ok("normal chat is not a menu request", isLanguageMenuRequest("what should I eat") === false);
+}
+
 // ─────────────────────────── speechText.ts stripForSpeech ───────────────────────────
 console.log("\n— stripForSpeech (TTS text hygiene) —");
 {

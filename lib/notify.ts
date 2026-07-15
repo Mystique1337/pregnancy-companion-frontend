@@ -16,6 +16,7 @@ import { dailyTipFor } from "./dailyTips";
 import { sendEmail, emailConfigured, FROM } from "./email";
 import { sendWhatsApp, whatsappConfigured } from "./whatsapp";
 import { sendTelegram } from "./telegram";
+import { sendSms, smsConfigured } from "./sms";
 
 function firstName(m: Mother): string {
   return (m.full_name || "mama").split(" ")[0];
@@ -75,6 +76,10 @@ export async function sendAlert(mother: Mother, alert: { level: string; message:
     await sendWhatsApp(phone, `${title}\n\n${firstName(mother)}, ${alert.message}`).catch(() => {});
   }
   await tgNotify(mother, `${title}\n\n${firstName(mother)}, ${alert.message}`);
+  // SMS safety net — reaches her even with no data / no WhatsApp (urgent alerts).
+  if (smsConfigured() && phone) {
+    await sendSms(phone, `${title} ${firstName(mother)}, ${alert.message}`).catch(() => {});
+  }
 }
 
 /** Days since epoch — used to rotate the daily tip deterministically per date. */

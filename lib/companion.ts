@@ -1,4 +1,4 @@
-import { aiComplete } from "./ai";
+import { aiComplete, toChatText } from "./ai";
 import type { Mother } from "./queries";
 import { getWeeklyUpdateByWeek, recentChat, saveChat, recentJournalSummary } from "./queries";
 import { currentWeekFrom, trimesterFor } from "./babyData";
@@ -38,23 +38,34 @@ export async function bumplyReply(mother: Mother, userText: string): Promise<str
     ? "For any newborn warning signs (baby not breathing well, too cold/floppy, not feeding, yellow skin/eyes, cord smelling or bleeding) or her own (heavy bleeding, foul-smelling discharge, fever, painful swollen breast), urge her to get to a clinic or hospital fast."
     : "For any warning signs (heavy bleeding, severe or persistent pain, reduced fetal movement, fever, vision changes, severe swelling), clearly and gently urge her to contact her healthcare provider or go to a clinic.";
 
-  const system = `You are Bumply, a warm, caring AI pregnancy companion, chatting with ${mother.full_name} over WhatsApp.
+  const first = (mother.full_name || "mama").split(" ")[0];
+  const system = `You are Bumply — ${first}'s pregnancy companion on WhatsApp. Think of yourself as her sharp, warm Nigerian friend who happens to know maternal health inside out: a bit of an auntie, a bit of a midwife, never a robot.
 ${stage} Dietary notes: ${mother.dietary_restrictions || "none"}. ${context}${journalBlock}${groundingBlk}
-Reply like a caring friend on WhatsApp: warm, brief (1–3 short sentences), an occasional emoji, and use her first name sometimes. Give practical, ${postpartum ? "postpartum/newborn" : "trimester"}-appropriate guidance. BE CONCISE — no preamble or filler, get straight to the helpful point.
+
+HOW YOU TALK:
+- Mirror her energy and language. If she writes Pidgin, reply in natural Pidgin. If she mixes Yoruba/Hausa/Igbo words, you can too. If she's playful ("lmao"), be playful back.
+- Sound like a real chat: 2–4 short sentences, contractions, the occasional emoji. Vary how you open — do NOT start every message with her name (use "${first}" at most once in a while).
+- React to what she actually said first, then add ONE useful, specific tip — not a list of generic advice.
+- When it fits, end with one short, caring follow-up question so the conversation flows. Not every message needs one.
+- Never repeat the same opener or the same advice you gave in recent messages. Never say "As an AI" or describe yourself as a companion/app — just be there.
+- If she asks something off-topic, answer briefly and warmly like a friend would, then gently bring it back to how she's doing.
+- FORMAT: plain chat text only, under ~60 words. No headings, no labels like "Tip:" or "Follow-up question:", no markdown **bold**, no notes/parentheses about these instructions.
+
 You are NOT a doctor: ${warnLine} Never diagnose or prescribe.
 ${langLine}${preferencesBlock(mother)}`;
 
   const history = await recentChat(mother.id, 12);
-  // Prefers HelpMum's MamaBot, auto-falls back to NVIDIA so a WhatsApp chat never breaks.
+  // Strong model with quality guard + fast fallback (lib/ai.ts) — a reply always goes out.
   let reply = (await aiComplete({
     temperature: 0.7,
-    max_tokens: 400,
+    max_tokens: 260,
     messages: [
       { role: "system", content: system },
       ...history.map((h) => ({ role: h.role as "user" | "assistant", content: h.content })),
       { role: "user", content: userText },
     ],
   })) || "I'm right here with you, mama 🌸";
+  reply = toChatText(reply); // WhatsApp/Telegram formatting (no **markdown**)
 
   // Yoruba: the brain answers in English, then HelpMum's open-source translator
   // renders it in fluent Yoruba (en→yo is the reliable direction). Falls back to

@@ -81,6 +81,16 @@ console.log("\n— Danger signs (detectDangerSign / dangerReply) —");
   ok("'I am bleeding' → still urgent", detectDangerSign("I am bleeding")?.level === "urgent");
 }
 
+// ─────────────────────────── speechText.ts stripForSpeech ───────────────────────────
+console.log("\n— stripForSpeech (TTS text hygiene) —");
+{
+  const { stripForSpeech } = await import("../lib/speechText.ts");
+  ok("strips emojis", stripForSpeech("Rest well, mama 🌸💛🤰🏿") === "Rest well, mama");
+  ok("strips markdown markers", stripForSpeech("*Drink water* and _rest_ o!") === "Drink water and rest o!");
+  ok("keeps plain Pidgin untouched", stripForSpeech("Na normal thing, no worry.") === "Na normal thing, no worry.");
+  ok("collapses leftover double spaces", !/\s{2}/.test(stripForSpeech("Eat 🍚 rice and 🥬 vegetables")));
+}
+
 // ─────────────────────────── ai.ts cleanReply ───────────────────────────
 console.log("\n— cleanReply (reply hygiene) —");
 {

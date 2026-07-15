@@ -6,6 +6,8 @@
 // Local engines rarely support yo/ha/ig, so those map to en-NG for recognition;
 // the higher-quality server path handles her language when she's online.
 
+import { stripForSpeech } from "./speechText";
+
 type Lang = string | null | undefined;
 
 // Map our app language to a BCP-47 tag the browser engines understand.
@@ -27,10 +29,11 @@ export function localTtsSupported(): boolean {
 // back to any English voice. Resolves when speech ends (or immediately if unsupported).
 export function speakLocal(text: string, lang?: Lang): Promise<void> {
   return new Promise((resolve) => {
-    if (!localTtsSupported() || !text.trim()) return resolve();
+    const clean = stripForSpeech(text);
+    if (!localTtsSupported() || !clean.trim()) return resolve();
     try {
       window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text.slice(0, 500));
+      const u = new SpeechSynthesisUtterance(clean.slice(0, 500));
       const tag = voiceLangTag(lang);
       const voices = window.speechSynthesis.getVoices();
       const pref = tag.split("-")[0];

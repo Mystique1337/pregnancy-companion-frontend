@@ -3,6 +3,7 @@
 //   Whisper  → speech-to-text, returns { text }
 // Both scale to zero, so the first call after idle has a ~30–60s cold start.
 // We use a 120s timeout + one automatic retry on cold-start timeout / 5xx.
+import { stripForSpeech } from "./speechText";
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 
@@ -47,7 +48,7 @@ async function withColdRetry<T>(run: () => Promise<T>): Promise<T> {
 
 /** Text → WAV bytes. `voice` is a language code (yo/ha/ig/pcm/en). */
 export async function speak(text: string, voice: Voice = "yo"): Promise<Buffer> {
-  const body = JSON.stringify({ input: String(text).slice(0, 1200), voice: normalizeVoice(voice), model: "sorotts" });
+  const body = JSON.stringify({ input: stripForSpeech(String(text)).slice(0, 1200), voice: normalizeVoice(voice), model: "sorotts" });
   return withColdRetry(async () => {
     const res = await timedFetch(`${TTS_URL}/v1/audio/speech`, {
       method: "POST",

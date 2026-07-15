@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import TriageFlow from "../_components/TriageFlow";
 import OfflineHelper from "../_components/OfflineHelper";
 import { ANC_SCHEDULE } from "@/lib/anc";
+import { stripForSpeech } from "@/lib/speechText";
 
 const RED_FLAGS = [
   "Heavy bleeding from your vagina",
@@ -24,7 +25,7 @@ function speak(text: string) {
   try {
     if (!("speechSynthesis" in window)) return;
     speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text.slice(0, 400));
+    const u = new SpeechSynthesisUtterance(stripForSpeech(text).slice(0, 400));
     u.rate = 0.95;
     speechSynthesis.speak(u);
   } catch { /* ignore */ }

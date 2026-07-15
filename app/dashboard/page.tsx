@@ -187,6 +187,11 @@ export default async function Dashboard() {
               <p style={{ fontFamily: "var(--serif)", fontSize: 18 }}>Bump diary</p>
               <p className="muted">Capture your growing bump week by week.</p>
             </a>
+            <a className="card" href="/immunization" style={{ display: "block" }}>
+              <div style={{ fontSize: 24, marginBottom: 6 }}>💉</div>
+              <p style={{ fontFamily: "var(--serif)", fontSize: 18 }}>Baby vaccines</p>
+              <p className="muted">Free immunization schedule — what your baby needs and when.</p>
+            </a>
             <a className="card" href="/wellbeing" style={{ display: "block" }}>
               <div style={{ fontSize: 24, marginBottom: 6 }}>💛</div>
               <p style={{ fontFamily: "var(--serif)", fontSize: 18 }}>Wellbeing check</p>

@@ -33,9 +33,23 @@ export const AI_MODEL = mamabot ? MAMABOT_MODEL : NVIDIA_MODEL;
 export const aiFallback = nvidia;
 export const AI_MODEL_FALLBACK = NVIDIA_MODEL;
 
+// mamabot-llama-1 is an under-documented fine-tune whose output can be forum-scrape
+// noise ("1 doctor agreed with this answer…", heavy repetition). Reject those so we
+// never show a mother junk — fall back to NVIDIA instead.
+function looksBad(text: string): boolean {
+  const t = (text || "").trim();
+  if (t.length < 15) return true;
+  if (/doctor agreed with this answer|healthtap|icliniq|^share\b/i.test(t)) return true;
+  const lines = t.split(/\n+/).map((l) => l.trim()).filter(Boolean);
+  if (lines.length >= 3 && new Set(lines).size <= Math.ceil(lines.length / 2)) return true; // repetitive
+  const words = t.toLowerCase().split(/\s+/);
+  if (words.length > 12 && new Set(words).size / words.length < 0.5) return true; // low lexical variety
+  return false;
+}
+
 // Non-streaming completion that prefers MamaBot and falls back to NVIDIA on any
-// error (cold-start timeout, 5xx, etc.). Use for the WhatsApp brain so a red-flag
-// conversation never breaks. Returns the reply text.
+// error OR low-quality output. Use for the WhatsApp brain so a red-flag conversation
+// never breaks and never returns junk. Returns the reply text.
 export async function aiComplete(
   params: Omit<OpenAI.Chat.ChatCompletionCreateParamsNonStreaming, "model" | "stream">
 ): Promise<string> {
@@ -45,7 +59,9 @@ export async function aiComplete(
   };
   if (mamabot) {
     try {
-      return await run(mamabot, MAMABOT_MODEL);
+      const out = await run(mamabot, MAMABOT_MODEL);
+      if (!looksBad(out)) return out;
+      console.warn("[ai] MamaBot output rejected (low quality) — falling back to NVIDIA");
     } catch (e) {
       console.warn("[ai] MamaBot failed, falling back to NVIDIA:", e instanceof Error ? e.message : e);
     }

@@ -37,11 +37,9 @@ export default async function ChatPage() {
       <div className="app-shell">
         <p className="s-label">{t("chat.talkto", L)}</p>
         <h1 className="s-title" style={{ marginBottom: 12 }}>{t("chat.companionAny", L)}</h1>
-        {mother.plan === "premium" && (
-          <p className="muted" style={{ marginBottom: 16, fontSize: 13 }}>
-            🎤 Prefer to talk? Tap the mic and speak — Bumply listens and answers aloud in your language.
-          </p>
-        )}
+        <p className="muted" style={{ marginBottom: 16, fontSize: 14 }}>
+          🎤 {t("chat.voiceHint", L)}
+        </p>
 
         {mother.plan === "premium" ? (
           <>
@@ -57,7 +55,11 @@ export default async function ChatPage() {
           <div className="pay-wall">
             <h3 className="feat-title">{t("chat.gateTitle", L)}</h3>
             <p className="muted" style={{ marginBottom: 16 }}>{t("chat.gateDesc", L)}</p>
-            <a className="btn-pink" href="/pricing">{t("dash.seeplans", L)}</a>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+              <a className="btn-pink" href="/pricing">{t("dash.seeplans", L)}</a>
+              {/* Never a dead end: free users still get the offline voice helper. */}
+              <a className="btn-ghost" href="/sos">🎤 {t("chat.freeVoice", L)}</a>
+            </div>
           </div>
         )}
       </div>

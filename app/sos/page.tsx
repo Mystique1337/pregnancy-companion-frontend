@@ -18,6 +18,18 @@ const RED_FLAGS = [
   "Swelling of your face and hands with a headache",
 ];
 
+// Read text aloud with the phone's built-in voice — works offline, helps mothers
+// who understand spoken English/Pidgin but don't read.
+function speak(text: string) {
+  try {
+    if (!("speechSynthesis" in window)) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text.slice(0, 400));
+    u.rate = 0.95;
+    speechSynthesis.speak(u);
+  } catch { /* ignore */ }
+}
+
 export default function SosPage() {
   const [online, setOnline] = useState(true);
   useEffect(() => {
@@ -36,10 +48,23 @@ export default function SosPage() {
         A quick check that works even with no network. If something feels seriously wrong, don&apos;t wait — go to the nearest hospital now.
       </p>
 
-      <div className="card" style={{ background: "var(--pink-pale)", border: "1px solid var(--pink)", marginBottom: 24 }}>
-        <p className="s-label" style={{ marginBottom: 8 }}>🚨 Go to hospital NOW if you have any of these</p>
-        <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.7, fontSize: 14, color: "var(--ink-mid)" }}>
-          {RED_FLAGS.map((f) => <li key={f}>{f}</li>)}
+      <div className="card" style={{ background: "#FDEEEA", border: "2px solid #E0563F", marginBottom: 24 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 10 }}>
+          <p className="s-label" style={{ color: "#C0392B", margin: 0 }}>🚨 Go to hospital NOW if you have any of these</p>
+          <button onClick={() => speak(`Go to hospital now if you have any of these. ${RED_FLAGS.join(". ")}`)}
+            style={{ flexShrink: 0, minHeight: 40, padding: "8px 14px", borderRadius: 100, border: "1.5px solid #C0392B", background: "#fff", color: "#C0392B", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+            🔊 Read aloud
+          </button>
+        </div>
+        <ul style={{ margin: 0, paddingLeft: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
+          {RED_FLAGS.map((f) => (
+            <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 15, lineHeight: 1.5, color: "var(--ink)" }}>
+              <span style={{ color: "#C0392B", fontWeight: 700, flexShrink: 0 }}>•</span>
+              <span style={{ flex: 1 }}>{f}</span>
+              <button onClick={() => speak(f)} aria-label={`Read aloud: ${f}`}
+                style={{ flexShrink: 0, width: 40, height: 40, borderRadius: "50%", border: "1px solid #E0563F", background: "#fff", color: "#C0392B", fontSize: 16, cursor: "pointer" }}>🔊</button>
+            </li>
+          ))}
         </ul>
       </div>
 

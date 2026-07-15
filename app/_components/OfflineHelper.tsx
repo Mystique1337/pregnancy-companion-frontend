@@ -209,7 +209,8 @@ export default function OfflineHelper() {
   const canAsk = state === "ready" || state === "idle";
   return (
     <div className="card" style={{ marginTop: 8 }}>
-      <p className="s-label">Ask offline (experimental)</p>
+      <p className="s-label">Ask a question — works without network</p>
+      <p className="muted" style={{ fontSize: 13, marginTop: 2, marginBottom: 6 }}>Tap the 🎤 and talk, or type. You can also read a photo of your card or medicine.</p>
 
       {/* Input is always available — danger-sign checks + "go online" work even before
           the model is downloaded. */}
@@ -231,8 +232,10 @@ export default function OfflineHelper() {
       </button>
 
       {state === "idle" && (
-        <p className="muted" style={{ fontSize: 12, marginTop: 10 }}>
-          Danger-sign checks work now, offline. For other questions, <button onClick={load} style={{ background: "none", border: "none", color: "var(--pink)", cursor: "pointer", padding: 0, textDecoration: "underline", fontSize: 12 }}>download the tiny AI helper</button> (~100MB, use WiFi) or go online.
+        <p className="muted" style={{ fontSize: 13, marginTop: 10 }}>
+          Danger-sign checks and common answers work now, offline. Want more?{" "}
+          <button onClick={load} style={{ background: "none", border: "none", color: "var(--pink)", cursor: "pointer", padding: 0, textDecoration: "underline", fontSize: 13, fontWeight: 600 }}>Add the offline helper</button>{" "}
+          <span style={{ fontSize: 12 }}>(one-time, use WiFi).</span>
         </p>
       )}
       {state === "loading" && <p className="muted" style={{ marginTop: 10 }}>Downloading the offline helper… {progress}%</p>}

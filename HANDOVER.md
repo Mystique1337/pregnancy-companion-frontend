@@ -153,6 +153,11 @@ Full manual + Android checklist: **[DEMO-TESTING.md](./DEMO-TESTING.md)**.
 
 ## 8. Known issues / gotchas
 
+- **Slow-uplink deploys:** `railway up` uploads the repo from your machine; on a degraded
+  connection (~<100 KB/s up) the upload 500s/times out. `.railwayignore` keeps the payload
+  small (~4.6MB) — if deploys still fail, test upload speed first (it's usually the network,
+  not Railway), or deploy from GitHub Actions (HANDOVER §4).
+
 - **Port 3000** on the build machine is taken by an unrelated app — always run Bumply on 3007/3005
   and verify `curl -s localhost:PORT/login | grep '<title>'` says "Bumply".
 - **Deploys are manual** (`railway up`) unless you enable auto-deploy (§4).

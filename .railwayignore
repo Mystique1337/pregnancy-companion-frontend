@@ -1,0 +1,11 @@
+# Not needed in the deployed image — keeps the upload small (slow uplinks time out).
+others/
+BuildLikeItMatters.pptx
+tests/
+test-results/
+playwright-report/
+playwright.config.ts
+.agents/
+.github/
+docs/
+*.md

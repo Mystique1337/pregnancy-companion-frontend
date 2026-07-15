@@ -47,7 +47,7 @@ export type OnboardChannel = {
   create: (name: string, week: number, trimester: string) => Promise<Mother>;
 };
 
-const WELCOME = "Welcome to Bumply 🌸 I'm your free pregnancy helper. I can answer your questions, check for danger signs, and remind you about clinic visits — any time.\n\nWhat is your first name?";
+const WELCOME = "Hi, I'm Bumply 🌸 — your free pregnancy companion. I answer your questions day or night, watch out for danger signs, read your ANC card or medicine from a photo, and remind you about clinic visits. You can type or send me a voice note.\n\nFirst, what's your first name?";
 
 // Drive one turn of onboarding. Call only after the user was not found as a mother.
 export async function handleOnboarding(text: string, ch: OnboardChannel): Promise<OnboardResult> {
@@ -82,7 +82,7 @@ export async function handleOnboarding(text: string, ch: OnboardChannel): Promis
       return {
         kind: "done",
         mother,
-        text: `You're all set, ${name}! 🎉 You're in *week ${week}* — ${trimesterFor(week)} trimester.\n\nFrom now on you can just message me:\n• Ask me anything about your pregnancy\n• Send a voice note if you'd rather talk\n• Send a photo of your ANC card or medicine and I'll read it\n• I'll watch for danger signs and tell you to get help fast\n\nHow are you feeling today?`,
+        text: `You're all set, ${name}! 🎉 You're in *week ${week}* — ${trimesterFor(week)} trimester.\n\nFrom now on, just message me any time: questions, voice notes, or a photo of your ANC card or medicine. I'll also watch for danger signs and tell you to get help fast.\n\nSo I can help you best — what do you need most right now? Health questions, food advice, clinic reminders… or just tell me how you're feeling today. 💛`,
       };
     } catch {
       await clearOnboarding(ch.stateKey);

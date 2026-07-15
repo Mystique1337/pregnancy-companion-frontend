@@ -75,7 +75,7 @@ async function loadInitial(motherId: string, name: string, week: number) {
   return [
     {
       role: "assistant" as const,
-      content: `Hello ${name} 🌸 You're in week ${week}. How are you feeling today? Ask me anything — symptoms, cravings, what's normal, or just how you're doing.`,
+      content: `Hi ${name}, I'm Bumply 🌸 — your pregnancy companion, here any time day or night. You're in week ${week}.\n\nTell me what you need most right now: answers about symptoms, what to eat, clinic-visit reminders — or just how you're really feeling. You can type, or tap the 🎤 and talk to me.`,
     },
   ];
 }

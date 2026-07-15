@@ -57,6 +57,10 @@ You are NOT a doctor: for any warning signs (heavy bleeding, severe or persisten
 ${languageInstruction(mother.language || "en")}${preferencesBlock(mother)}`;
 
   const history = await recentChat(mother.id, 16);
+  // First-ever conversation → Bumply introduces itself and discovers her needs.
+  const systemFinal = history.length <= 1
+    ? system + `\nTHIS IS THE START OF YOUR RELATIONSHIP: introduce yourself in one warm line — you are Bumply, her pregnancy companion — then answer what she said, and ask ONE gentle question to learn what she needs most right now (health worries, food guidance, clinic-visit reminders, or just someone to talk to). Do not introduce yourself again after this.`
+    : system;
 
   // Strong model first (best conversation quality); admin override via settings;
   // fast 8B retry if the strong stream fails to start.
@@ -70,7 +74,7 @@ ${languageInstruction(mother.language || "en")}${preferencesBlock(mother)}`;
       stop: CHAT_STOPS,
       messages: [
         ...(/nemotron/i.test(m) ? [{ role: "system" as const, content: "detailed thinking off" }] : []),
-        { role: "system" as const, content: system },
+        { role: "system" as const, content: systemFinal },
         ...history.map((h) => ({ role: h.role as "user" | "assistant", content: h.content })),
         { role: "user" as const, content: lastUser },
       ],

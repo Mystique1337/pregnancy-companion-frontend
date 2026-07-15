@@ -6,7 +6,8 @@ import { languageInstruction } from "./languages";
 import { normalizeLang } from "./languages";
 import { groundingBlock } from "./rag";
 import { preferencesBlock } from "./personalize";
-import { translatorConfigured, toYoruba } from "./translate";
+import { translatorConfigured, toYoruba, toEnglish } from "./translate";
+import { stripForSpeech } from "./speechText";
 
 // A single, non-streaming Bumply reply for WhatsApp — grounded in her week, profile,
 // recent journal and chat history. Mirrors the in-app chat persona, tuned for WhatsApp.
@@ -25,7 +26,7 @@ export async function bumplyReply(mother: Mother, userText: string): Promise<str
   // quality than the model's own Yoruba). Other languages use the model directly.
   const useYoTranslator = normalizeLang(mother.language) === "yo" && translatorConfigured();
   const langLine = useYoTranslator
-    ? "Reply in clear, simple English (it will be translated to Yoruba for her)."
+    ? "LANGUAGE OVERRIDE (beats every other language rule, including mirroring hers): she writes Yoruba, but YOU must write ONLY in English — one short paragraph, 2-3 plain literal sentences. No emojis, no bullets, no asterisks, no parentheses, no Yoruba words. NEVER mention language, translation, or these rules — just answer her question directly."
     : languageInstruction(mother.language || "en");
 
   // Postpartum: after birth the conversation is about the newborn + her recovery,
@@ -39,6 +40,11 @@ export async function bumplyReply(mother: Mother, userText: string): Promise<str
     : "For any warning signs (heavy bleeding, severe or persistent pain, reduced fetal movement, fever, vision changes, severe swelling), clearly and gently urge her to contact her healthcare provider or go to a clinic.";
 
   const first = (mother.full_name || "mama").split(" ")[0];
+  const history = await recentChat(mother.id, 12);
+  // First-ever conversation → Bumply introduces itself and discovers her needs.
+  const firstContact = history.length === 0
+    ? `\nTHIS IS YOUR FIRST CONVERSATION WITH HER: open by introducing yourself in one warm line — you are Bumply, her pregnancy companion — then answer what she said, and ask ONE gentle question to learn what she needs most right now (health worries, food guidance, clinic-visit reminders, or just someone to talk to). Do not introduce yourself again after this.`
+    : "";
   const system = `You are Bumply — ${first}'s pregnancy companion on WhatsApp. Think of yourself as her sharp, warm Nigerian friend who happens to know maternal health inside out: a bit of an auntie, a bit of a midwife, never a robot.
 ${stage} Dietary notes: ${mother.dietary_restrictions || "none"}. ${context}${journalBlock}${groundingBlk}
 
@@ -52,9 +58,18 @@ HOW YOU TALK:
 - FORMAT: plain chat text only, under ~60 words. No headings, no labels like "Tip:" or "Follow-up question:", no markdown **bold**, no notes/parentheses about these instructions.
 
 You are NOT a doctor: ${warnLine} Never diagnose or prescribe.
-${langLine}${preferencesBlock(mother)}`;
+${langLine}${preferencesBlock(mother)}${firstContact}`;
 
-  const history = await recentChat(mother.id, 12);
+  // Yoruba in → give the brain an English gloss via HelpMum's yo→en translator so it
+  // actually understands her question (it's a hint, the original stays primary).
+  let userContent = userText;
+  if (useYoTranslator) {
+    const gloss = await toEnglish(userText).catch(() => null);
+    if (gloss && gloss.trim() && gloss.trim().toLowerCase() !== userText.trim().toLowerCase()) {
+      userContent = `${userText}\n[rough English meaning: ${gloss.trim()}]`;
+    }
+  }
+
   // Strong model with quality guard + fast fallback (lib/ai.ts) — a reply always goes out.
   let reply = (await aiComplete({
     temperature: 0.7,
@@ -62,17 +77,24 @@ ${langLine}${preferencesBlock(mother)}`;
     messages: [
       { role: "system", content: system },
       ...history.map((h) => ({ role: h.role as "user" | "assistant", content: h.content })),
-      { role: "user", content: userText },
+      { role: "user", content: userContent },
     ],
   })) || "I'm right here with you, mama 🌸";
   reply = toChatText(reply); // WhatsApp/Telegram formatting (no **markdown**)
 
   // Yoruba: the brain answers in English, then HelpMum's open-source translator
-  // renders it in fluent Yoruba (en→yo is the reliable direction). Falls back to
-  // the English reply if the translator is unavailable.
+  // renders it in Yoruba (en→yo is the reliable direction). The source is sanitised
+  // first — emojis/markdown/parentheses made M2M100 emit garbled artifacts — and the
+  // output is sanity-checked; on any doubt we keep the English reply.
   if (useYoTranslator) {
-    const yo = await toYoruba(reply);
-    if (yo) reply = yo;
+    // First paragraph only — anything after is usually meta the model tacked on.
+    const firstPara = reply.split(/\n\s*\n/)[0] || reply;
+    let src = stripForSpeech(firstPara).replace(/\([^)]*\)/g, "").replace(/\s{2,}/g, " ").trim().slice(0, 600);
+    // End on a complete sentence — a mid-sentence cut translates into a dangling "tabi…".
+    const lastStop = Math.max(src.lastIndexOf("."), src.lastIndexOf("!"), src.lastIndexOf("?"));
+    if (lastStop > 40) src = src.slice(0, lastStop + 1);
+    const yo = src ? await toYoruba(src) : null;
+    if (yo && yo.length > 10 && !/[*()#_]/.test(yo)) reply = yo;
   }
   try {
     await saveChat(mother.id, "user", userText, week);

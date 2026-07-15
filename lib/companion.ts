@@ -1,5 +1,4 @@
-import { ai, AI_MODEL } from "./ai";
-import { resolveModel } from "./settings";
+import { aiComplete } from "./ai";
 import type { Mother } from "./queries";
 import { getWeeklyUpdateByWeek, recentChat, saveChat, recentJournalSummary } from "./queries";
 import { currentWeekFrom, trimesterFor } from "./babyData";
@@ -29,9 +28,8 @@ You are NOT a doctor: for any warning signs (heavy bleeding, severe or persisten
 ${languageInstruction(mother.language || "en")}${preferencesBlock(mother)}`;
 
   const history = await recentChat(mother.id, 12);
-  const model = await resolveModel(AI_MODEL);
-  const completion = await ai.chat.completions.create({
-    model,
+  // Prefers HelpMum's MamaBot, auto-falls back to NVIDIA so a WhatsApp chat never breaks.
+  const reply = (await aiComplete({
     temperature: 0.7,
     max_tokens: 400,
     messages: [
@@ -39,9 +37,7 @@ ${languageInstruction(mother.language || "en")}${preferencesBlock(mother)}`;
       ...history.map((h) => ({ role: h.role as "user" | "assistant", content: h.content })),
       { role: "user", content: userText },
     ],
-  });
-
-  const reply = completion.choices?.[0]?.message?.content?.trim() || "I'm right here with you, mama 🌸";
+  })) || "I'm right here with you, mama 🌸";
   try {
     await saveChat(mother.id, "user", userText, week);
     await saveChat(mother.id, "assistant", reply, week);

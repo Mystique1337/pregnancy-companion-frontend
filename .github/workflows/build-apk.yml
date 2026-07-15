@@ -1,0 +1,65 @@
+name: Build Android APK
+
+# Builds a signed TWA APK (loads app.bumply.mom, offline via the service worker)
+# and uploads it as a downloadable artifact you install manually.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "android/**"
+      - ".github/workflows/build-apk.yml"
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install Bubblewrap
+        run: npm i -g @bubblewrap/cli@1.24.1
+
+      - name: Generate signing keystore
+        working-directory: android
+        run: |
+          keytool -genkeypair -v -keystore android.keystore -alias bumply \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass bumplySigning123 -keypass bumplySigning123 \
+            -dname "CN=Bumply, O=Bumply, L=Lagos, C=NG"
+
+      - name: Generate Android project from twa-manifest.json
+        working-directory: android
+        env:
+          BUBBLEWRAP_KEYSTORE_PASSWORD: bumplySigning123
+          BUBBLEWRAP_KEY_PASSWORD: bumplySigning123
+        run: bubblewrap update --skipVersionUpgrade
+
+      - name: Build APK
+        working-directory: android
+        env:
+          BUBBLEWRAP_KEYSTORE_PASSWORD: bumplySigning123
+          BUBBLEWRAP_KEY_PASSWORD: bumplySigning123
+        run: bubblewrap build --skipPwaValidation
+
+      - name: Show outputs
+        working-directory: android
+        run: ls -la *.apk *.aab 2>/dev/null || true
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: bumply-apk
+          path: |
+            android/*.apk
+            android/*.aab
+          if-no-files-found: warn

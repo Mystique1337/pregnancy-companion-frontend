@@ -162,3 +162,24 @@ export async function sendText(to: string, text: string): Promise<Result> {
       : { number, text, ...(delay > 0 ? { delay } : {}) };
   return evo(`/message/sendText/${EVOLUTION_INSTANCE}`, { method: "POST", body: JSON.stringify(body) });
 }
+
+/** Download an inbound media message (e.g. a voice note) as raw bytes. */
+export async function downloadWhatsAppMedia(messageRecord: unknown): Promise<Buffer | null> {
+  const r = await evo<{ base64?: string }>(`/chat/getBase64FromMediaMessage/${EVOLUTION_INSTANCE}`, {
+    method: "POST",
+    body: JSON.stringify({ message: messageRecord, convertToMp4: false }),
+  });
+  if (!r.ok || !r.data?.base64) return null;
+  try { return Buffer.from(r.data.base64, "base64"); } catch { return null; }
+}
+
+/** Send a WhatsApp voice note (PTT). `audio` = MP3 bytes or a URL. */
+export async function sendWhatsAppAudio(to: string, audio: Buffer | string): Promise<Result> {
+  const number = normalizeNumber(to);
+  if (!number) return { ok: false, error: "no phone number" };
+  const payload = typeof audio === "string" ? audio : audio.toString("base64");
+  return evo(`/message/sendWhatsAppAudio/${EVOLUTION_INSTANCE}`, {
+    method: "POST",
+    body: JSON.stringify({ number, audio: payload }),
+  });
+}

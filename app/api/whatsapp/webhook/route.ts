@@ -2,8 +2,10 @@ import { NextResponse, after } from "next/server";
 import { getMotherByPhone, createAlert } from "@/lib/queries";
 import { getSettings } from "@/lib/settings";
 import { bumplyReply } from "@/lib/companion";
-import { sendText, webhookSecret } from "@/lib/evolution";
+import { sendText, sendWhatsAppAudio, downloadWhatsAppMedia, webhookSecret } from "@/lib/evolution";
 import { detectDangerSign, dangerReply } from "@/lib/dangerSigns";
+import { transcribe, speak, normalizeVoice } from "@/lib/voice";
+import { wavToMp3 } from "@/lib/audio";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120; // give the AI round-trip + delayed send room to finish in after()
@@ -54,7 +56,17 @@ export async function POST(req: Request) {
         if (key.fromMe) continue; // ignore our own messages
         const jid = String(key.remoteJid || "");
         if (!jid || jid.endsWith("@g.us") || jid === "status@broadcast") continue; // skip groups/status
-        const text = extractText(d?.message);
+
+        // Resolve the message — transcribe voice notes with Whisper.
+        let text = extractText(d?.message);
+        let viaVoice = false;
+        const audioMsg = d?.message?.audioMessage || d?.message?.ephemeralMessage?.message?.audioMessage;
+        if (!text && audioMsg) {
+          try {
+            const audio = await downloadWhatsAppMedia(d);
+            if (audio) { text = (await transcribe(audio, "voice.ogg")).trim(); viaVoice = true; }
+          } catch (e) { console.error("wa voice transcribe error:", e); }
+        }
         if (!text) continue;
 
         const phone = jid.split("@")[0].replace(/\D/g, "");
@@ -63,6 +75,15 @@ export async function POST(req: Request) {
 
         const settings = await getSettings();
         if (!settings.chat_enabled) continue;
+
+        // If she spoke, reply with a voice note too (in her language).
+        const voiceBack = async (msg: string) => {
+          if (!viaVoice) return;
+          try {
+            const wav = await speak(msg.slice(0, 600), normalizeVoice(mother.language));
+            await sendWhatsAppAudio(phone, await wavToMp3(wav));
+          } catch (e) { console.error("wa voice reply error:", e); }
+        };
 
         if (process.env.WHATSAPP_CHAT_REQUIRES_PREMIUM === "true" && mother.plan !== "premium") {
           const first = mother.full_name.split(" ")[0];
@@ -76,20 +97,23 @@ export async function POST(req: Request) {
         const danger = detectDangerSign(text);
         if (danger) {
           const first = mother.full_name.split(" ")[0];
-          await sendText(phone, dangerReply(first, danger));
+          const dr = dangerReply(first, danger);
+          await sendText(phone, dr);
+          await voiceBack(danger.level === "emergency" ? "Please go to the nearest hospital now. Do not wait." : "Please go to your clinic today. Do not wait.");
           const level = danger.level === "emergency" ? "urgent" : "warning";
           await createAlert(mother.id, {
             level,
             kind: "danger-sign",
             message: `WhatsApp danger sign — ${danger.sign}: "${text.slice(0, 160)}"`,
           }).catch(() => {});
-          console.log(`[wa] DANGER (${danger.sign}) from ${phone} (${mother.full_name})`);
+          console.log(`[wa] DANGER (${danger.sign}) from ${phone} (${mother.full_name}) voice=${viaVoice}`);
           continue;
         }
 
         const reply = await bumplyReply(mother, text);
         const sent = await sendText(phone, reply);
-        console.log(`[wa] reply to ${phone} (${mother.full_name}): sent=${sent.ok}${sent.error ? ` error=${sent.error}` : ""}`);
+        await voiceBack(reply);
+        console.log(`[wa] reply to ${phone} (${mother.full_name}) voice=${viaVoice}: sent=${sent.ok}${sent.error ? ` error=${sent.error}` : ""}`);
       } catch (e) {
         console.error("whatsapp webhook handler error:", e);
       }

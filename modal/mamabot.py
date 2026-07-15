@@ -51,12 +51,26 @@ def serve():
     import os
     import subprocess
 
+    # mamabot-llama-1's tokenizer ships no chat template, so provide the Llama-3 one.
+    template = (
+        "{{- bos_token }}"
+        "{% for message in messages %}"
+        "{{- '<|start_header_id|>' + message['role'] + '<|end_header_id|>\n\n' + message['content'] | trim + '<|eot_id|>' }}"
+        "{% endfor %}"
+        "{% if add_generation_prompt %}"
+        "{{- '<|start_header_id|>assistant<|end_header_id|>\n\n' }}"
+        "{% endif %}"
+    )
+    with open("/root/chat_template.jinja", "w") as f:
+        f.write(template)
+
     cmd = (
         f"vllm serve {MODEL_NAME} --revision {MODEL_REVISION} "
         f"--host 0.0.0.0 --port {PORT} "
         f"--served-model-name mamabot "
         f"--api-key {os.environ['LLM_API_KEY']} "
         f"--quantization bitsandbytes --load-format bitsandbytes "  # 4-bit BnB checkpoint
+        f"--chat-template /root/chat_template.jinja "
         f"--max-model-len 4096 --gpu-memory-utilization 0.92"
     )
     subprocess.Popen(cmd, shell=True)

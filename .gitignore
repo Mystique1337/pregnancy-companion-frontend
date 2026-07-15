@@ -20,3 +20,6 @@ next-env.d.ts
 
 # local working files (n8n workflow exports, data dumps)
 others/*.json
+
+# Python
+__pycache__/

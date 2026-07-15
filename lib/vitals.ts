@@ -23,6 +23,28 @@ export function vitalMeta(kind: string) {
   return VITAL_KINDS.find((v) => v.kind === kind);
 }
 
+// Humanly-plausible bounds per kind. Anything outside is a typo/entry error —
+// reject it instead of storing it and firing a false "go to hospital now" alert.
+export const PLAUSIBLE: Record<VitalKind, { min: number; max: number; min2?: number; max2?: number }> = {
+  bp: { min: 50, max: 260, min2: 30, max2: 160 },
+  weight: { min: 30, max: 250 },
+  temp: { min: 33, max: 43 },
+  fhr: { min: 40, max: 250 },
+  glucose: { min: 1, max: 35 },
+};
+
+// Returns a friendly error message if the reading is outside plausible bounds.
+export function plausibilityError(kind: VitalKind, value: number, value2: number | null): string | null {
+  const p = PLAUSIBLE[kind];
+  if (!p) return null;
+  const meta = vitalMeta(kind);
+  if (value < p.min || value > p.max)
+    return `That ${meta?.label?.toLowerCase() || "value"} (${value}) doesn't look right — please re-check and enter it again.`;
+  if (p.min2 != null && value2 != null && (value2 < p.min2 || value2 > (p.max2 ?? Infinity)))
+    return `That second number (${value2}) doesn't look right — please re-check and enter it again.`;
+  return null;
+}
+
 export type AlertLevel = "info" | "warning" | "urgent";
 export type VitalAlert = { level: AlertLevel; kind: VitalKind; message: string };
 

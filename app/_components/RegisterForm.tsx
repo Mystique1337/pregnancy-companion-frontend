@@ -1,9 +1,35 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LANGUAGES, normalizeLang } from "@/lib/languages";
 import { t } from "@/lib/i18n";
+import { speakLocal, startLocalAsr, localAsrSupported } from "@/lib/localVoice";
 
 const WEEKS = Array.from({ length: 40 }, (_, i) => i + 1);
+
+// --- Voice sign-up helpers (on-device, no network) ---
+const UNITS: Record<string, number> = { zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19 };
+const TENS: Record<string, number> = { twenty: 20, thirty: 30, forty: 40 };
+
+// Parse a spoken week: digits ("20 weeks") or number words ("twenty four").
+function parseWeekLocal(s: string): number {
+  const d = s.match(/\b(\d{1,2})\b/);
+  if (d) { const n = Number(d[1]); if (n >= 1 && n <= 42) return n; }
+  let total = 0;
+  for (const w of s.toLowerCase().split(/[\s-]+/)) { if (w in UNITS) total += UNITS[w]; else if (w in TENS) total += TENS[w]; }
+  return total >= 1 && total <= 42 ? total : 0;
+}
+
+// Clean a spoken name: drop lead-ins, keep letters, title-case, max 2 words.
+function cleanNameLocal(s: string): string {
+  return s
+    .replace(/^\s*(my\s+name\s+is|i\s*am|i'?m|call\s+me|na\s+me|na)\s+/i, "")
+    .replace(/[^\p{L}\s'-]/gu, "")
+    .trim()
+    .split(/\s+/).slice(0, 2)
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(" ")
+    .trim();
+}
 const ETHNICITIES = [
   "Yoruba", "Igbo", "Hausa", "Fulani", "Ijaw", "Kanuri", "Tiv", "Ibibio / Efik",
   "Edo", "Nupe", "Urhobo", "Non-Nigerian", "Prefer not to say", "Other",
@@ -28,9 +54,43 @@ export default function RegisterForm() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
+  const [canVoice, setCanVoice] = useState(false); // set after mount to avoid hydration mismatch
+  const [voiceActive, setVoiceActive] = useState(false);
 
   const L = normalizeLang(form.language);
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  useEffect(() => { setCanVoice(localAsrSupported()); }, []);
+
+  // Speak a prompt, then capture one spoken answer on-device. Resolves with the text.
+  function listenOnce(prompt: string): Promise<string> {
+    return new Promise((resolve) => {
+      speakLocal(prompt, L).then(() => {
+        let done2 = false;
+        let handle: { stop: () => void } | null = null;
+        handle = startLocalAsr(
+          L,
+          (tx) => { if (!done2) { done2 = true; resolve(tx); } handle?.stop(); },
+          () => { if (!done2) { done2 = true; resolve(""); } },
+        );
+        if (!handle) resolve("");
+      });
+    });
+  }
+
+  // Voice sign-up: ask her name, then her weeks — no typing needed.
+  async function voiceSignup() {
+    if (!localAsrSupported()) { setError(t("reg.voiceUnsupported", L)); return; }
+    setError(""); setVoiceActive(true);
+    try {
+      const nm = cleanNameLocal(await listenOnce(t("reg.vName", L)));
+      if (nm) set("full_name", nm);
+      const wk = parseWeekLocal(await listenOnce(t("reg.vWeek", L)));
+      if (wk) set("current_week", String(wk));
+      await speakLocal(t("reg.vDone", L), L);
+    } catch { /* ignore */ }
+    setVoiceActive(false);
+  }
 
   async function submit() {
     setError("");
@@ -88,6 +148,15 @@ export default function RegisterForm() {
           ))}
         </select>
       </div>
+
+      {/* Voice sign-up — speak your name + weeks, no typing. On-device, works for
+          mothers who can't read/type. */}
+      {canVoice && (
+        <button type="button" onClick={voiceSignup} disabled={voiceActive}
+          style={{ width: "100%", minHeight: 48, marginBottom: 14, padding: "12px", borderRadius: 12, border: `1.5px solid var(--pink)`, background: voiceActive ? "var(--pink)" : "var(--pink-pale)", color: voiceActive ? "#fff" : "var(--pink)", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
+          {voiceActive ? `🎙 ${t("reg.vListening", L)}` : `🎤 ${t("reg.voiceBtn", L)}`}
+        </button>
+      )}
       <div className="fg">
         <label>{t("reg.name", L)}</label>
         <input value={form.full_name} onChange={(e) => set("full_name", e.target.value)} placeholder={t("reg.namePh", L)} />

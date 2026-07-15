@@ -37,14 +37,20 @@ export async function meiliIndexDocs(docs: KbDoc[]): Promise<boolean> {
 
 export type MeiliHit = { id: string; title: string; source: string; content: string };
 
+let warnedDown = false;
 export async function meiliSearch(q: string, limit = 6): Promise<MeiliHit[]> {
   if (!meiliConfigured() || !q.trim()) return [];
   try {
     const r = await mfetch(`/indexes/${INDEX}/search`, { method: "POST", body: JSON.stringify({ q, limit }) });
-    if (!r.ok) return [];
+    if (!r.ok) {
+      // Don't fail silently forever — the host may be gone (it happened): log once.
+      if (!warnedDown) { warnedDown = true; console.warn(`[meili] search returned ${r.status} — falling back to DB keyword search (check MEILI_URL)`); }
+      return [];
+    }
     const d = (await r.json()) as { hits?: MeiliHit[] };
     return d.hits || [];
-  } catch {
+  } catch (e) {
+    if (!warnedDown) { warnedDown = true; console.warn("[meili] unreachable — falling back to DB keyword search:", e instanceof Error ? e.message : e); }
     return [];
   }
 }

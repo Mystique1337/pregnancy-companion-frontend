@@ -33,18 +33,41 @@ export async function retrieve(query: string, k = 4): Promise<KbHit[]> {
 
 export type KbKeywordHit = { id: string; title: string; source: string; content: string };
 
-// Keyword search straight over the knowledge base in Postgres — used as a resilient
-// fallback when Meilisearch is unavailable (so library search never goes dark).
+// UK/US + common-phrasing aliases so "anemia" finds "anaemia", "swollen" finds
+// "swelling", etc. — the whole-phrase ILIKE match missed all of these.
+const KW_ALIASES: Record<string, string[]> = {
+  anemia: ["anaemia"], anaemia: ["anemia"],
+  swollen: ["swelling", "swell"], swelling: ["swollen", "swell"],
+  diarrhea: ["diarrhoea"], diarrhoea: ["diarrhea"],
+  eat: ["food", "diet", "nutrition"], food: ["eat", "diet"],
+  tired: ["fatigue", "tiredness"], baby: ["fetal", "foetal"],
+};
+const KW_STOP = new Set(["the", "a", "an", "is", "are", "i", "my", "me", "to", "of", "in", "on", "and", "or", "do", "can", "what", "how", "should", "for", "it", "be", "have", "with", "am", "was", "you", "your", "this", "that", "when", "why", "will"]);
+
+// Keyword search straight over the knowledge base in Postgres — the resilient
+// fallback when Meilisearch is unavailable. Word-based (ANY meaningful word can
+// match, one regex parameter), ranked in JS by distinct word hits; the old
+// whole-phrase ILIKE returned 0 results for most multi-word questions.
 export async function kbKeywordSearch(query: string, limit = 8): Promise<KbKeywordHit[]> {
   const q = query.trim();
   if (!q) return [];
-  const like = `%${q}%`;
-  return sql<KbKeywordHit[]>`
+  const words = [...new Set(
+    q.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ").split(/\s+/)
+      .filter((w) => w.length > 2 && !KW_STOP.has(w))
+      .flatMap((w) => [w, ...(KW_ALIASES[w] || [])])
+  )].slice(0, 10);
+  if (!words.length) return [];
+  const pattern = words.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+  const rows = await sql<KbKeywordHit[]>`
     select id::text as id, coalesce(title, '') as title, coalesce(source, '') as source, content
     from kb_chunks
-    where content ilike ${like} or title ilike ${like}
-    order by (title ilike ${like}) desc
-    limit ${limit}`;
+    where content ~* ${pattern} or title ~* ${pattern}
+    limit 50`;
+  const score = (r: KbKeywordHit) => {
+    const hay = (r.title + " " + r.content).toLowerCase();
+    return words.reduce((n, w) => n + (hay.includes(w) ? 1 : 0), 0);
+  };
+  return rows.sort((a, b) => score(b) - score(a)).slice(0, limit);
 }
 
 // Hybrid retrieval as a ready-to-inject grounding block: semantic (pgvector) +

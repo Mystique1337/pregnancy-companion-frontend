@@ -4,6 +4,7 @@
 // page so it works with no signal — the "midwife in her pocket" for a ₦45k phone.
 import { useEffect, useState } from "react";
 import TriageFlow from "../_components/TriageFlow";
+import OfflineHelper from "../_components/OfflineHelper";
 import { ANC_SCHEDULE } from "@/lib/anc";
 
 const RED_FLAGS = [
@@ -45,6 +46,11 @@ export default function SosPage() {
       <p className="s-label">Check a symptom</p>
       <div style={{ marginTop: 8, marginBottom: 28 }}>
         <TriageFlow />
+      </div>
+
+      <p className="s-label">Ask a question (offline)</p>
+      <div style={{ marginTop: 8, marginBottom: 28 }}>
+        <OfflineHelper />
       </div>
 
       <p className="s-label">Your antenatal (ANC) visits</p>

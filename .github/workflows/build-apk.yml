@@ -29,6 +29,12 @@ jobs:
       - name: Install Bubblewrap
         run: npm i -g @bubblewrap/cli@1.24.1
 
+      - name: Point Bubblewrap at the CI JDK + Android SDK (avoids its interactive installer)
+        run: |
+          mkdir -p ~/.bubblewrap
+          printf '{"jdkPath":"%s","androidSdkPath":"%s"}' "$JAVA_HOME" "$ANDROID_HOME" > ~/.bubblewrap/config.json
+          cat ~/.bubblewrap/config.json
+
       - name: Generate signing keystore
         working-directory: android
         run: |

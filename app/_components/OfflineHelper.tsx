@@ -12,6 +12,27 @@ import { readCachedProfile } from "./ProfileCache";
 const cdnImport = (u: string) => (new Function("u", "return import(u)"))(u) as Promise<Record<string, unknown>>;
 const TRANSFORMERS = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1";
 const MODEL = "HuggingFaceTB/SmolLM2-135M-Instruct";
+const ASR_MODEL = "onnx-community/whisper-tiny.en"; // ~75MB, offline speech-to-text
+
+// Decode a recorded audio Blob to 16kHz mono Float32 for Whisper.
+async function blobTo16k(blob: Blob): Promise<Float32Array> {
+  const ab = await blob.arrayBuffer();
+  const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+  const decoded = await new AC().decodeAudioData(ab);
+  const off = new OfflineAudioContext(1, Math.ceil(decoded.duration * 16000), 16000);
+  const src = off.createBufferSource();
+  src.buffer = decoded; src.connect(off.destination); src.start();
+  return (await off.startRendering()).getChannelData(0);
+}
+
+// Speak text offline via the device's built-in TTS (Android speech engine).
+function speakOut(text: string) {
+  try {
+    if (!("speechSynthesis" in window)) return;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(new SpeechSynthesisUtterance(text.slice(0, 300)));
+  } catch { /* ignore */ }
+}
 
 type Msg = { role: "system" | "user" | "assistant"; content: string };
 
@@ -21,8 +42,14 @@ export default function OfflineHelper() {
   const [q, setQ] = useState("");
   const [answer, setAnswer] = useState("");
   const [needOnline, setNeedOnline] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [hearing, setHearing] = useState(false);
   const [err, setErr] = useState("");
   const gen = useRef<((m: Msg[], o: Record<string, unknown>) => Promise<{ generated_text: Msg[] }[]>) | null>(null);
+  const asr = useRef<((pcm: Float32Array) => Promise<{ text: string }>) | null>(null);
+  const rec = useRef<MediaRecorder | null>(null);
+  const chunks = useRef<Blob[]>([]);
+  const spokeRef = useRef(false);
 
   async function load() {
     setState("loading"); setErr("");
@@ -52,29 +79,65 @@ export default function OfflineHelper() {
     return false;
   }
 
-  async function ask() {
-    if (!q.trim()) return;
+  // Lazy-load the offline speech-to-text model, then record → transcribe → ask.
+  async function toggleMic() {
+    if (recording) { rec.current?.stop(); return; }
+    setErr("");
+    try {
+      if (!asr.current) {
+        setHearing(true);
+        const t = (await cdnImport(TRANSFORMERS)) as { pipeline: (...a: unknown[]) => Promise<unknown> };
+        asr.current = (await t.pipeline("automatic-speech-recognition", ASR_MODEL, { dtype: "q4", device: "wasm" })) as typeof asr.current;
+        setHearing(false);
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const r = new MediaRecorder(stream);
+      chunks.current = [];
+      r.ondataavailable = (e) => { if (e.data.size) chunks.current.push(e.data); };
+      r.onstop = async () => {
+        stream.getTracks().forEach((tr) => tr.stop());
+        setRecording(false); setHearing(true);
+        try {
+          const blob = new Blob(chunks.current, { type: r.mimeType || "audio/webm" });
+          const said = (await asr.current!(await blobTo16k(blob)))?.text?.trim() || "";
+          if (said) { setQ(said); spokeRef.current = true; await ask(said); }
+        } catch { setErr("Couldn't hear that clearly — try again."); }
+        setHearing(false);
+      };
+      rec.current = r; r.start(); setRecording(true);
+    } catch { setErr("Microphone not available."); setHearing(false); }
+  }
+
+  async function ask(override?: string) {
+    const question = (override ?? q).trim();
+    if (!question) return;
     setAnswer(""); setNeedOnline(false);
     const profile = readCachedProfile();
     const name = profile?.firstName || "mama";
+    const spoke = spokeRef.current; spokeRef.current = false;
 
     // 1) Danger words → skip the tiny model, give the reliable rule-based guidance.
-    const danger = detectDangerSign(q);
-    if (danger) { setAnswer(dangerReply(name, danger)); setNeedOnline(danger.level === "emergency"); return; }
+    const danger = detectDangerSign(question);
+    if (danger) {
+      const reply = dangerReply(name, danger);
+      setAnswer(reply); setNeedOnline(danger.level === "emergency");
+      if (spoke) speakOut(danger.level === "emergency" ? "Please go to the nearest hospital now." : "Please go to your clinic today.");
+      return;
+    }
 
-    if (!gen.current) return;
+    if (!gen.current) { setNeedOnline(true); return; }
     setState("thinking");
     try {
       const ctx = profile ? ` She is ${name}, in week ${profile.week} (${profile.trimester} trimester)${profile.firstPregnancy ? ", first pregnancy" : ""}.` : "";
       const messages: Msg[] = [
         { role: "system", content: `You are Bumply, a kind pregnancy helper for Nigerian mothers.${ctx} Answer in 1-2 short, simple sentences. For any warning sign (bleeding, severe pain, baby not moving, fits, fever), tell her to go to a clinic now. If you are unsure, say "I'm not sure".` },
-        { role: "user", content: q.trim() },
+        { role: "user", content: question },
       ];
       const out = await gen.current(messages, { max_new_tokens: 80, do_sample: false, temperature: 0.3 });
       const reply = (out?.[0]?.generated_text?.at?.(-1)?.content || "").trim();
       // 2) Weak answer → redirect her to the full (online) Bumply.
-      if (weak(reply)) { setAnswer(""); setNeedOnline(true); }
-      else setAnswer(reply);
+      if (weak(reply)) { setNeedOnline(true); }
+      else { setAnswer(reply); if (spoke) speakOut(reply); }
     } catch {
       setNeedOnline(true);
     }
@@ -89,8 +152,13 @@ export default function OfflineHelper() {
       {/* Input is always available — danger-sign checks + "go online" work even before
           the model is downloaded. */}
       <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ask a quick question…" onKeyDown={(e) => e.key === "Enter" && ask()} style={{ flex: 1, padding: "10px 12px", borderRadius: 10, border: "1px solid var(--border)", fontSize: 14 }} disabled={state === "thinking" || state === "loading"} />
-        <button className="f-submit" style={{ maxWidth: 90 }} onClick={ask} disabled={!canAsk}>{state === "thinking" ? "…" : "Ask"}</button>
+        <button onClick={toggleMic} title="Speak" aria-label="Speak"
+          style={{ flex: "0 0 44px", borderRadius: 10, border: "1px solid var(--border)", cursor: "pointer", fontSize: 18, background: recording ? "var(--pink)" : "white", color: recording ? "#fff" : "inherit" }}
+          disabled={state === "thinking" || hearing}>
+          {hearing ? "⏳" : recording ? "■" : "🎤"}
+        </button>
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={hearing ? "Listening…" : "Ask, or tap 🎤 to speak…"} onKeyDown={(e) => e.key === "Enter" && ask()} style={{ flex: 1, padding: "10px 12px", borderRadius: 10, border: "1px solid var(--border)", fontSize: 14 }} disabled={state === "thinking" || state === "loading"} />
+        <button className="f-submit" style={{ maxWidth: 80 }} onClick={() => ask()} disabled={!canAsk}>{state === "thinking" ? "…" : "Ask"}</button>
       </div>
 
       {state === "idle" && (

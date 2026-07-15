@@ -182,3 +182,7 @@ create table if not exists preg_companion.bump_photos (
   created_at  timestamptz not null default now()
 );
 create index if not exists idx_bump_mother on preg_companion.bump_photos(mother_id, created_at desc);
+
+-- CHW (community health worker) who enrolled/owns this mother (reuses clinicians).
+alter table preg_companion.mothers add column if not exists chw_id uuid references preg_companion.clinicians(id) on delete set null;
+create index if not exists idx_mothers_chw on preg_companion.mothers(chw_id);

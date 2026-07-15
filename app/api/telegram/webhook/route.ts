@@ -59,10 +59,12 @@ export async function POST(req: Request) {
 
   after(async () => {
     try {
-      const settings = await getSettings();
+      // Instant feedback: show "typing…" before ANY database work, and fetch the
+      // independent lookups in parallel (each is a round-trip to the DB bridge).
+      void sendChatAction(chatId, "typing").catch(() => {});
+      const t0 = Date.now();
+      const [settings, mother] = await Promise.all([getSettings(), getMotherByTelegram(chatId)]);
       if (!settings.chat_enabled) return;
-
-      const mother = await getMotherByTelegram(chatId);
 
       // Resolve the message text — transcribe voice notes with Whisper.
       let userText = text;
@@ -167,11 +169,11 @@ export async function POST(req: Request) {
       if (userText.startsWith("/")) { await handleCommand(chatId, mother, userText); return; }
 
       // The brain — grounded reply (+ voice note back if she spoke).
-      await sendChatAction(chatId, "typing");
+      void sendChatAction(chatId, "typing").catch(() => {});
       const reply = await bumplyReply(mother, userText);
       const r = await sendTelegram(chatId, reply);
+      console.log(`[tg] reply to ${chatId} (${mother.full_name}) voice=${viaVoice}: sent=${r.sent} in ${Date.now() - t0}ms`);
       await voiceBack(reply);
-      console.log(`[tg] reply to ${chatId} (${mother.full_name}) voice=${viaVoice}: sent=${r.sent}`);
     } catch (e) {
       console.error("telegram webhook error:", e);
     }

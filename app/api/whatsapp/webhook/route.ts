@@ -179,10 +179,11 @@ export async function POST(req: Request) {
           continue;
         }
 
+        const t0 = Date.now();
         const reply = await bumplyReply(mother, text);
         const sent = await sendText(phone, reply);
+        console.log(`[wa] reply to ${phone} (${mother.full_name}) voice=${viaVoice}: sent=${sent.ok} in ${Date.now() - t0}ms${sent.error ? ` error=${sent.error}` : ""}`);
         await voiceBack(reply);
-        console.log(`[wa] reply to ${phone} (${mother.full_name}) voice=${viaVoice}: sent=${sent.ok}${sent.error ? ` error=${sent.error}` : ""}`);
       } catch (e) {
         console.error("whatsapp webhook handler error:", e);
       }

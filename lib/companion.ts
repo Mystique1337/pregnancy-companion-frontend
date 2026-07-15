@@ -13,13 +13,18 @@ import { stripForSpeech } from "./speechText";
 // recent journal and chat history. Mirrors the in-app chat persona, tuned for WhatsApp.
 export async function bumplyReply(mother: Mother, userText: string): Promise<string> {
   const week = currentWeekFrom({ dueDate: mother.due_date, enteredWeek: mother.current_week, createdAt: mother.created_at });
-  const update = await getWeeklyUpdateByWeek(mother.id, week);
+  // All context fetches are independent — run them in parallel. Sequential awaits
+  // over the REST bridge (Germany) were adding 2-3s to every single reply.
+  const [update, journal, grounding, history] = await Promise.all([
+    getWeeklyUpdateByWeek(mother.id, week).catch(() => null),
+    recentJournalSummary(mother.id, 5).catch(() => ""),
+    groundingBlock(userText, 3).catch(() => ""),
+    recentChat(mother.id, 12).catch(() => []),
+  ]);
   const context = update
     ? `This week's focus: ${update.baby_development || ""}. Affirmation: ${update.affirmation || ""}.`
     : "";
-  const journal = await recentJournalSummary(mother.id, 5);
   const journalBlock = journal ? `\nHer recent journal check-ins (reference naturally if relevant):\n${journal}` : "";
-  const grounding = await groundingBlock(userText, 3);
   const groundingBlk = grounding ? `\nVERIFIED REFERENCE (rely on this; don't contradict it):\n${grounding}` : "";
 
   // For Yoruba, answer in English then translate with HelpMum's translator (higher
@@ -40,7 +45,6 @@ export async function bumplyReply(mother: Mother, userText: string): Promise<str
     : "For any warning signs (heavy bleeding, severe or persistent pain, reduced fetal movement, fever, vision changes, severe swelling), clearly and gently urge her to contact her healthcare provider or go to a clinic.";
 
   const first = (mother.full_name || "mama").split(" ")[0];
-  const history = await recentChat(mother.id, 12);
   // First-ever conversation → Bumply introduces itself and discovers her needs.
   const firstContact = history.length === 0
     ? `\nTHIS IS YOUR FIRST CONVERSATION WITH HER: open by introducing yourself in one warm line — you are Bumply, her pregnancy companion — then answer what she said, and ask ONE gentle question to learn what she needs most right now (health worries, food guidance, clinic-visit reminders, or just someone to talk to). Do not introduce yourself again after this.`
@@ -96,11 +100,9 @@ ${langLine}${preferencesBlock(mother)}${firstContact}`;
     const yo = src ? await toYoruba(src) : null;
     if (yo && yo.length > 10 && !/[*()#_]/.test(yo)) reply = yo;
   }
-  try {
-    await saveChat(mother.id, "user", userText, week);
-    await saveChat(mother.id, "assistant", reply, week);
-  } catch (e) {
-    console.error("whatsapp chat save error:", e);
-  }
+  // Persist in the background — saving mustn't delay her reply.
+  void saveChat(mother.id, "user", userText, week)
+    .then(() => saveChat(mother.id, "assistant", reply, week))
+    .catch((e) => console.error("chat save error:", e));
   return reply;
 }

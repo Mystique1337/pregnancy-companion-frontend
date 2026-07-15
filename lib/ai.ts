@@ -111,7 +111,9 @@ export async function aiComplete(
     }
   }
   try {
-    const out = await run(nvidia, NVIDIA_MODEL_STRONG, 20000);
+    // 14s budget: nemotron typically answers in 4-8s; beyond that the fast 8B
+    // fallback keeps the chat snappy instead of leaving her staring at "typing…".
+    const out = await run(nvidia, NVIDIA_MODEL_STRONG, 14000);
     if (out && !looksBad(out)) return out;
     console.warn("[ai] strong model output rejected — falling back to fast model");
   } catch (e) {

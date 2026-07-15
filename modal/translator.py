@@ -31,7 +31,7 @@ cache = modal.Volume.from_name("bumply-hf-cache", create_if_missing=True)
     volumes={"/root/.cache/huggingface": cache},
     cpu=2,
     memory=4096,
-    scaledown_window=180,        # pay-per-use: idle out after 3 min
+    scaledown_window=120,        # pay-per-use: idle out after 2 min
     secrets=[modal.Secret.from_name("bumply-llm")],
 )
 @modal.concurrent(max_inputs=4)

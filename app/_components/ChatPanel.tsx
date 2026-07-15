@@ -38,11 +38,10 @@ export default function ChatPanel({
     if (boxRef.current) boxRef.current.scrollTop = boxRef.current.scrollHeight;
   }, [msgs, busy]);
 
-  // Wake SoroTTS (the Nigerian voices on Modal) the moment she opens the chat, so
-  // the first "Listen" is her voice, fast — not a cold start.
-  useEffect(() => {
-    fetch("/api/voice/warm", { method: "POST" }).catch(() => {});
-  }, []);
+  // Cost note: we deliberately do NOT warm the voice GPUs on page load — every
+  // visit was spinning them up whether or not she used voice. Warming now happens
+  // on real voice intent only (mic tap below / inbound voice notes on the bots);
+  // the "Preparing your voice…" state covers a cold start on first Listen.
 
   // Tap to talk: record → transcribe → auto-send. Prefers server Whisper (best,
   // supports her language); when offline, uses the phone's on-device recognition.
@@ -52,6 +51,8 @@ export default function ChatPanel({
     // record Bumply's own voice, Whisper would transcribe it as her next question,
     // and the chat would loop, repeating questions and answers.
     stopVoice();
+    // Real voice intent → warm ASR+TTS now so transcription and the spoken reply are fast.
+    fetch("/api/voice/warm", { method: "POST" }).catch(() => {});
     // Offline → on-device speech recognition (no network, no Modal).
     if (!navigator.onLine && localAsrSupported()) {
       const handle = startLocalAsr(

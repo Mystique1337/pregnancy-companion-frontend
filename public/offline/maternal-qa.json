@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "note": "Curated Nigerian maternal Q&A knowledge pack. Cached on-device; grounds the offline SmolLM and doubles as fine-tuning data (modal/finetune.py). Safe, plain-English, WHO/Nigeria-aligned. NOT a diagnosis.",
+  "items": [
+    { "q": "What foods should I eat during pregnancy?", "tags": ["nutrition", "food", "diet", "eat"], "a": "Eat a mix every day: beans, eggs, fish or meat, moimoi, green vegetables (like ugu, ewedu), fruits, and pap or yam. Take your iron and folic acid tablets from the clinic. Drink plenty clean water." },
+    { "q": "Which foods should I avoid in pregnancy?", "tags": ["nutrition", "avoid", "food", "alcohol"], "a": "Avoid alcohol and smoking completely. Avoid raw or undercooked meat/eggs, unpasteurised milk, and too much caffeine. Wash fruits and vegetables well before eating." },
+    { "q": "How much water should I drink?", "tags": ["water", "hydration", "drink"], "a": "Drink about 8 cups of clean water a day, more when it is hot. Dark urine means you need more water." },
+    { "q": "I am vomiting a lot in early pregnancy, what can I do?", "tags": ["vomiting", "nausea", "morning sickness"], "a": "Eat small meals often, try dry foods like biscuits or bread in the morning, sip water or ginger. If you cannot keep any food or water down, or you feel very weak, go to the clinic — you may need help so you don't get dehydrated." },
+    { "q": "What can I do about heartburn?", "tags": ["heartburn", "chest", "acid"], "a": "Eat smaller meals, avoid oily and peppery food, and don't lie down right after eating. Sleep with your head raised a little. Ask your clinic before taking any medicine." },
+    { "q": "My legs and feet are swelling, is it normal?", "tags": ["swelling", "legs", "feet"], "a": "Mild swelling of the feet late in the day can be normal. Rest with your legs raised. BUT if your face or hands suddenly swell, or you get a bad headache or blurred vision, go to the clinic the same day — it can be a danger sign." },
+    { "q": "How do I deal with back pain in pregnancy?", "tags": ["back pain", "back", "pain"], "a": "Sit with your back supported, avoid lifting heavy things, wear flat shoes, and rest often. Gentle stretching helps. If the pain is severe or comes with bleeding or tightening, go to the clinic." },
+    { "q": "Is it safe to have sex during pregnancy?", "tags": ["sex", "intercourse"], "a": "In a normal pregnancy, sex is usually safe. Stop and see your clinic if you have bleeding, pain, or your water breaks, or if your health worker told you to avoid it." },
+    { "q": "How often should I go for antenatal care (ANC)?", "tags": ["anc", "antenatal", "clinic", "visits"], "a": "Start antenatal care as early as possible. WHO recommends at least 8 visits. Your clinic will give you your dates — attend every one, even when you feel fine." },
+    { "q": "Why should I take folic acid and iron?", "tags": ["folic acid", "iron", "tablets", "supplement", "anaemia"], "a": "Folic acid helps your baby's brain and spine form well. Iron prevents anaemia (low blood), which is common and dangerous in pregnancy. Take them daily as your clinic gives you." },
+    { "q": "What is anaemia and why does it matter?", "tags": ["anaemia", "anemia", "blood", "pcv", "weak"], "a": "Anaemia means low blood. It makes you tired and weak and can be dangerous at delivery. Eat iron-rich food (beans, liver, green vegetables), take your iron tablets, and go to the clinic if you feel very weak or your palms/eyes look pale." },
+    { "q": "How do I know I am in labour?", "tags": ["labour", "labor", "contractions", "signs of labour"], "a": "Signs include regular tightening pains that get stronger and closer together, a show (mucus with a little blood), or your water breaking. Go to your place of delivery when pains are strong and regular, or if your water breaks." },
+    { "q": "My water broke but no pains, what do I do?", "tags": ["water broke", "waters", "rupture"], "a": "Go to your clinic or hospital now, even without pains. Note the time and colour of the water. If the water is green or smells, tell the health worker immediately." },
+    { "q": "When should I count the baby's movements?", "tags": ["baby movement", "kicks", "fetal movement"], "a": "From about 28 weeks, your baby should move regularly each day. If you notice the baby moving much less than usual, drink water, lie on your side and count. If movements are still reduced, go to the clinic the same day." },
+    { "q": "How can I prepare for a safe delivery?", "tags": ["birth plan", "delivery", "prepare", "safe"], "a": "Plan to deliver at a health facility with a skilled birth attendant. Pack a bag early (clothes for you and baby, your ANC card, pads, money for transport). Know how you will get there quickly, day or night." },
+    { "q": "Is malaria dangerous in pregnancy?", "tags": ["malaria", "fever", "mosquito"], "a": "Yes. Malaria in pregnancy is dangerous for you and the baby. Sleep under a treated mosquito net every night, take the preventive tablets (IPTp) your clinic gives, and go to the clinic quickly if you have fever." },
+    { "q": "Can I take medicine when I am pregnant?", "tags": ["medicine", "drugs", "medication", "safe"], "a": "Do not buy and take drugs on your own. Some medicines harm the baby. Always ask your clinic or pharmacist first, even for pain or malaria." },
+    { "q": "How do I start breastfeeding?", "tags": ["breastfeeding", "breast", "feed", "milk"], "a": "Put the baby to your breast within the first hour after birth. Give only breast milk for the first 6 months — no water, no other food. Feed on demand, day and night. The first yellow milk (colostrum) is very good for the baby." },
+    { "q": "My breasts are painful and I have a fever after birth", "tags": ["mastitis", "breast pain", "postpartum", "fever"], "a": "This can be a breast infection (mastitis). Keep breastfeeding or expressing milk, rest, and go to the clinic — you may need treatment. Go quickly if you feel very unwell." },
+    { "q": "How do I care for the baby's cord?", "tags": ["cord", "navel", "newborn", "umbilical"], "a": "Keep the cord clean and dry. Do not put anything on it unless your health worker says so. If the cord area becomes red, swollen, smells, or has pus, take the baby to the clinic now." },
+    { "q": "My newborn's skin and eyes look yellow", "tags": ["jaundice", "yellow", "newborn"], "a": "Yellow skin or eyes in a newborn (jaundice) needs checking. Take the baby to the clinic or hospital. If the baby is also not feeding well, is very sleepy, or floppy, go now." },
+    { "q": "When does my baby need vaccines?", "tags": ["immunization", "vaccine", "vaccination", "npi"], "a": "At birth: BCG, OPV0, Hepatitis B. Then at 6, 10 and 14 weeks, and at 9 months (measles, yellow fever). They are free at the health centre — do not miss them, they protect against killer diseases." },
+    { "q": "How do I know if I have high blood pressure danger (pre-eclampsia)?", "tags": ["pre-eclampsia", "blood pressure", "bp", "headache", "vision"], "a": "Warning signs are a bad headache, blurred vision or seeing spots, swelling of the face and hands, and pain in the upper belly. This is an emergency — go to the hospital now." },
+    { "q": "I feel very sad or cannot sleep after birth", "tags": ["postpartum depression", "sad", "mood", "mental health"], "a": "Many mothers feel low after birth. Rest when you can, accept help, and talk to someone you trust. If the sadness is deep, lasts more than two weeks, or you have thoughts of harming yourself or the baby, tell a health worker — help is available." },
+    { "q": "How can I space my next pregnancy (family planning)?", "tags": ["family planning", "contraception", "spacing"], "a": "Waiting at least 2 years before the next pregnancy is healthier for you and your baby. Your clinic offers free family planning methods — ask them which is best for you." }
+  ],
+  "danger": {
+    "note": "If she describes any of these, the deterministic danger checker handles it — this is backup text.",
+    "signs": [
+      "Heavy bleeding from the private part",
+      "Severe headache with blurred vision",
+      "Fever that will not come down",
+      "Baby not moving or moving much less",
+      "Fits or convulsions",
+      "Severe belly pain",
+      "Water breaking with green or smelly fluid"
+    ],
+    "advice": "Go to the nearest hospital NOW — do not wait. Ask someone to go with you."
+  }
+}

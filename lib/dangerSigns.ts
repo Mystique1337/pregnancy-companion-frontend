@@ -15,7 +15,11 @@ type Rule = { sign: string; level: DangerLevel; any: RegExp[]; not?: RegExp[] };
 const RULES: Rule[] = [
   { sign: "fits/convulsions", level: "emergency", any: [/\bconvuls/i, /\bseizure/i, /\bfits\b/i, /having.*fit/i, /jerk(ing)?\b/i, /body.*(shak|jerk)/i, /\bgiri\b/i, /wárápá|\bwarapa\b/i, /farfad/i, /jijiji/i] },
   { sign: "heavy bleeding", level: "emergency", any: [/heavy.*(bleed|blood)/i, /soak.*(pad|cloth)/i, /pass(ing)?\s+clot/i, /plenty\s+blood/i, /blood.*(comot|rush)/i, /(ẹjẹ|\beje\b|\bjini\b|ọbara|\bobara\b).*(pọ̀|púpọ̀|plenty|comot|rush)/i] },
-  { sign: "vaginal bleeding", level: "urgent", any: [/\bbleed/i, /\bblood\b/i, /dey\s+see\s+blood/i, /dey\s+bleed/i, /spotting/i, /ẹjẹ/i, /\beje\b/i, /\bjini\b/i, /ọbara/i, /\bobara\b/i], not: [/blood\s*pressure/i, /\bbp\b/i, /blood\s*sugar/i, /nose\s*bleed/i] },
+  // "blood" needs bleeding CONTEXT — a bare `\bblood\b` hijacked normal chats about
+  // blood tonic / low blood (anaemia) / blood tests with a scary urgent reply.
+  { sign: "vaginal bleeding", level: "urgent",
+    any: [/\bbleed/i, /(see|seeing|dey\s+see|saw|notice[ds]?|pass(ing)?|comot|wipe[ds]?)\s+(some\s+|small\s+)?blood/i, /blood\s+(dey\s+)?(comot|come\s*out|drop|flow|rush)/i, /blood\s+(for|on|in)\s+(my\s+)?(pant|underwear|toilet|tissue)/i, /spotting/i, /ẹjẹ/i, /\beje\b/i, /\bjini\b/i, /ọbara/i, /\bobara\b/i],
+    not: [/blood\s*pressure/i, /\bbp\b/i, /blood\s*sugar/i, /nose\s*bleed/i, /blood\s*(tonic|level|test|group|count|work|donat)/i, /(low|shortage\s+of|lack\s+of|little)\s+blood/i, /(give|gives|build|builds|boost|boosts|increase)\s+(my\s+)?blood/i, /gum(s)?\s*(are|dey|is)?\s*bleed/i, /bleeding\s*gums?/i] },
   { sign: "baby not moving", level: "urgent", any: [/baby.*(not|no|never|stop|isn.?t|less).*(mov|kick)/i, /pikin.*(no|never).*(mov|kick)/i, /no.*(movement|kicking)/i, /not.*feel.*baby/i, /reduced.*movement/i, /baby.*(quiet|still)/i] },
   { sign: "waters broken", level: "urgent", any: [/water.*(break|broke|burst|comot|don\s*come|leak)/i, /my\s+water/i, /fluid.*(leak|comot|rush)/i] },
   { sign: "vision changes (pre-eclampsia)", level: "urgent", any: [/blur(red|ry)?\s*(vision|eye)?/i, /can.?t\s+see\s+well/i, /see\s+double/i, /flashing\s+light/i, /spots?\s+(in|before).*eye/i, /eye.*(dey\s+)?blur/i] },

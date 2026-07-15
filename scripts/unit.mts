@@ -71,6 +71,24 @@ console.log("\n— Danger signs (detectDangerSign / dangerReply) —");
   // False-positive guards: bounded regex must NOT trip on English words containing 'eje'/'j'.
   ok("'I reject this idea' → NOT flagged", detectDangerSign("I reject this idea") === null);
   ok("'just relax and enjoy' → NOT flagged", detectDangerSign("just relax and enjoy") === null);
+
+  // "blood" needs bleeding context — everyday anaemia/test chat must NOT hijack.
+  ok("'which food dey give blood' → NOT flagged", detectDangerSign("which food dey give blood") === null);
+  ok("'my blood level is low' → NOT flagged", detectDangerSign("my blood level is low") === null);
+  ok("'I get blood test tomorrow' → NOT flagged", detectDangerSign("I get blood test tomorrow") === null);
+  ok("'my gums dey bleed small' → NOT flagged", detectDangerSign("my gums dey bleed small") === null);
+  ok("'I see blood for my pant' → urgent bleeding", detectDangerSign("I see blood for my pant")?.level === "urgent");
+  ok("'I am bleeding' → still urgent", detectDangerSign("I am bleeding")?.level === "urgent");
+}
+
+// ─────────────────────────── ai.ts cleanReply ───────────────────────────
+console.log("\n— cleanReply (reply hygiene) —");
+{
+  const { cleanReply } = await import("../lib/ai.ts");
+  ok("strips hallucinated 'User:' turns", cleanReply("Rest well, mama.\nUser: ok\nAssistant: Great!") === "Rest well, mama.");
+  ok("strips <think> blocks", cleanReply("<think>reasoning...</think>Drink water today 🌸") === "Drink water today 🌸");
+  ok("strips leading 'Assistant:' label", cleanReply("Assistant: You dey do well!") === "You dey do well!");
+  ok("leaves a clean reply untouched", cleanReply("Na normal thing, no worry. How your body dey today?") === "Na normal thing, no worry. How your body dey today?");
 }
 
 // ─────────────────────────── immunization.ts ───────────────────────────

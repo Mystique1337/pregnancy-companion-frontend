@@ -186,3 +186,19 @@ create index if not exists idx_bump_mother on preg_companion.bump_photos(mother_
 -- CHW (community health worker) who enrolled/owns this mother (reuses clinicians).
 alter table preg_companion.mothers add column if not exists chw_id uuid references preg_companion.clinicians(id) on delete set null;
 create index if not exists idx_mothers_chw on preg_companion.mothers(chw_id);
+
+-- WhatsApp self-onboarding: transient state while an unregistered number signs up by chat.
+create table if not exists preg_companion.wa_onboarding (
+  phone      text primary key,
+  step       text not null default 'ask_name',   -- ask_name | ask_week
+  data       jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+-- Close-the-loop: outcome recorded by a CHW/clinician on an alert (did she reach care?).
+alter table preg_companion.alerts add column if not exists outcome text;          -- sought_care | ok | no_response | referred
+alter table preg_companion.alerts add column if not exists outcome_at timestamptz;
+alter table preg_companion.alerts add column if not exists outcome_by text;
+
+-- Postpartum: recorded when the mother tells us her baby is born.
+alter table preg_companion.mothers add column if not exists birth_date date;

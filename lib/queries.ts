@@ -10,6 +10,7 @@ export type Mother = {
   phone: string | null;
   whatsapp_number: string | null;
   due_date: string | null;
+  birth_date: string | null;
   current_week: number;
   weeks_completed: number | null;
   trimester: string | null;
@@ -305,10 +306,26 @@ export async function latestVital(motherId: string, kind: string): Promise<Vital
   return rows[0] ?? null;
 }
 
+// Postpartum: mark a mother as delivered (records baby's birth date; drives
+// newborn danger-sign context + the immunization schedule).
+export async function markDelivered(motherId: string, birthDate: string) {
+  await sql`update mothers set birth_date = ${birthDate} where id = ${motherId}`;
+}
+
+// Delivered mothers whose baby is still within the immunization window (< ~18 months),
+// for postpartum vaccine reminders.
+export async function listPostpartumMothers(limit = 500): Promise<Mother[]> {
+  return sql<Mother[]>`
+    select * from mothers
+    where birth_date is not null and birth_date > (current_date - interval '18 months')
+    order by birth_date desc limit ${limit}`;
+}
+
 // --- Alerts ---
 export type Alert = {
   id: string; mother_id: string; level: string; kind: string; message: string;
   vital_id: string | null; status: string; reviewed_by: string | null; created_at: string;
+  outcome?: string | null; outcome_at?: string | null; outcome_by?: string | null;
 };
 export type AlertWithMother = Alert & { full_name: string; email: string; phone: string | null; whatsapp_number: string | null };
 
@@ -341,6 +358,37 @@ export async function listAlerts(status?: string, limit = 100): Promise<AlertWit
 
 export async function setAlertStatus(id: string, status: string, reviewedBy: string) {
   await sql`update alerts set status = ${status}, reviewed_by = ${reviewedBy} where id = ${id}`;
+}
+
+// Close-the-loop: record whether she actually reached care.
+export async function setAlertOutcome(id: string, outcome: string, by: string) {
+  await sql`update alerts set outcome = ${outcome}, outcome_at = now(), outcome_by = ${by}, status = 'resolved' where id = ${id}`;
+}
+
+export type OutcomeStats = { total: number; with_outcome: number; sought_care: number };
+export async function outcomeStats(): Promise<OutcomeStats> {
+  const rows = await sql<{ total: string; with_outcome: string; sought_care: string }[]>`
+    select count(*) as total,
+           count(*) filter (where outcome is not null) as with_outcome,
+           count(*) filter (where outcome in ('sought_care','referred')) as sought_care
+    from alerts where level in ('urgent','warning')`;
+  const r = rows[0] || { total: "0", with_outcome: "0", sought_care: "0" };
+  return { total: Number(r.total), with_outcome: Number(r.with_outcome), sought_care: Number(r.sought_care) };
+}
+
+// --- WhatsApp self-onboarding state ---
+export type Onboarding = { phone: string; step: string; data: Record<string, unknown> };
+export async function getOnboarding(phone: string): Promise<Onboarding | null> {
+  const rows = await sql<Onboarding[]>`select phone, step, data from wa_onboarding where phone = ${phone} limit 1`;
+  return rows[0] ?? null;
+}
+export async function setOnboarding(phone: string, step: string, data: Record<string, unknown>) {
+  await sql`
+    insert into wa_onboarding (phone, step, data) values (${phone}, ${step}, ${sql.json(data as Parameters<typeof sql.json>[0])})
+    on conflict (phone) do update set step = ${step}, data = ${sql.json(data as Parameters<typeof sql.json>[0])}`;
+}
+export async function clearOnboarding(phone: string) {
+  await sql`delete from wa_onboarding where phone = ${phone}`;
 }
 
 // --- CHW co-pilot: a community health worker enrolls + monitors her own mothers ---

@@ -2,9 +2,10 @@ import { listAllMothers, setUpdateSent } from "./queries";
 import { ensureWeeklyUpdate } from "./weekly";
 import { currentWeekFrom } from "./babyData";
 import { babyImageFor } from "./babyImages";
-import { sendEmail, emailConfigured, readPublicImage } from "./email";
+import { sendEmail, emailConfigured, readPublicImage, FROM } from "./email";
 import { sendWhatsApp, whatsappConfigured } from "./whatsapp";
 import { pushWeeklyReady } from "./notify";
+import { publicBaseUrl } from "./baseUrl";
 
 export type WeeklyJobResult = {
   ok: boolean;
@@ -40,18 +41,24 @@ export async function runWeeklyJob(): Promise<WeeklyJobResult> {
       const link = base ? `${base}/my-update/${update.slug}` : "";
 
       if (!update.sent_email) {
-        // Embed the baby image inline (cid) so it renders even before deployment.
         const img = babyImageFor(week);
         let html = update.html_content || "";
         let attachments;
-        try {
-          const buf = await readPublicImage(img.file);
-          html = html.replace(`src="${img.src}"`, `src="cid:babyhero"`);
-          attachments = [{ filename: img.file, content: buf, contentId: "babyhero" }];
-        } catch {
-          // If the image can't be read, send without it rather than failing the email.
+        const pub = base || publicBaseUrl();
+        if (pub && img.src.startsWith("/")) {
+          // Prefer a hosted absolute URL — works with providers that drop attachments (Plunk).
+          html = html.replace(`src="${img.src}"`, `src="${pub}${img.src}"`);
+        } else {
+          // No public URL (local dev) → embed the image inline via cid.
+          try {
+            const buf = await readPublicImage(img.file);
+            html = html.replace(`src="${img.src}"`, `src="cid:babyhero"`);
+            attachments = [{ filename: img.file, content: buf, contentId: "babyhero" }];
+          } catch {
+            // If the image can't be read, send without it rather than failing the email.
+          }
         }
-        const r = await sendEmail(m.email, update.subject || `Your week ${week} update 🌸`, html, attachments);
+        const r = await sendEmail(m.email, update.subject || `Your week ${week} update 🌸`, html, attachments, FROM.updates);
         if (r.sent) {
           await setUpdateSent(update.id, "email");
           emailed++;

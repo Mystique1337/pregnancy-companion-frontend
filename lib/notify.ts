@@ -13,7 +13,7 @@ import { sendPushToMother } from "./push";
 import { ancAtWeek } from "./anc";
 import { milestoneAtWeek, type Milestone } from "./milestones";
 import { dailyTipFor } from "./dailyTips";
-import { sendEmail, emailConfigured } from "./email";
+import { sendEmail, emailConfigured, FROM } from "./email";
 import { sendWhatsApp, whatsappConfigured } from "./whatsapp";
 import { sendTelegram } from "./telegram";
 
@@ -68,7 +68,7 @@ export async function sendAlert(mother: Mother, alert: { level: string; message:
         </div>
         <p style="text-align:center;color:#9A8576;font-size:12px;margin-top:18px">This is information, not a diagnosis. With love, Bumply 🌸</p>
       </div></body></html>`;
-    await sendEmail(mother.email, title, html).catch(() => {});
+    await sendEmail(mother.email, title, html, undefined, FROM.care).catch(() => {});
   }
   const phone = mother.whatsapp_number || mother.phone;
   if (whatsappConfigured() && phone) {
@@ -116,7 +116,7 @@ export async function runDailyEngagement(dateStr: string): Promise<DailyResult> 
       if (!(await alreadyNotified(m.id, "milestone", ref))) {
         await sendPushToMother(m.id, { title: ms.title, body: ms.body, url: "/dashboard", tag: ref });
         if (emailConfigured()) {
-          await sendEmail(m.email, ms.title, milestoneEmailHtml(m, ms)).catch(() => {});
+          await sendEmail(m.email, ms.title, milestoneEmailHtml(m, ms), undefined, FROM.updates).catch(() => {});
         }
         await tgNotify(m, `${ms.title}\n${firstName(m)}, ${ms.body}`);
         await markNotified(m.id, "milestone", ref);
@@ -173,7 +173,7 @@ export async function runProactiveRiskCheck(m: Mother, week: number): Promise<bo
   await tgNotify(m, `💛 ${message}`);
   if (emailConfigured()) {
     const html = `<!DOCTYPE html><html><body style="margin:0;background:#FBF7F1;font-family:'DM Sans',system-ui,Arial,sans-serif;color:#2E2620;line-height:1.7"><div style="max-width:520px;margin:0 auto;padding:32px 20px"><div style="background:#FBF1DC;border:1px solid #E8B96F;border-radius:20px;padding:28px;text-align:center"><h1 style="font-family:Georgia,serif;font-weight:400;font-size:22px;margin:0 0 10px">💛 A gentle check-in</h1><p style="margin:0;color:#5B4A3E">${message}</p></div><p style="text-align:center;color:#9A8576;font-size:12px;margin-top:18px">A screening aid from your own logged data, not a diagnosis. With love, Bumply 🌸</p></div></body></html>`;
-    await sendEmail(m.email, "💛 A gentle check-in about your health", html).catch(() => {});
+    await sendEmail(m.email, "💛 A gentle check-in about your health", html, undefined, FROM.care).catch(() => {});
   }
   // Raise an alert so a clinician reviews it (human-in-the-loop).
   await createAlert(m.id, {

@@ -22,11 +22,20 @@ function getClient(): Resend | null {
 
 export type EmailAttachment = { filename: string; content: Buffer; contentId?: string };
 
+// Per-purpose sender addresses (domain bumply.mom is verified in Plunk).
+export const FROM = {
+  onboarding: "Bumply <onboarding@bumply.mom>",
+  updates: "Bumply <hello@bumply.mom>",
+  care: "Bumply Care <care@bumply.mom>",
+  account: "Bumply <account@bumply.mom>",
+} as const;
+
 export async function sendEmail(
   to: string,
   subject: string,
   html: string,
-  attachments?: EmailAttachment[]
+  attachments?: EmailAttachment[],
+  from?: string
 ): Promise<{ sent: boolean; skipped?: boolean; error?: string; id?: string }> {
   // MVP/demo mode: while the sender is the shared `onboarding@resend.dev` (which
   // only delivers to the Resend account owner), EMAIL_OVERRIDE_TO reroutes EVERY
@@ -42,8 +51,9 @@ export async function sendEmail(
   // Provider order: Plunk (preferred) → Gmail → Resend. Note: Plunk's send API
   // doesn't take attachments, so inline-image emails should reference a hosted URL.
   // If Plunk fails (misconfigured/down), fall through to the next provider.
+  const fromLine = from || process.env.EMAIL_FROM || FROM.onboarding;
   if (plunkConfigured()) {
-    const r = await sendViaPlunk(to, subject, html);
+    const r = await sendViaPlunk(to, subject, html, fromLine);
     if (r.sent || (!gmailConfigured() && !resendConfigured())) return r;
     console.warn("[email] Plunk failed, falling back:", r.error);
   }
@@ -52,7 +62,7 @@ export async function sendEmail(
   if (!c) return { sent: false, skipped: true };
   try {
     const { data, error } = await c.emails.send({
-      from: process.env.EMAIL_FROM || "Bumply <onboarding@resend.dev>",
+      from: fromLine,
       to: [to],
       subject,
       html,
@@ -100,5 +110,5 @@ export async function sendWelcomeEmail(
   name: string,
   week: number
 ): Promise<{ sent: boolean; skipped?: boolean; error?: string }> {
-  return sendEmail(to, `Welcome to Bumply, ${String(name || "mama").split(" ")[0]} 🌸`, buildWelcomeHtml(name, week));
+  return sendEmail(to, `Welcome to Bumply, ${String(name || "mama").split(" ")[0]} 🌸`, buildWelcomeHtml(name, week), undefined, FROM.onboarding);
 }

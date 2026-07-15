@@ -8,30 +8,25 @@ export function plunkConfigured(): boolean {
   return !!KEY;
 }
 
-// Extract a bare email from an "EMAIL_FROM" that may be "Name <addr>".
-function fromAddress(): string | undefined {
-  const raw = process.env.EMAIL_FROM || "";
-  const m = raw.match(/<([^>]+)>/);
-  const addr = (m ? m[1] : raw).trim();
-  return /@/.test(addr) ? addr : undefined;
-}
-function fromName(): string | undefined {
-  const raw = process.env.EMAIL_FROM || "";
-  const m = raw.match(/^\s*"?([^"<]+?)"?\s*</);
-  return m ? m[1].trim() : undefined;
+// Parse a "Name <addr>" (or bare addr) string into { addr, name }.
+function parseFrom(raw?: string): { addr?: string; name?: string } {
+  const s = (raw || process.env.EMAIL_FROM || "").trim();
+  const m = s.match(/^\s*"?([^"<]+?)"?\s*<([^>]+)>\s*$/);
+  if (m) return { name: m[1].trim(), addr: m[2].trim() };
+  return /@/.test(s) ? { addr: s } : {};
 }
 
 export async function sendViaPlunk(
   to: string,
   subject: string,
-  html: string
+  html: string,
+  fromOverride?: string
 ): Promise<{ sent: boolean; skipped?: boolean; error?: string; id?: string }> {
   if (!KEY) return { sent: false, skipped: true };
   try {
     const body: Record<string, unknown> = { to, subject, body: html, subscribed: true };
-    const from = fromAddress();
-    if (from) body.from = from;
-    const name = fromName();
+    const { addr, name } = parseFrom(fromOverride);
+    if (addr) body.from = addr;
     if (name) body.name = name;
 
     const res = await fetch(`${URL}/v1/send`, {

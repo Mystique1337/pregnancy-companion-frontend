@@ -12,7 +12,7 @@ const GREETING = /^(hi+|hello+|hey+|start|begin|join|good\s*(morning|afternoon|e
 
 // Pull a plausible "weeks pregnant" number, or a due date, from free text.
 // Returns the current gestational week (1..42) or null if we can't tell.
-function parseWeek(text: string): number | null {
+export function parseWeek(text: string): number | null {
   const t = text.toLowerCase();
   // "20 weeks", "week 20", or a bare number
   const wk = t.match(/\b(\d{1,2})\s*(?:weeks?|wks?|w)\b/) || t.match(/\bweek\s*(\d{1,2})\b/) || t.match(/^\s*(\d{1,2})\s*$/);
@@ -38,7 +38,7 @@ function parseWeek(text: string): number | null {
   return null;
 }
 
-function cleanName(text: string): string {
+export function cleanName(text: string): string {
   // Strip common lead-ins ("my name is", "I am", "call me") and punctuation.
   const n = text
     .replace(/^\s*(my\s+name\s+is|i\s*am|i'?m|this\s+is|call\s+me|na\s+me|na)\s+/i, "")

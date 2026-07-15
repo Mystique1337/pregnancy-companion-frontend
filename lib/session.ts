@@ -39,3 +39,23 @@ export async function destroySession() {
   const c = await cookies();
   c.delete(SESSION_COOKIE);
 }
+
+// --- Password reset (stateless, signed token; 1-hour expiry) ---
+export async function createResetToken(sub: string, email: string): Promise<string> {
+  return new SignJWT({ email, purpose: "reset" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setSubject(sub)
+    .setIssuedAt()
+    .setExpirationTime("1h")
+    .sign(secret);
+}
+
+export async function verifyResetToken(token: string): Promise<SessionData | null> {
+  try {
+    const { payload } = await jwtVerify(token, secret);
+    if (payload.purpose !== "reset") return null;
+    return { sub: String(payload.sub), email: String(payload.email) };
+  } catch {
+    return null;
+  }
+}

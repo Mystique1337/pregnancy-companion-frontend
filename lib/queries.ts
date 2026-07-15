@@ -59,6 +59,10 @@ export async function getMotherById(id: string): Promise<Mother | null> {
   return rows[0] ?? null;
 }
 
+export async function updateMotherPassword(id: string, passwordHash: string): Promise<void> {
+  await sql`update mothers set password_hash = ${passwordHash} where id = ${id}`;
+}
+
 // Match an inbound WhatsApp sender (any format) to a mother by the last 10 digits,
 // which sidesteps country-code / leading-zero differences (e.g. +234 vs 0).
 export async function getMotherByPhone(phone: string): Promise<Mother | null> {

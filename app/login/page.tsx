@@ -61,6 +61,9 @@ export default function LoginPage() {
           {busy ? t("login.signingin", L) : t("login.signin", L)}
         </button>
         {error && <p className="f-error">{error}</p>}
+        <p className="f-note" style={{ marginTop: 12 }}>
+          <a className="auth-link" href="/forgot-password">Forgot your password?</a>
+        </p>
         <p className="f-note" style={{ marginTop: 18 }}>
           {t("login.newhere", L)} <a className="auth-link" href="/#register">{t("login.create", L)}</a>
         </p>

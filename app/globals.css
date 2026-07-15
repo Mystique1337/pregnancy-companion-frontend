@@ -16,7 +16,7 @@
   --sage:        #6E8C63;  /* readable green (success text) */
   --ink:         #2E2620;  /* espresso */
   --ink-mid:     #5B4A3E;  /* warm brown */
-  --ink-muted:   #9A8576;  /* warm taupe */
+  --ink-muted:   #6E5D50;  /* warm taupe — darkened for WCAG AA (~5:1 on cream) */
   --border:      rgba(46,38,32,0.12);
   --serif:       'Cormorant Garamond', Georgia, serif;
   --sans:        'DM Sans', system-ui, sans-serif;
@@ -256,11 +256,11 @@ nav {
 .fc-sub { font-size: 12px; color: var(--ink-muted); margin-bottom: 32px; }
 
 .fg { margin-bottom: 16px; }
-label { display: block; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-muted); font-weight: 500; margin-bottom: 7px; }
+label { display: block; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mid); font-weight: 600; margin-bottom: 7px; }
 input, select, textarea {
   width: 100%; background: white;
   border: 1px solid var(--border); border-radius: var(--r);
-  padding: 13px 15px; font-size: 13px;
+  padding: 13px 15px; font-size: 16px;
   font-family: var(--sans); color: var(--ink);
   outline: none; transition: border-color 0.2s;
   -webkit-appearance: none; appearance: none;
@@ -343,7 +343,7 @@ footer { background: var(--ink); padding: 56px 0 40px; }
 .np-status-dot { width: 6px; height: 6px; border-radius: 50%; background: #4CAF50; }
 .np-close { margin-left: auto; background: none; border: none; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 18px; padding: 2px 6px; }
 .np-messages { padding: 20px; height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
-.np-msg { max-width: 88%; padding: 10px 14px; border-radius: 16px; font-size: 13px; line-height: 1.6; animation: msgIn 0.3s ease both; white-space: pre-wrap; }
+.np-msg { max-width: 88%; padding: 10px 14px; border-radius: 16px; font-size: 15px; line-height: 1.6; animation: msgIn 0.3s ease both; white-space: pre-wrap; }
 @keyframes msgIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 .np-msg.bumply { background: var(--pink-pale); color: var(--ink); border-bottom-left-radius: 4px; align-self: flex-start; }
 .np-msg.user { background: var(--pink); color: white; border-bottom-right-radius: 4px; align-self: flex-end; }
@@ -352,11 +352,19 @@ footer { background: var(--ink); padding: 56px 0 40px; }
 .np-typing span:nth-child(2) { animation-delay: 0.2s; }
 .np-typing span:nth-child(3) { animation-delay: 0.4s; }
 @keyframes typing { 0%,60%,100%{transform:translateY(0);opacity:0.4} 30%{transform:translateY(-6px);opacity:1} }
-.np-input-area { padding: 14px 16px; border-top: 1px solid var(--border); display: flex; gap: 8px; align-items: center; }
-.np-input { flex: 1; border: 1px solid var(--border); border-radius: 100px; padding: 9px 14px; font-size: 13px; font-family: var(--sans); color: var(--ink); outline: none; transition: border-color 0.2s; background: var(--cream); }
+.np-input-area { padding: 14px 16px; border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: center; }
+.np-input { flex: 1; border: 1px solid var(--border); border-radius: 100px; padding: 12px 16px; font-size: 16px; font-family: var(--sans); color: var(--ink); outline: none; transition: border-color 0.2s; background: var(--cream); }
 .np-input:focus { border-color: var(--pink); }
-.np-send { width: 34px; height: 34px; border-radius: 50%; background: var(--pink); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; transition: background 0.2s; flex-shrink: 0; }
+.np-send { min-width: 48px; min-height: 48px; width: 48px; height: 48px; border-radius: 50%; background: var(--pink); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; transition: background 0.2s, transform 0.1s; flex-shrink: 0; }
 .np-send:hover { background: var(--lavender); }
+.np-send:active { transform: scale(0.94); }
+/* Recording pulse for the mic button */
+.np-send.recording { background: var(--pink); animation: micPulse 1.1s ease-in-out infinite; }
+@keyframes micPulse { 0%,100%{box-shadow:0 0 0 0 rgba(201,123,90,0.5)} 50%{box-shadow:0 0 0 10px rgba(201,123,90,0)} }
+/* Prominent "listen" button under an assistant reply — key for non-readers */
+.np-listen { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; min-height: 40px; padding: 8px 16px; border-radius: 100px; border: 1.5px solid var(--pink); background: white; color: var(--pink); font-size: 14px; font-weight: 600; cursor: pointer; }
+.np-listen:hover { background: var(--pink-pale); }
+.np-listen:disabled { opacity: 0.55; cursor: default; }
 
 /* SCROLL REVEAL */
 .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.65s ease, transform 0.65s ease; }
@@ -382,10 +390,14 @@ footer { background: var(--ink); padding: 56px 0 40px; }
 
 /* Mobile bottom tab bar (hidden on desktop) */
 .bottom-nav { display: none; }
-.bn-item { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; padding: 7px 0; color: var(--ink-muted); font-size: 10px; letter-spacing: 0; text-transform: none; }
+.bn-item { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; padding: 7px 0; min-height: 54px; justify-content: center; color: var(--ink-muted); font-size: 11px; letter-spacing: 0; text-transform: none; }
 .bn-item.active { color: var(--pink); }
-.bn-icon { font-size: 21px; line-height: 1; }
-.bn-label { font-weight: 500; }
+.bn-icon { font-size: 22px; line-height: 1; }
+.bn-label { font-weight: 600; }
+/* Emergency/SOS tab — always reads as urgent */
+.bn-item.sos { color: #C0392B; }
+.bn-item.sos .bn-icon { animation: sosPulse 2s ease-in-out infinite; }
+@keyframes sosPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.12)} }
 @media(max-width: 860px) {
   .app-nav-links { display: none; }
   .bottom-nav {
@@ -401,7 +413,7 @@ footer { background: var(--ink); padding: 56px 0 40px; }
 .badge-premium { background: var(--pink); color: white; }
 .card { background: white; border: 1px solid var(--border); border-radius: var(--r-lg); padding: 28px; }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.muted { color: var(--ink-muted); font-size: 13px; }
+.muted { color: var(--ink-muted); font-size: 14px; }
 .pay-wall { text-align: center; padding: 48px 28px; background: var(--lav-pale); border: 1px dashed var(--lavender); border-radius: var(--r-lg); }
 .chip { display: inline-block; background: white; border: 1px solid var(--border); border-radius: 100px; padding: 7px 14px; font-size: 12px; color: var(--ink-mid); }
 .chip:hover { border-color: var(--pink); color: var(--pink); }

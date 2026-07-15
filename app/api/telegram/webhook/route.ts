@@ -7,7 +7,7 @@ import { publicBaseUrl } from "@/lib/baseUrl";
 import { getSettings } from "@/lib/settings";
 import { bumplyReply } from "@/lib/companion";
 import { sendTelegram, telegramSecret, sendChatAction, downloadTelegramFile, sendVoiceReply } from "@/lib/telegram";
-import { transcribe, speak, normalizeVoice } from "@/lib/voice";
+import { transcribe, speak, normalizeVoice, warm } from "@/lib/voice";
 import { wavToMp3 } from "@/lib/audio";
 import { currentWeekFrom, getBabyData, babySizeText, trimesterFor } from "@/lib/babyData";
 import { dailyTipFor } from "@/lib/dailyTips";
@@ -68,6 +68,9 @@ export async function POST(req: Request) {
       let userText = text;
       const viaVoice = !userText && !!voice;
       if (viaVoice) {
+        // Warm both Modal voice engines now — avoids a second ~25s cold start
+        // when we synthesise the voice reply.
+        void warm().catch(() => {});
         await sendChatAction(chatId, "typing");
         try { userText = (await transcribe(await downloadTelegramFile(voice.file_id), "voice.ogg")).trim(); } catch { userText = ""; }
       }

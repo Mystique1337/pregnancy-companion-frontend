@@ -72,19 +72,24 @@ export default function OfflineHelper() {
     }
   }
 
-  // Is the tiny model's answer too weak to trust? Then redirect her online.
+  // Is the tiny model's answer too weak to trust? (Kept loose — over-strict gating
+  // made the offline chat feel dead: every answer got binned and she was told to
+  // go online.)
   function weak(a: string): boolean {
     const t = (a || "").trim();
     if (t.length < 8) return true;
     if (/i (don'?t|do not) know|i'?m not sure|as an ai|cannot help|no puedo/i.test(t)) return true;
     const w = t.toLowerCase().split(/\s+/);
-    if (w.length > 10 && new Set(w).size / w.length < 0.5) return true; // repetitive
+    if (w.length > 14 && new Set(w).size / w.length < 0.35) return true; // severe repetition only
     return false;
   }
 
   // Lazy-load the offline speech-to-text model, then record → transcribe → ask.
   async function toggleMic() {
     if (recording) { rec.current?.stop(); return; }
+    // Silence our own voice first — otherwise the mic records the spoken reply and
+    // the helper "hears itself" (repeated questions/answers on speakerphone).
+    try { speechSynthesis.cancel(); } catch { /* ignore */ }
     setErr("");
     try {
       if (!asr.current) {
@@ -190,11 +195,15 @@ export default function OfflineHelper() {
         { role: "system", content: `You are Bumply, a kind pregnancy helper for Nigerian mothers.${ctx} Answer in 1-2 short, simple sentences.${groundLine} For any warning sign (bleeding, severe pain, baby not moving, fits, fever), tell her to go to a clinic now. If you are unsure, say "I'm not sure".` },
         { role: "user", content: question },
       ];
-      const out = await gen.current(messages, { max_new_tokens: 80, do_sample: false, temperature: 0.3 });
+      // Sampling + repetition penalty: greedy decoding makes a 135M model loop the
+      // same phrase, which then failed the weak() gate — the chat felt broken.
+      const out = await gen.current(messages, { max_new_tokens: 70, do_sample: true, temperature: 0.7, top_p: 0.9, repetition_penalty: 1.3 });
       const reply = (out?.[0]?.generated_text?.at?.(-1)?.content || "").trim();
-      // Weak model answer → fall back to the curated note if we have one, else send online.
+      // Weak model answer → curated note if we have one; else the closest KB item;
+      // only push her online as a last resort.
       if (weak(reply)) {
-        if (grounding) { setAnswer(grounding); if (spoke) speakOut(grounding); }
+        const backup = grounding || (hit && hit.score > 0 ? hit.item.a : "");
+        if (backup) { setAnswer(backup); if (spoke) speakOut(backup); }
         else setNeedOnline(true);
       } else { setAnswer(reply); if (spoke) speakOut(reply); }
     } catch {

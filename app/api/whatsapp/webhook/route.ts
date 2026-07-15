@@ -9,7 +9,7 @@ import { detectBirthAnnouncement, birthCongratsReply } from "@/lib/postpartum";
 import { markDelivered } from "@/lib/queries";
 import { immunizationReminder } from "@/lib/immunization";
 import { readImage, safetyNote, visionConfigured } from "@/lib/vision";
-import { transcribe, speak, normalizeVoice } from "@/lib/voice";
+import { transcribe, speak, normalizeVoice, warm } from "@/lib/voice";
 import { wavToMp3 } from "@/lib/audio";
 
 export const dynamic = "force-dynamic";
@@ -67,6 +67,9 @@ export async function POST(req: Request) {
         let viaVoice = false;
         const audioMsg = d?.message?.audioMessage || d?.message?.ephemeralMessage?.message?.audioMessage;
         if (!text && audioMsg) {
+          // Modal voice scales to zero — warm BOTH engines now so the TTS reply
+          // isn't a second cold start after transcribe + the brain (~25s each).
+          void warm().catch(() => {});
           try {
             const audio = await downloadWhatsAppMedia(d);
             if (audio) { text = (await transcribe(audio, "voice.ogg")).trim(); viaVoice = true; }

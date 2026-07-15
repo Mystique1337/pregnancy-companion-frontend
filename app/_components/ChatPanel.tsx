@@ -39,6 +39,10 @@ export default function ChatPanel({
   // supports her language); when offline, uses the phone's on-device recognition.
   async function toggleMic() {
     if (recording) { localRecRef.current?.stop(); recRef.current?.stop(); return; }
+    // CRITICAL: silence any playing reply first — on speakerphone the mic would
+    // record Bumply's own voice, Whisper would transcribe it as her next question,
+    // and the chat would loop, repeating questions and answers.
+    audioRef.current?.pause(); audioRef.current = null; stopLocalTts(); setVoiceMsg(null);
     // Offline → on-device speech recognition (no network, no Modal).
     if (!navigator.onLine && localAsrSupported()) {
       const handle = startLocalAsr(

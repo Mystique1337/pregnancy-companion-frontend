@@ -1,32 +1,22 @@
-// WhatsApp self-onboarding: an unknown number can join Bumply by chat alone —
-// no app, no signup form. We walk her through name → weeks/due-date over WhatsApp,
-// then create her mother record (the same minimal wa<digits>@bumply.chw pattern a
-// CHW enrolment uses). State lives in preg_companion.wa_onboarding until she's done.
+// Self-onboarding over a chat channel (WhatsApp OR Telegram): an unknown user can
+// join Bumply by chatting alone — no app, no signup form. We ask name → weeks/due-date,
+// then create their mother record. State lives in preg_companion.wa_onboarding keyed by
+// a per-channel stateKey (phone digits for WhatsApp, `tg:<chatId>` for Telegram).
 import { randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
-import { getOnboarding, setOnboarding, clearOnboarding, createMother, type Mother } from "@/lib/queries";
-import { currentWeekFrom, trimesterFor } from "@/lib/babyData";
+import { getOnboarding, setOnboarding, clearOnboarding, createMother, linkTelegramChat, type Mother } from "@/lib/queries";
+import { trimesterFor, currentWeekFrom } from "@/lib/babyData";
 import { normalizeLang } from "@/lib/languages";
 
 const GREETING = /^(hi+|hello+|hey+|start|begin|join|good\s*(morning|afternoon|evening)|ba?wo|abeg|help|menu|sannu|ndewo)\b/i;
 
 // Pull a plausible "weeks pregnant" number, or a due date, from free text.
-// Returns the current gestational week (1..42) or null if we can't tell.
 export function parseWeek(text: string): number | null {
   const t = text.toLowerCase();
-  // "20 weeks", "week 20", or a bare number
   const wk = t.match(/\b(\d{1,2})\s*(?:weeks?|wks?|w)\b/) || t.match(/\bweek\s*(\d{1,2})\b/) || t.match(/^\s*(\d{1,2})\s*$/);
-  if (wk) {
-    const n = Number(wk[1]);
-    if (n >= 1 && n <= 42) return n;
-  }
-  // "months": convert to weeks (rough, ×4.3)
+  if (wk) { const n = Number(wk[1]); if (n >= 1 && n <= 42) return n; }
   const mo = t.match(/\b(\d{1,2})\s*months?\b/);
-  if (mo) {
-    const n = Math.round(Number(mo[1]) * 4.3);
-    if (n >= 1 && n <= 42) return n;
-  }
-  // A due date anywhere in the text (e.g. "due in December", "15 Jan 2027").
+  if (mo) { const n = Math.round(Number(mo[1]) * 4.3); if (n >= 1 && n <= 42) return n; }
   if (/\b(due|edd|expect)/.test(t) || /\b20\d\d\b/.test(t) || /(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/.test(t)) {
     const cleaned = text.replace(/\b(due|edd|expected?|date|in|on|around|about)\b/gi, " ").trim();
     const ms = Date.parse(cleaned);
@@ -39,42 +29,41 @@ export function parseWeek(text: string): number | null {
 }
 
 export function cleanName(text: string): string {
-  // Strip common lead-ins ("my name is", "I am", "call me") and punctuation.
-  const n = text
+  return text
     .replace(/^\s*(my\s+name\s+is|i\s*am|i'?m|this\s+is|call\s+me|na\s+me|na)\s+/i, "")
     .replace(/[^\p{L}\p{M}\s'’-]/gu, "")
     .trim()
     .split(/\s+/).slice(0, 3).join(" ");
-  return n;
 }
 
 export type OnboardResult =
-  | { kind: "reply"; text: string }                    // still onboarding — send this and stop
-  | { kind: "done"; text: string; mother: Mother }     // enrolled — send welcome, then normal flow may follow
-  | { kind: "skip" };                                  // not an onboarding turn
+  | { kind: "reply"; text: string }
+  | { kind: "done"; text: string; mother: Mother }
+  | { kind: "skip" };
 
-// Drive one turn of onboarding for an unregistered number. Call this only after
-// getMotherByPhone() returned null.
-export async function handleOnboarding(phone: string, text: string): Promise<OnboardResult> {
-  const digits = phone.replace(/\D/g, "");
-  const state = await getOnboarding(digits);
+// A channel abstracts WHERE onboarding state lives and HOW the mother is created.
+export type OnboardChannel = {
+  stateKey: string;
+  create: (name: string, week: number, trimester: string) => Promise<Mother>;
+};
 
-  // First contact ever: greet + ask for her name.
+const WELCOME = "Welcome to Bumply 🌸 I'm your free pregnancy helper. I can answer your questions, check for danger signs, and remind you about clinic visits — any time.\n\nWhat is your first name?";
+
+// Drive one turn of onboarding. Call only after the user was not found as a mother.
+export async function handleOnboarding(text: string, ch: OnboardChannel): Promise<OnboardResult> {
+  const state = await getOnboarding(ch.stateKey);
+
   if (!state) {
-    await setOnboarding(digits, "ask_name", {});
-    return {
-      kind: "reply",
-      text: "Welcome to Bumply 🌸 I'm your free pregnancy helper on WhatsApp. I can answer your questions, check for danger signs, and remind you about clinic visits — any time.\n\nWhat is your first name?",
-    };
+    await setOnboarding(ch.stateKey, "ask_name", {});
+    return { kind: "reply", text: WELCOME };
   }
 
   if (state.step === "ask_name") {
     const name = cleanName(text);
-    // If she just said hi again (no real name), re-ask once.
     if (!name || (GREETING.test(text) && name.length < 2)) {
       return { kind: "reply", text: "No wahala 🙂 Just tell me the name you'd like me to call you." };
     }
-    await setOnboarding(digits, "ask_week", { name });
+    await setOnboarding(ch.stateKey, "ask_week", { name });
     return {
       kind: "reply",
       text: `Lovely to meet you, ${name}! 💛\n\nHow many weeks pregnant are you? Reply with a number (like *20*).\n\nNot sure? Tell me your due date or which month you're expecting, and I'll work it out.`,
@@ -87,34 +76,66 @@ export async function handleOnboarding(phone: string, text: string): Promise<Onb
       return { kind: "reply", text: "Almost there! Just reply with how many weeks pregnant you are — a number like *20*. If you don't know, tell me the month your baby is due." };
     }
     const name = String(state.data?.name || "").trim() || "mama";
-    const email = `wa${digits}@bumply.chw`;
-    const password_hash = await bcrypt.hash(randomBytes(12).toString("hex"), 10);
     try {
-      const mother = await createMother({
-        email,
-        password_hash,
-        full_name: name,
-        phone: digits,
-        whatsapp_number: digits,
-        current_week: week,
-        weeks_completed: week,
-        trimester: trimesterFor(week),
-        first_pregnancy: true,
-        source: "whatsapp",
-        language: normalizeLang(undefined),
-      });
-      await clearOnboarding(digits);
+      const mother = await ch.create(name, week, trimesterFor(week));
+      await clearOnboarding(ch.stateKey);
       return {
         kind: "done",
         mother,
-        text: `You're all set, ${name}! 🎉 You're in *week ${week}* — ${trimesterFor(week)} trimester.\n\nFrom now on you can just message me:\n• Ask me anything about your pregnancy\n• Send a voice note if you'd rather talk\n• I'll watch for danger signs and tell you to get help fast\n\nHow are you feeling today?`,
+        text: `You're all set, ${name}! 🎉 You're in *week ${week}* — ${trimesterFor(week)} trimester.\n\nFrom now on you can just message me:\n• Ask me anything about your pregnancy\n• Send a voice note if you'd rather talk\n• Send a photo of your ANC card or medicine and I'll read it\n• I'll watch for danger signs and tell you to get help fast\n\nHow are you feeling today?`,
       };
     } catch {
-      // Duplicate/edge — don't trap her in the flow.
-      await clearOnboarding(digits);
+      await clearOnboarding(ch.stateKey);
       return { kind: "reply", text: "You're all set 🌸 Go ahead and ask me anything about your pregnancy." };
     }
   }
 
   return { kind: "skip" };
+}
+
+async function freshHash(): Promise<string> {
+  return bcrypt.hash(randomBytes(12).toString("hex"), 10);
+}
+
+// WhatsApp channel — minimal wa<digits>@bumply.chw record keyed by phone digits.
+export function whatsappChannel(digits: string): OnboardChannel {
+  return {
+    stateKey: digits,
+    create: async (name, week, trimester) =>
+      createMother({
+        email: `wa${digits}@bumply.chw`,
+        password_hash: await freshHash(),
+        full_name: name,
+        phone: digits,
+        whatsapp_number: digits,
+        current_week: week,
+        weeks_completed: week,
+        trimester,
+        first_pregnancy: true,
+        source: "whatsapp",
+        language: normalizeLang(undefined),
+      }),
+  };
+}
+
+// Telegram channel — tg<chatId>@bumply.tg record, linked to the Telegram chat.
+export function telegramChannel(chatId: string): OnboardChannel {
+  return {
+    stateKey: `tg:${chatId}`,
+    create: async (name, week, trimester) => {
+      const mother = await createMother({
+        email: `tg${chatId}@bumply.tg`,
+        password_hash: await freshHash(),
+        full_name: name,
+        current_week: week,
+        weeks_completed: week,
+        trimester,
+        first_pregnancy: true,
+        source: "telegram",
+        language: normalizeLang(undefined),
+      });
+      await linkTelegramChat(mother.id, chatId);
+      return mother;
+    },
+  };
 }

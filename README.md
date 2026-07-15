@@ -1,6 +1,6 @@
 # Bumply — the AI pregnancy companion that meets Nigerian mothers where they are
 
-**Live:** https://app.bumply.mom · **WhatsApp:** +234 815 417 4140 · **Telegram:** @bumply_bot
+**Live:** https://app.bumply.mom · **WhatsApp:** +234 815 417 4140 · **Telegram:** @My_bumplycompanionbot
 **Android:** installable APK (see [ANDROID.md](./ANDROID.md)) · **Testing:** [DEMO-TESTING.md](./DEMO-TESTING.md)
 
 Built for the **HelpMum CareCode Hackathon** (+ the "build-small" on-device track).
@@ -61,7 +61,7 @@ something is wrong — then tracks whether she actually reached care.
 | **Clinic / CHW** | Enrol mothers, alert queue, WhatsApp-her, close-the-loop outcomes, **impact report + CSV** |
 | **Postpartum** | Birth announcement → newborn danger signs + free immunization schedule & reminders |
 | **Web app** | Personalised weekly updates, baby size, journal, vitals + risk alerts, hospital locator, symptom triage, appointments, library search |
-| **Channels** | WhatsApp (Evolution API), Telegram bot, web, installable Android app (PWA/TWA) |
+| **Channels** | WhatsApp (Evolution API) **and Telegram** — full feature parity (onboarding, danger detection, voice, photo, postpartum) — plus web + installable Android app (PWA/TWA) |
 | **Languages** | English, Pidgin, Yoruba, Hausa, Igbo (UI + AI replies) |
 
 ---

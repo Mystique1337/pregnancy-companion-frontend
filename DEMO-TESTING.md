@@ -5,7 +5,7 @@ suites**, and a **manual checklist** for the web app, WhatsApp, and the Android 
 
 - **Live web app:** https://app.bumply.mom
 - **WhatsApp bot:** +234 815 417 4140
-- **Telegram bot:** @bumply_bot
+- **Telegram bot:** @My_bumplycompanionbot
 - Estimated full manual pass: ~30–40 min.
 
 ---
@@ -134,7 +134,7 @@ Message **+234 815 417 4140** from a number **not** already registered.
    safety, and gives the **free immunization** schedule.
 
 > If WhatsApp is unresponsive, the Evolution instance may need reconnecting (QR) in the admin
-> panel → WhatsApp. Telegram (@bumply_bot) is a reliable backup channel for the same brain.
+> panel → WhatsApp. Telegram (@My_bumplycompanionbot) is a reliable backup channel for the same brain.
 
 ---
 

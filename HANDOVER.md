@@ -18,7 +18,7 @@ See also: [README.md](./README.md) (what it is + selling points) · [DEMO-TESTIN
 | Health | ✅ `{ok:true}` | `/api/health` |
 | Database | ✅ reachable (26 mothers) | self-hosted Supabase, REST bridge |
 | WhatsApp bot | ✅ instance `bumply` state **open** | Evolution API, number **+234 815 417 4140** |
-| Telegram bot | ✅ webhook clean, 0 pending | @bumply_bot |
+| Telegram bot | ✅ webhook clean, 0 pending | @My_bumplycompanionbot |
 | AI brain | ✅ NVIDIA NIM 200 OK | `llama-3.1-8b-instruct` |
 | Photo vision | ✅ free NVIDIA model | `llama-3.2-11b-vision` |
 | Cron (daily+weekly) | ✅ scheduled, last run green | GitHub Actions `cron.yml` |
@@ -38,7 +38,7 @@ See also: [README.md](./README.md) (what it is + selling points) · [DEMO-TESTIN
 | **AI (LLM+vision)** | NVIDIA NIM (OpenAI-compatible) | build.nvidia.com key |
 | **AI (HelpMum / voice)** | Modal, scale-to-zero | Modal workspace **`chidi-ashinze`** |
 | **Email** | Plunk, verified domain `bumply.mom` | Plunk instance |
-| **Telegram** | @bumply_bot | bot token |
+| **Telegram** | @My_bumplycompanionbot | bot token |
 | **Domains** | `bumply.mom`, `app.bumply.mom` | DNS provider |
 
 ---

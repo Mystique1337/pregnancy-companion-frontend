@@ -4,7 +4,7 @@ import { getSettings } from "@/lib/settings";
 import { bumplyReply } from "@/lib/companion";
 import { sendText, sendWhatsAppAudio, downloadWhatsAppMedia, webhookSecret } from "@/lib/evolution";
 import { detectDangerSign, dangerReply } from "@/lib/dangerSigns";
-import { handleOnboarding } from "@/lib/waOnboard";
+import { handleOnboarding, whatsappChannel } from "@/lib/waOnboard";
 import { detectBirthAnnouncement, birthCongratsReply } from "@/lib/postpartum";
 import { markDelivered } from "@/lib/queries";
 import { immunizationReminder } from "@/lib/immunization";
@@ -93,7 +93,7 @@ export async function POST(req: Request) {
             console.log(`[wa] DANGER (${dNew.sign}) from unregistered ${phone}`);
             continue;
           }
-          const res = await handleOnboarding(phone, text);
+          const res = await handleOnboarding(text, whatsappChannel(phone));
           if (res.kind !== "skip") await sendText(phone, res.text);
           console.log(`[wa] onboarding ${res.kind} for ${phone}`);
           continue;

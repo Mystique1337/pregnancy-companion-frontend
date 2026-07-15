@@ -1,99 +1,102 @@
-# Bumply → CareCode Hackathon 2.0 — Winning Plan
+# Bumply — Master Plan (CareCode Hackathon 2.0)
 
-**Deadline: 20 July 2026.** Prize ₦10M. Judged by HelpMum. The whole plan is built
-around one question from their deck: *"Would the woman on slide 3 actually use this?"*
+**Deadline: 20 July 2026. Judge's question: "Would the woman on slide 3 actually use this?"**
+She uses WhatsApp daily, code-switches Yoruba/Pidgin, may not read long English, is on a
+₦45k Android + 3G, won't explore features. Build for her.
 
-## Who she is (from the brief)
-Mother, late 20s–30s. ₦45k Android, 3G. **Uses WhatsApp every day for everything.**
-Code-switches Yoruba/Pidgin mid-sentence. May not read long English. Busy, sometimes
-scared, not a tech user, **won't explore features**. "If it isn't obvious, she leaves."
-
-## The hard truth about the current app
-Bumply today is a rich **web app** with ~15 pages, logins, and lots of features. That is
-built for judges/portfolio, not for her. The deck says that loses. We reframe.
+**North star:** *Bumply is a WhatsApp-first AI midwife that catches danger signs in time,
+in her language, by voice — powered by HelpMum's open-source models, deployed through CHWs.*
 
 ---
 
-## The strategy (what wins)
+## The whole system, in layers
 
-1. **Live where she lives: WhatsApp.** Make WhatsApp the primary surface via the official
-   **WhatsApp Cloud API** (Meta) — not Evolution/Baileys (that got us soft-banned before).
-   The web app becomes the **Community Health Worker (CHW) + clinician** layer, not her surface.
-2. **Use HelpMum's open-source brain.** Swap the chat model to **HelpMum MamaBot Llama**
-   (open-source, maternal-health-tuned Llama 3.1) with **Vax Llama** datasets as the RAG
-   knowledge base. This satisfies the hard open-source requirement AND makes answers
-   domain-correct. (Keep NVIDIA as a fallback.)
-3. **No reading required: voice + her language.** She sends a **voice note in Pidgin/Yoruba**,
-   Bumply replies **by voice** in the same language. We already have this (Whisper + SoroTTS).
-4. **No login, ever.** Her WhatsApp number is her identity. This deletes the entire "have to
-   create an account again" problem. (Web/CHW side keeps sliding-session auth — already shipped.)
-5. **One obvious job: catch danger signs in time.** The impact core is a **danger-sign checker
-   + ANC + immunization reminders**, pushed proactively in her language at the right moment.
-6. **Reach the unreachable: USSD/SMS fallback.** For no-data/feature-phone moments, a
-   **USSD short-code** (*347*#) via **Africa's Talking** does a danger-sign check + reminder.
+### 1. Channels (how she reaches Bumply)
+- **WhatsApp** — primary. Voice + text, danger signs, chat. ✅ LIVE (Evolution, number 2348154174140).
+- **SMS** — safety net: ANC/danger-sign reminders + phone-OTP login, no data needed. ⏳ needs a provider (Termii / Africa's Talking).
+- **Android app (PWA → APK)** — installable, offline shell, push. ⏳ buildable from the existing PWA (no rewrite).
+- **Web app** — CHW + clinician + power users. ✅ exists (rich).
+- Telegram — demoted to optional.
 
-## The impact path (draw the line for the judges)
-WhatsApp/USSD reaches her on the phone she already uses → danger-sign info **in her language,
-at the right time** → she recognises a sign (bleeding, swelling, fever, reduced movement) →
-she seeks care early → contributes to cutting the **82 deaths/day**. Immunisation reminders
-extend the same line past birth (HelpMum's core, 400k caregivers).
+### 2. The brain (AI) — HelpMum open-source is the hard requirement
+- **`HelpMumHQ/mamabot-llama-1`** (8B) → maternal chat + danger-sign guidance. ⏳ needs hosting.
+- **`HelpMumHQ/vax-llama-1`** (8B) → immunization module. ⏳ needs hosting.
+- **`HelpMumHQ/AI-translator-eng↔9ja`** (0.5B) → Yoruba in/out layer. ⏳ needs hosting.
+- **SoroTTS + Whisper** (Modal) → voice in/out. ✅ LIVE.
+- **RAG / pgvector** → grounding in vetted + HelpMum content. ✅.
+- **NVIDIA NIM** → automatic fallback so the demo never dies. ✅.
+- *Hosting the 8B models:* deploy on **your Modal** (vLLM, OpenAI-compatible) — recommended — or an **HF Inference Endpoint**. Then I point `lib/ai.ts` at it (prefer HelpMum, fall back to NVIDIA).
+
+### 3. Core features (already built — repackage onto WhatsApp)
+- Danger-sign checker / triage ✅ · Predictive risk engine + proactive check-ins ✅
+- Vitals + red-flag alerts ✅ · Weekly journey + ethnicity meal plan ✅
+- Emergency mode (nearest hospital + alert next-of-kin) ✅ · Wellbeing/EPDS screen ✅
+- Symptom checker ✅ · Bump diary ✅ · Doctor report ✅
+
+### 4. The human loop / distribution (the winning move for HelpMum)
+- **CHW co-pilot** — a Community Health Worker enrolls mothers by phone number and gets
+  alerted on danger signs. Mirrors HelpMum's real deployment = impact path + sustainability. ⏳ NEW.
+- **Clinician portal** ✅ exists.
+
+### 5. Accessibility / inclusion
+- **Voice-first** Pidgin/Yoruba/Hausa/Igbo ✅ tech ready · **Multilingual** UI (5 languages) ✅
+- **WhatsApp text** = already Deaf-accessible ✅
+- **ASL "Watch in sign language" videos** on the danger-sign messages (ASL = basis of Nigerian SL). ⏳ P2, pre-generated clips.
+
+### 6. Reliability / ops
+- **Plunk email** on bumply.mom (real delivery) ✅ · **Password reset** + sliding sessions ✅
+- **Passwordless phone-OTP** (her number = identity — kills re-signup for good) ⏳ via SMS.
+- Self-hosted Supabase via REST bridge ✅.
 
 ---
 
-## Build order for 5 days (ruthless)
+## Android app — yes, here's how
+The app is **already a PWA** (manifest + service worker + offline shell). The fast, no-rewrite path:
+- **PWA → TWA APK** via **Bubblewrap / PWABuilder** — point it at `app.bumply.mom`, get a signed,
+  installable, Play-Store-ready `.apk`/`.aab` in ~half a day. Web push works on Android via Chrome.
+- Deeper native later (camera, native push): **Capacitor** wrapper (still reuses the web code).
+- React Native rewrite = NOT worth it before the deadline.
+- **Recommendation:** ship the **TWA APK** so you can say "installable Android app" and hand judges
+  an APK, while WhatsApp stays the primary surface for the non-tech mother.
 
-**P0 — the winning core (must ship):**
-- WhatsApp Cloud API channel (inbound + outbound, template + session messages).
-- MamaBot Llama as the brain + Vax Llama datasets in the RAG KB.
-- Voice-note in / voice-note out, Pidgin + Yoruba (+ Hausa/Igbo).
-- Danger-sign checker (our triage flow) delivered conversationally in WhatsApp.
-- ANC + immunisation reminder drip (behaviour-change chain).
-- Zero-login (WhatsApp number = identity).
+---
 
-**P1 — reach + trust:**
-- USSD/SMS fallback via Africa's Talking (danger-sign check + reminder for no-data users).
-- CHW mode (a CHW enrols/tracks mothers in her LGA, gets alerts) — the distribution engine.
-- Emergency: nearest hospital + alert next-of-kin (already built; surface in WhatsApp).
+## The 5-day build order (ruthless)
 
-**P2 — polish + inclusion:**
-- Nigerian Sign Language **pre-recorded video** clips for the danger-sign + ANC messages
-  (deployable, low-data). NOT real-time sign recognition — that won't run on a ₦45k phone/3G
-  and breaks the "simplicity" rule.
-- Immunisation tracker (birth→5) mirroring HelpMum's Vaccination Tracker.
-- Clinician portal / population dashboard for the sustainability story.
+**P0 — the winning core (no new creds needed except model hosting):**
+1. WhatsApp **voice notes** in/out (Pidgin/Yoruba) — she speaks, it speaks back. *(in progress)*
+2. **Danger-sign detector** in WhatsApp (keyword + triage → urgent guidance + CHW/clinician alert).
+3. Wire **mamabot-llama-1** as the brain (fallback to NVIDIA). *(needs hosting)*
 
-## Cheap channel infrastructure (the "what SMS/WhatsApp" question)
-- **WhatsApp Cloud API (Meta, official):** service/user-initiated conversations are effectively
-  free; utility templates are cents. Reliable, no ban risk. **Primary channel.**
-- **Africa's Talking:** SMS + **USSD** + Voice, pay-as-you-go (~₦2–4/SMS, no monthly fee),
-  Africa-first. **Best for USSD/SMS fallback + OTP.**
-- **Termii (Nigerian):** SMS/WhatsApp/Voice OTP, cheap local rates — a good backup for OTP.
-- Telegram: keep only as an optional power-user channel. It is **not** what she uses; do not
-  centre the pitch on it. (A new bot token is a 2-minute BotFather task if we want it.)
+**P1 — reach + the impact/sustainability engine:**
+4. **CHW co-pilot** (enroll by phone + danger-sign alerts).
+5. **SMS** reminders + **phone-OTP passwordless login**. *(needs SMS key)*
+6. **Android APK** from the PWA.
 
-## The account fix (root cause + fix)
-- **Root cause:** no password recovery + web sessions lost across browsers (WhatsApp in-app
-  browser, new device) → she re-signs-up. Confirmed: a real phone registered twice.
-- **Shipped now:** sliding sessions (active users never silently log out).
-- **Real fix:** go passwordless — WhatsApp/phone-number identity, OTP only when needed. Removes
-  the problem class entirely and fits "obvious, no friction."
+**P2 — depth + inclusion:**
+7. **vax-llama-1** immunization module + reminders.
+8. **Yoruba translator** layer (native Yoruba I/O).
+9. **ASL danger-sign videos**.
 
-## Sustainability (the deck's #3 killer)
-Partner with HelpMum: deploy on their **CHW network** + open-source infra + government handover
-path (they just handed vaccine tools to the Nigerian govt). Revenue: B2B2C to **State Primary
-Healthcare Boards / HMOs / clinics**, clinician portal as the product. Not "figure it out later."
+---
 
-## Decisions / access needed to execute
-1. **WhatsApp Cloud API:** a Meta Business account + a phone number + the Cloud API token
-   (or confirm we use an existing HelpMum/your number).
-2. **MamaBot Llama / Vax Llama:** point me to where they're hosted (Hugging Face repo or an
-   endpoint) so I wire them in.
-3. **Africa's Talking (or Termii)** account for USSD/SMS — optional for P1.
-4. Confirm the **WhatsApp-first pivot** (web app becomes CHW/clinician layer).
+## The 60-second demo (draw the impact line)
+Pidgin voice note *"I dey see blood"* → Bumply understands (HelpMum translator) → thinks
+(mamabot-llama) → **voice-replies in her language** "go clinic now" → shows nearest hospital →
+**alerts her CHW** → CHW dashboard lights up. Line: *reaches her on the phone she owns, right
+info, right time, her language → she seeks care early → fewer of the 82 deaths/day.*
+
+## Sustainability (deck killer #3)
+Extend HelpMum's stack, don't compete: deploy via their **CHW network**, use their **open-source
+models**, ride their **government handover** path. Revenue: B2B2C to **State PHC boards / HMOs /
+clinics**; clinician portal as the product.
+
+## What I need from you
+1. **Host mamabot / vax-llama / translators** — Modal (I'll write the deploy) or an HF Endpoint URL+token.
+2. **SMS provider** key — Termii or Africa's Talking.
+3. Go-ahead on the **Android APK** (I'll polish the manifest + generate it).
 
 ## Sources
-- HelpMum hackathon: https://helpmum.org/hackathon
+- HelpMum models: https://huggingface.co/HelpMumHQ
 - MamaBot: https://helpmum.org/mamabot
-- MamaBot Llama (open-source): https://helpmum.org/blog/launch-of-helpmum-africa-mamabot-llama
-- WhatsApp-based chatbot impact: https://allafrica.com/stories/202510240001.html
-- Vaccination tools → govt: https://techcabal.com/2025/09/04/helpmum-hands-over-digital-vaccine-tools-to-nigerian-government-setting-stage-for-nationwide-rollout/
+- WhatsApp-chatbot impact: https://allafrica.com/stories/202510240001.html

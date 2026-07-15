@@ -3,18 +3,24 @@
 // immunization schedule. Keep the trigger tight to avoid false positives.
 const BIRTH = [
   /\bi\s*(have|'?ve)?\s*(just\s*)?(given\s*birth|delivered|had\s*(my|the)\s*baby)/i,
-  /\bbaby\s*(is\s*)?(born|arrived|came|don\s*come)/i,
+  /\bbaby\s*(is\s*)?(born|arrived|don\s*come)/i,
+  /\bbaby\s*(has|have)\s*(come|arrived)/i,
   /\bi\s*don\s*(born|deliver|put\s*to\s*bed)/i,
   /\bi\s*put\s*to\s*bed/i,
-  /\bmy\s*baby\s*(don\s*)?come/i,
+  /\bmy\s*baby\s*(don|has|have)\s*come/i,
   /\bwe\s*(have\s*)?welcomed\s*(our|the)\s*baby/i,
 ];
 
-// Only fire on a genuinely short, announcement-style message (not a long question
-// that merely mentions birth).
+// Future-tense / question phrasing that mentions birth but is NOT an announcement
+// ("when will my baby come?", "when is baby due?").
+const NOT_YET = /\b(when|will|going\s+to|go\s+come|due|expect|should\s+i)\b/i;
+
+// Only fire on a genuinely short, announcement-style message (not a question or a
+// long message that merely mentions birth).
 export function detectBirthAnnouncement(text: string): boolean {
   const t = String(text || "").trim();
   if (!t || t.length > 120) return false;
+  if (t.includes("?") || NOT_YET.test(t)) return false;
   return BIRTH.some((r) => r.test(t));
 }
 

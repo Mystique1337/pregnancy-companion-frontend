@@ -91,10 +91,13 @@ export default function ChatPanel({
     setVoiceMsg(i);
     if (navigator.onLine) {
       try {
+        // The server voice (SoroTTS) scales to zero — a cold start is ~25s of
+        // silence. Give it a short budget, then fall back to the phone's voice.
         const res = await fetch("/api/tts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text, voice: L }),
+          signal: AbortSignal.timeout(9000),
         });
         if (res.ok) {
           const url = URL.createObjectURL(await res.blob());
@@ -104,9 +107,9 @@ export default function ChatPanel({
           await audio.play();
           return; // keep the "playing" state until it ends
         }
-      } catch { /* server voice unavailable → local fallback below */ }
+      } catch { /* slow/unavailable server voice → local fallback below */ }
     }
-    // On-device voice (no network / server down).
+    // On-device voice (no network / cold or down server).
     await speakLocal(text, L);
     setVoiceMsg(null);
   }

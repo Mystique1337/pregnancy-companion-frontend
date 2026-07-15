@@ -38,6 +38,13 @@ export function cleanReply(text: string): string {
   t = t.replace(/\(\s*Note:[\s\S]*?\)\s*/gi, "").trim();
   const metaAt = t.search(/\n\s*[*_(]*\s*Note\s*[:*)]/i);
   if (metaAt > 0) t = t.slice(0, metaAt).trim();
+  // The model sometimes wraps the whole reply in quotation marks — unwrap them.
+  const open = t[0];
+  if ((open === '"' || open === "“" || open === "'") && t.length > 2) {
+    const close = open === "“" ? "”" : open;
+    if (t.endsWith(close)) t = t.slice(1, -1).trim();
+    else if (!t.slice(1).includes(open)) t = t.slice(1).trim(); // lone leading quote
+  }
   return t.trim();
 }
 

@@ -99,6 +99,9 @@ console.log("\n— cleanReply (reply hygiene) —");
   ok("strips <think> blocks", cleanReply("<think>reasoning...</think>Drink water today 🌸") === "Drink water today 🌸");
   ok("strips leading 'Assistant:' label", cleanReply("Assistant: You dey do well!") === "You dey do well!");
   ok("leaves a clean reply untouched", cleanReply("Na normal thing, no worry. How your body dey today?") === "Na normal thing, no worry. How your body dey today?");
+  ok("unwraps full-reply quotation marks", cleanReply('"Hey mama, big hug! Rest well today."') === "Hey mama, big hug! Rest well today.");
+  ok("strips a lone leading quote", cleanReply('"Rest well today, mama.') === "Rest well today, mama.");
+  ok("keeps quotes INSIDE a reply", cleanReply('Doctors call it "morning sickness" but it can strike anytime.') === 'Doctors call it "morning sickness" but it can strike anytime.');
 }
 
 // ─────────────────────────── immunization.ts ───────────────────────────

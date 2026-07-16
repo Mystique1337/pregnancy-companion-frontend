@@ -58,6 +58,40 @@ export function toChatText(text: string): string {
     .trim();
 }
 
+// The model ROLE-REVERSING — speaking as the anxious mother and asking HER for
+// advice ("Do you have any advice for me? How are you coping?") — is the worst
+// failure mode a mother can see. Detect it so we never send it.
+export function looksReversed(text: string): boolean {
+  const t = (text || "").toLowerCase();
+  const q = (t.match(/\?/g) || []).length;
+  if (q >= 4) return true; // interrogation, not conversation
+  const reversed = /(advice|guidance|wisdom) (would be|for me)|do you have any (advice|tips) (for me)?|how are you coping|i'?m (feeling|just feeling) (a bit |quite |really )?(overwhelmed|anxious|stressed|out)/;
+  return reversed.test(t) && q >= 2;
+}
+
+// Hard ceiling on chat replies: at most `maxSentences` sentences and ~`maxWords`
+// words, always ending on a complete sentence — no mid-sentence max_token cuts.
+export function enforceChatBrevity(text: string, maxSentences = 3, maxWords = 60): string {
+  const t = (text || "").trim();
+  if (!t) return t;
+  const sentences = t.match(/[^.!?…]+[.!?…]+["')\]]*\s*/g) || [t];
+  let out = "";
+  let count = 0;
+  for (const s of sentences) {
+    if (count >= maxSentences) break;
+    if ((out + s).split(/\s+/).length > maxWords && count > 0) break;
+    out += s;
+    count++;
+  }
+  out = out.trim();
+  // If the source had no sentence ending at all (pure mid-cut), drop the dangling tail.
+  if (!/[.!?…]["')\]]*$/.test(out)) {
+    const lastStop = Math.max(out.lastIndexOf("."), out.lastIndexOf("!"), out.lastIndexOf("?"));
+    if (lastStop > 20) out = out.slice(0, lastStop + 1);
+  }
+  return out || t.split(/\s+/).slice(0, maxWords).join(" ");
+}
+
 // Nemotron models take a "detailed thinking" toggle as the first system line.
 function withModelQuirks(model: string, messages: OpenAI.Chat.ChatCompletionMessageParam[]): OpenAI.Chat.ChatCompletionMessageParam[] {
   if (/nemotron/i.test(model)) return [{ role: "system", content: "detailed thinking off" }, ...messages];
@@ -72,10 +106,10 @@ const mamabot = MAMABOT_URL
 
 export const usingMamabot = !!mamabot;
 
-// Primary client + model (MamaBot when deployed, else NVIDIA). Existing call sites
-// keep using these unchanged — they just get the HelpMum brain automatically.
-export const ai = mamabot || nvidia;
-export const AI_MODEL = mamabot ? MAMABOT_MODEL : NVIDIA_MODEL;
+// NVIDIA ONLY for all text generation (user decision 2026-07-16). MamaBot stays
+// deployed on Modal purely as open-source provenance — never in the reply path.
+export const ai = nvidia;
+export const AI_MODEL = NVIDIA_MODEL;
 
 // Explicit fallback handle.
 export const aiFallback = nvidia;
@@ -95,36 +129,29 @@ function looksBad(text: string): boolean {
   return false;
 }
 
-// Non-streaming completion for the chat brains (WhatsApp/Telegram). Order:
-//   MamaBot (if deployed, quality-guarded) → STRONG NVIDIA model (20s budget)
-//   → fast 8B fallback — so a reply always goes out, and it's never junk.
+// Non-streaming completion for the chat brains (WhatsApp/Telegram).
+// ONE MODEL ONLY — the strong NVIDIA nemotron (user decision 2026-07-16): the 8B
+// "fallback" produced rambling, role-reversed replies, so it is banned from chat.
+// One retry on the SAME model; quality-guarded (junk + role-reversal). Returns ""
+// when nemotron can't produce a good reply — callers send their own safe line.
 export async function aiComplete(
   params: Omit<OpenAI.Chat.ChatCompletionCreateParamsNonStreaming, "model" | "stream">
 ): Promise<string> {
-  const run = async (client: OpenAI, model: string, timeout?: number) => {
-    const r = await client.chat.completions.create(
-      { ...params, messages: withModelQuirks(model, params.messages), stop: CHAT_STOPS, model, stream: false },
-      timeout ? { timeout } : undefined
+  const run = async (timeout: number) => {
+    const r = await nvidia.chat.completions.create(
+      { ...params, messages: withModelQuirks(NVIDIA_MODEL_STRONG, params.messages), stop: CHAT_STOPS, model: NVIDIA_MODEL_STRONG, stream: false },
+      { timeout }
     );
     return cleanReply(r.choices?.[0]?.message?.content || "");
   };
-  if (mamabot) {
+  for (const [attempt, timeout] of [[1, 25000], [2, 20000]] as const) {
     try {
-      const out = await run(mamabot, MAMABOT_MODEL);
-      if (!looksBad(out)) return out;
-      console.warn("[ai] MamaBot output rejected (low quality) — falling back to NVIDIA");
+      const out = await run(timeout);
+      if (out && !looksBad(out) && !looksReversed(out)) return out;
+      console.warn(`[ai] nemotron output rejected (attempt ${attempt})`);
     } catch (e) {
-      console.warn("[ai] MamaBot failed, falling back to NVIDIA:", e instanceof Error ? e.message : e);
+      console.warn(`[ai] nemotron failed (attempt ${attempt}):`, e instanceof Error ? e.message : e);
     }
   }
-  try {
-    // 14s budget: nemotron typically answers in 4-8s; beyond that the fast 8B
-    // fallback keeps the chat snappy instead of leaving her staring at "typing…".
-    const out = await run(nvidia, NVIDIA_MODEL_STRONG, 14000);
-    if (out && !looksBad(out)) return out;
-    console.warn("[ai] strong model output rejected — falling back to fast model");
-  } catch (e) {
-    console.warn("[ai] strong model failed, falling back to fast model:", e instanceof Error ? e.message : e);
-  }
-  return run(nvidia, NVIDIA_MODEL);
+  return ""; // caller sends its safe fallback line
 }

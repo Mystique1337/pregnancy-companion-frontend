@@ -1,4 +1,4 @@
-import { ai, AI_MODEL, AI_MODEL_STRONG, CHAT_STOPS, usingMamabot } from "@/lib/ai";
+import { ai, AI_MODEL_STRONG, CHAT_STOPS } from "@/lib/ai";
 import { resolveModel } from "@/lib/settings";
 import { getSession } from "@/lib/session";
 import { getMotherById, getWeeklyUpdateByWeek, recentChat, saveChat, recentJournalSummary } from "@/lib/queries";
@@ -67,7 +67,7 @@ ${languageInstruction(detectMessageLanguage(lastUser) || mother.language || "en"
 
   // Strong model first (best conversation quality); admin override via settings;
   // fast 8B retry if the strong stream fails to start.
-  const model = await resolveModel(usingMamabot ? AI_MODEL : AI_MODEL_STRONG);
+  const model = await resolveModel(AI_MODEL_STRONG); // NVIDIA only (user decision)
   const startStream = (m: string) =>
     ai.chat.completions.create({
       model: m,
@@ -86,9 +86,9 @@ ${languageInstruction(detectMessageLanguage(lastUser) || mother.language || "en"
   try {
     stream = await startStream(model);
   } catch (e) {
-    console.error("chat start error (strong), retrying fast model:", e);
+    console.error("chat start error, retrying same model:", e);
     try {
-      stream = await startStream(AI_MODEL);
+      stream = await startStream(model); // ONE model only — never the 8B
     } catch (e2) {
       console.error("chat start error:", e2);
       return textResponse("I couldn't reach my thoughts just now — please try again in a moment. 🌸");

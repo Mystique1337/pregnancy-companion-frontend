@@ -119,6 +119,21 @@ console.log("\n— stripForSpeech (TTS text hygiene) —");
   ok("collapses leftover double spaces", !/\s{2}/.test(stripForSpeech("Eat 🍚 rice and 🥬 vegetables")));
 }
 
+// ─────────────────────────── ai.ts guards (role-reversal + brevity) ───────────────────────────
+console.log("\n— reply guards (looksReversed + enforceChatBrevity) —");
+{
+  const { looksReversed, enforceChatBrevity } = await import("../lib/ai.ts");
+  const badReal = "Hi! I'm feeling a bit overwhelmed with the prospect of becoming a new parent. How are you coping with this? Do you have any advice for me? I've been feeling quite stressed about the responsibility of raising a child. How do you manage stress like this?";
+  ok("REAL role-reversed reply is caught", looksReversed(badReal) === true);
+  ok("4+ questions is caught", looksReversed("A? B? C? D? E?") === true);
+  ok("normal reply with one question passes", looksReversed("Rest well today. How your body dey?") === false);
+  const rambling = "Hey! Week 24 is great! Have you thought about the nursery yet? This is a fun and exciting time to consider the space. Does decorating bring back memories? Whatever your style, start brainstorming. And hey, share some ideas with me! Wishing you";
+  const trimmed = enforceChatBrevity(rambling);
+  ok("rambling reply trimmed to ≤3 sentences", (trimmed.match(/[.!?]/g) || []).length <= 4 && trimmed.split(/\s+/).length <= 60);
+  ok("trimmed reply ends on a complete sentence", /[.!?…]["')\]]*$/.test(trimmed));
+  ok("short reply untouched", enforceChatBrevity("Na normal thing. Rest well o!") === "Na normal thing. Rest well o!");
+}
+
 // ─────────────────────────── ai.ts cleanReply ───────────────────────────
 console.log("\n— cleanReply (reply hygiene) —");
 {

@@ -1,4 +1,4 @@
-import { aiComplete, toChatText } from "./ai";
+import { aiComplete, toChatText, enforceChatBrevity } from "./ai";
 import type { Mother } from "./queries";
 import { getWeeklyUpdateByWeek, recentChat, saveChat, recentJournalSummary } from "./queries";
 import { currentWeekFrom, trimesterFor } from "./babyData";
@@ -16,11 +16,15 @@ export async function bumplyReply(mother: Mother, userText: string): Promise<str
   const week = currentWeekFrom({ dueDate: mother.due_date, enteredWeek: mother.current_week, createdAt: mother.created_at });
   // All context fetches are independent — run them in parallel. Sequential awaits
   // over the REST bridge (Germany) were adding 2-3s to every single reply.
+  // Each fetch is bounded to 8s — one slow bridge/API call must never stall her
+  // reply for a minute (observed: a 74s reply when a context call hung).
+  const bounded = <T,>(p: Promise<T>, fallback: T) =>
+    Promise.race([p.catch(() => fallback), new Promise<T>((res) => setTimeout(() => res(fallback), 8000))]);
   const [update, journal, grounding, history] = await Promise.all([
-    getWeeklyUpdateByWeek(mother.id, week).catch(() => null),
-    recentJournalSummary(mother.id, 5).catch(() => ""),
-    groundingBlock(userText, 3).catch(() => ""),
-    recentChat(mother.id, 12).catch(() => []),
+    bounded(getWeeklyUpdateByWeek(mother.id, week), null),
+    bounded(recentJournalSummary(mother.id, 5), ""),
+    bounded(groundingBlock(userText, 3), ""),
+    bounded(recentChat(mother.id, 12), [] as Awaited<ReturnType<typeof recentChat>>),
   ]);
   const context = update
     ? `This week's focus: ${update.baby_development || ""}. Affirmation: ${update.affirmation || ""}.`
@@ -89,8 +93,10 @@ ${langLine}${preferencesBlock(mother)}${firstContact}`;
       ...history.map((h) => ({ role: h.role as "user" | "assistant", content: h.content })),
       { role: "user", content: userContent },
     ],
-  })) || "I'm right here with you, mama 🌸";
-  reply = toChatText(reply); // WhatsApp/Telegram formatting (no **markdown**)
+  })) || `I hear you, ${first} 💛 Tell me small more about wetin dey on your mind right now?`;
+  // Formatting + HARD brevity: max 3 sentences ending cleanly — never a rambling
+  // wall of questions, never a mid-sentence max-token cut.
+  reply = enforceChatBrevity(toChatText(reply));
 
   // Yoruba: the brain answers in English, then HelpMum's open-source translator
   // renders it in Yoruba (en→yo is the reliable direction). The source is sanitised

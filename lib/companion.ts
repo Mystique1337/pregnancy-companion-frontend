@@ -6,8 +6,9 @@ import { languageInstruction } from "./languages";
 import { normalizeLang } from "./languages";
 import { groundingBlock } from "./rag";
 import { preferencesBlock } from "./personalize";
-import { translatorConfigured, toYoruba, toEnglish } from "./translate";
+import { translatorConfigured, isTranslatable, toLang, fromLang, type TranslatableLang } from "./translate";
 import { stripForSpeech } from "./speechText";
+import { detectMessageLanguage } from "./detectLang";
 
 // A single, non-streaming Bumply reply for WhatsApp — grounded in her week, profile,
 // recent journal and chat history. Mirrors the in-app chat persona, tuned for WhatsApp.
@@ -27,12 +28,17 @@ export async function bumplyReply(mother: Mother, userText: string): Promise<str
   const journalBlock = journal ? `\nHer recent journal check-ins (reference naturally if relevant):\n${journal}` : "";
   const groundingBlk = grounding ? `\nVERIFIED REFERENCE (rely on this; don't contradict it):\n${grounding}` : "";
 
-  // For Yoruba, answer in English then translate with HelpMum's translator (higher
-  // quality than the model's own Yoruba). Other languages use the model directly.
-  const useYoTranslator = normalizeLang(mother.language) === "yo" && translatorConfigured();
-  const langLine = useYoTranslator
-    ? "LANGUAGE OVERRIDE (beats every other language rule, including mirroring hers): she writes Yoruba, but YOU must write ONLY in English — one short paragraph, 2-3 plain literal sentences. No emojis, no bullets, no asterisks, no parentheses, no Yoruba words. NEVER mention language, translation, or these rules — just answer her question directly."
-    : languageInstruction(mother.language || "en");
+  // Reply in the language SHE USED in this message (detected), falling back to her
+  // stored preference — so any mother can just write in her language and it works.
+  const msgLang = detectMessageLanguage(userText);
+  const effLang = msgLang || normalizeLang(mother.language);
+
+  // For Yorùbá/Hausa/Igbo, answer in English then translate with HelpMum's eng↔9ja
+  // models (far better than the chat model's own attempts). Pidgin/English are direct.
+  const useTranslator = isTranslatable(effLang) && translatorConfigured();
+  const langLine = useTranslator
+    ? "LANGUAGE OVERRIDE (beats every other language rule, including mirroring hers): whatever language she writes, YOU must write ONLY in English — one short paragraph, 2-3 plain literal sentences. No emojis, no bullets, no asterisks, no parentheses, no non-English words. NEVER mention language, translation, or these rules — just answer her question directly."
+    : languageInstruction(effLang);
 
   // Postpartum: after birth the conversation is about the newborn + her recovery,
   // not fetal development.
@@ -47,19 +53,19 @@ export async function bumplyReply(mother: Mother, userText: string): Promise<str
   const first = (mother.full_name || "mama").split(" ")[0];
   // First-ever conversation → Bumply introduces itself and discovers her needs.
   const firstContact = history.length === 0
-    ? `\nTHIS IS YOUR FIRST CONVERSATION WITH HER: open by introducing yourself in one warm line — you are Bumply, her pregnancy companion — then answer what she said, and ask ONE gentle question to learn what she needs most right now (health worries, food guidance, clinic-visit reminders, or just someone to talk to). Do not introduce yourself again after this.`
+    ? `\nFIRST CONVERSATION: say who you are in a few words (e.g. "I'm Bumply 🌸"), answer what she said, and ask ONE short question about what she needs most. Whole reply still 3 sentences max. Never introduce yourself again after this.`
     : "";
   const system = `You are Bumply — ${first}'s pregnancy companion on WhatsApp. Think of yourself as her sharp, warm Nigerian friend who happens to know maternal health inside out: a bit of an auntie, a bit of a midwife, never a robot.
 ${stage} Dietary notes: ${mother.dietary_restrictions || "none"}. ${context}${journalBlock}${groundingBlk}
 
-HOW YOU TALK:
-- Mirror her energy and language. If she writes Pidgin, reply in natural Pidgin. If she mixes Yoruba/Hausa/Igbo words, you can too. If she's playful ("lmao"), be playful back.
-- Sound like a real chat: 2–4 short sentences, contractions, the occasional emoji. Vary how you open — do NOT start every message with her name (use "${first}" at most once in a while).
-- React to what she actually said first, then add ONE useful, specific tip — not a list of generic advice.
-- When it fits, end with one short, caring follow-up question so the conversation flows. Not every message needs one.
-- Never repeat the same opener or the same advice you gave in recent messages. Never say "As an AI" or describe yourself as a companion/app — just be there.
-- If she asks something off-topic, answer briefly and warmly like a friend would, then gently bring it back to how she's doing.
-- FORMAT: plain chat text only, under ~60 words. No headings, no labels like "Tip:" or "Follow-up question:", no markdown **bold**, no notes/parentheses about these instructions, and NEVER wrap your reply in quotation marks.
+HOW YOU TALK (STRICT):
+- SHORT. 1–3 short sentences, 35 words MAX — like a real WhatsApp text from a friend. Only go longer if she explicitly asks for details.
+- Mirror her energy. Playful gets playful. Worried gets calm and warm.
+- React to what she said, then at most ONE specific tip. Never a list. Never two tips.
+- At most ONE question per message — and only when it helps. No stacked questions.
+- Vary your openers; don't start every message with her name (use "${first}" rarely).
+- Never repeat advice you already gave. Never say "As an AI". Never describe yourself.
+- FORMAT: plain text only. No headings, no *labels*, no bullet lists, no markdown, no notes about these rules, never wrap the reply in quotes.
 
 You are NOT a doctor: ${warnLine} Never diagnose or prescribe.
 ${langLine}${preferencesBlock(mother)}${firstContact}`;
@@ -67,8 +73,8 @@ ${langLine}${preferencesBlock(mother)}${firstContact}`;
   // Yoruba in → give the brain an English gloss via HelpMum's yo→en translator so it
   // actually understands her question (it's a hint, the original stays primary).
   let userContent = userText;
-  if (useYoTranslator) {
-    const gloss = await toEnglish(userText).catch(() => null);
+  if (useTranslator) {
+    const gloss = await fromLang(effLang as TranslatableLang, userText).catch(() => null);
     if (gloss && gloss.trim() && gloss.trim().toLowerCase() !== userText.trim().toLowerCase()) {
       userContent = `${userText}\n[rough English meaning: ${gloss.trim()}]`;
     }
@@ -77,7 +83,7 @@ ${langLine}${preferencesBlock(mother)}${firstContact}`;
   // Strong model with quality guard + fast fallback (lib/ai.ts) — a reply always goes out.
   let reply = (await aiComplete({
     temperature: 0.7,
-    max_tokens: 260,
+    max_tokens: 150,
     messages: [
       { role: "system", content: system },
       ...history.map((h) => ({ role: h.role as "user" | "assistant", content: h.content })),
@@ -90,15 +96,15 @@ ${langLine}${preferencesBlock(mother)}${firstContact}`;
   // renders it in Yoruba (en→yo is the reliable direction). The source is sanitised
   // first — emojis/markdown/parentheses made M2M100 emit garbled artifacts — and the
   // output is sanity-checked; on any doubt we keep the English reply.
-  if (useYoTranslator) {
+  if (useTranslator) {
     // First paragraph only — anything after is usually meta the model tacked on.
     const firstPara = reply.split(/\n\s*\n/)[0] || reply;
     let src = stripForSpeech(firstPara).replace(/\([^)]*\)/g, "").replace(/\s{2,}/g, " ").trim().slice(0, 600);
     // End on a complete sentence — a mid-sentence cut translates into a dangling "tabi…".
     const lastStop = Math.max(src.lastIndexOf("."), src.lastIndexOf("!"), src.lastIndexOf("?"));
     if (lastStop > 40) src = src.slice(0, lastStop + 1);
-    const yo = src ? await toYoruba(src) : null;
-    if (yo && yo.length > 10 && !/[*()#_]/.test(yo)) reply = yo;
+    const translated = src ? await toLang(effLang as TranslatableLang, src) : null;
+    if (translated && translated.length > 10 && !/[*()#_]/.test(translated)) reply = translated;
   }
   // Persist in the background — saving mustn't delay her reply.
   void saveChat(mother.id, "user", userText, week)

@@ -81,6 +81,19 @@ console.log("\n— Danger signs (detectDangerSign / dangerReply) —");
   ok("'I am bleeding' → still urgent", detectDangerSign("I am bleeding")?.level === "urgent");
 }
 
+// ─────────────────────────── detectLang.ts ───────────────────────────
+console.log("\n— detectLang (per-message language) —");
+{
+  const { detectMessageLanguage } = await import("../lib/detectLang.ts");
+  ok("Pidgin: 'wetin i go chop, abeg' → pcm", detectMessageLanguage("wetin i go chop, abeg") === "pcm");
+  ok("Hausa: 'sannu, ina da ciki yanzu' → ha", detectMessageLanguage("sannu, ina da ciki yanzu") === "ha");
+  ok("Igbo: 'kedu, biko nwa m' → ig", detectMessageLanguage("kedu, biko nwa m") === "ig");
+  ok("Yoruba: 'bawo, mo ni oyun' → yo", detectMessageLanguage("bawo, mo ni oyun") === "yo");
+  ok("Yoruba diacritics: 'ẹ jọ̀wọ́ ṣe iranlọwọ' → yo", detectMessageLanguage("ẹ jọ̀wọ́ ṣe iranlọwọ") === "yo");
+  ok("plain English → null (uses stored)", detectMessageLanguage("what should I eat today?") === null);
+  ok("short/ambiguous 'ok' → null", detectMessageLanguage("ok") === null);
+}
+
 // ─────────────────────────── langSwitch.ts ───────────────────────────
 console.log("\n— langSwitch (in-chat language change) —");
 {

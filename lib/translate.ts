@@ -9,7 +9,9 @@ export function translatorConfigured(): boolean {
   return !!URL;
 }
 
-async function call(direction: "en2yo" | "yo2en", text: string): Promise<string | null> {
+type Direction = "en2yo" | "en2ha" | "en2ig" | "yo2en" | "ha2en" | "ig2en";
+
+async function call(direction: Direction, text: string): Promise<string | null> {
   if (!URL || !text.trim()) return null;
   try {
     const r = await fetch(URL, {
@@ -29,3 +31,11 @@ async function call(direction: "en2yo" | "yo2en", text: string): Promise<string 
 
 export const toYoruba = (text: string) => call("en2yo", text);
 export const toEnglish = (text: string) => call("yo2en", text);
+
+// Generic helpers — HelpMum's eng↔9ja models cover Yorùbá, Hausa AND Igbo.
+export const TRANSLATABLE = ["yo", "ha", "ig"] as const;
+export type TranslatableLang = (typeof TRANSLATABLE)[number];
+export const isTranslatable = (code: string): code is TranslatableLang =>
+  (TRANSLATABLE as readonly string[]).includes(code);
+export const toLang = (code: TranslatableLang, text: string) => call(`en2${code}` as Direction, text);
+export const fromLang = (code: TranslatableLang, text: string) => call(`${code}2en` as Direction, text);

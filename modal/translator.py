@@ -11,9 +11,15 @@
 
 import modal
 
+# The HelpMum fine-tunes are M2M100-based "eng↔9ja" models — the 9ja side covers
+# Yorùbá, Hausa AND Igbo (M2M100 lang ids yo/ha/ig). One deployment, six directions.
 MODELS = {
     "en2yo": ("HelpMumHQ/AI-translator-eng-to-9ja", "en", "yo"),
+    "en2ha": ("HelpMumHQ/AI-translator-eng-to-9ja", "en", "ha"),
+    "en2ig": ("HelpMumHQ/AI-translator-eng-to-9ja", "en", "ig"),
     "yo2en": ("HelpMumHQ/AI-translator-9ja-to-eng", "yo", "en"),
+    "ha2en": ("HelpMumHQ/AI-translator-9ja-to-eng", "ha", "en"),
+    "ig2en": ("HelpMumHQ/AI-translator-9ja-to-eng", "ig", "en"),
 }
 
 app = modal.App("bumply-translator")
@@ -32,6 +38,7 @@ cache = modal.Volume.from_name("bumply-hf-cache", create_if_missing=True)
     cpu=2,
     memory=4096,
     scaledown_window=120,        # pay-per-use: idle out after 2 min
+    min_containers=int(__import__("os").environ.get("MIN_CONTAINERS", "0")),  # set 1 to keep warm (demo)
     secrets=[modal.Secret.from_name("bumply-llm")],
 )
 @modal.concurrent(max_inputs=4)
@@ -39,10 +46,13 @@ class Translator:
     @modal.enter()
     def load(self):
         from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+        # Dedupe by checkpoint — six directions share two underlying models.
         self.tok, self.mdl = {}, {}
+        loaded: dict = {}
         for k, (name, _src, _tgt) in MODELS.items():
-            self.tok[k] = AutoTokenizer.from_pretrained(name)
-            self.mdl[k] = AutoModelForSeq2SeqLM.from_pretrained(name)
+            if name not in loaded:
+                loaded[name] = (AutoTokenizer.from_pretrained(name), AutoModelForSeq2SeqLM.from_pretrained(name))
+            self.tok[k], self.mdl[k] = loaded[name]
 
     @modal.fastapi_endpoint(method="POST")
     def translate(self, data: dict):

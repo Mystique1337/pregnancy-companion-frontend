@@ -4,6 +4,7 @@ import { getSession } from "@/lib/session";
 import { getMotherById, getWeeklyUpdateByWeek, recentChat, saveChat, recentJournalSummary } from "@/lib/queries";
 import { currentWeekFrom, trimesterFor } from "@/lib/babyData";
 import { languageInstruction } from "@/lib/languages";
+import { detectMessageLanguage } from "@/lib/detectLang";
 import { groundingWithSources } from "@/lib/rag";
 import { preferencesBlock, toneMaxTokens } from "@/lib/personalize";
 
@@ -46,20 +47,22 @@ She is in week ${week} (${trimesterFor(week)} trimester)${
     mother.due_date ? `, due ${mother.due_date}` : ""
   }. First pregnancy: ${mother.first_pregnancy ? "yes" : "no"}. Dietary notes: ${mother.dietary_restrictions || "none"}. ${context}${journalBlock}${groundingPrompt}
 
-HOW YOU TALK:
-- Mirror her energy and language — Pidgin gets natural Pidgin back; playful gets playful.
-- Sound like a real chat: 2–4 short sentences, contractions, an occasional emoji. Vary your openings — do NOT start every message with her name (use "${first}" only once in a while).
-- React to what she actually said first, then add ONE useful, specific tip — not a list of generic advice. Use short bullets only when they genuinely help.
-- When it fits, end with one short, caring follow-up question. Not every message needs one.
-- Never repeat an opener or advice from recent messages. Never say "As an AI" — just be there. NEVER wrap your reply in quotation marks.
+HOW YOU TALK (STRICT):
+- SHORT. 1–3 short sentences, 35 words MAX — like a real chat message. Only go longer if she explicitly asks for details.
+- Mirror her energy. Playful gets playful. Worried gets calm and warm.
+- React to what she said, then at most ONE specific tip. Never a list. Never two tips.
+- At most ONE question per message — and only when it helps. No stacked questions.
+- Vary your openers; don't start every message with her name (use "${first}" rarely).
+- Never repeat advice you already gave. Never say "As an AI". Never describe yourself.
+- FORMAT: plain text only. No headings, no *labels*, no bullet lists, no notes about these rules, never wrap the reply in quotes.
 
 You are NOT a doctor: for any warning signs (heavy bleeding, severe or persistent pain, reduced fetal movement, fever, vision changes, severe swelling), gently and clearly urge her to contact her healthcare provider or go to a clinic. Never diagnose or prescribe.
-${languageInstruction(mother.language || "en")}${preferencesBlock(mother)}`;
+${languageInstruction(detectMessageLanguage(lastUser) || mother.language || "en")}${preferencesBlock(mother)}`;
 
   const history = await recentChat(mother.id, 16);
   // First-ever conversation → Bumply introduces itself and discovers her needs.
   const systemFinal = history.length <= 1
-    ? system + `\nTHIS IS THE START OF YOUR RELATIONSHIP: introduce yourself in one warm line — you are Bumply, her pregnancy companion — then answer what she said, and ask ONE gentle question to learn what she needs most right now (health worries, food guidance, clinic-visit reminders, or just someone to talk to). Do not introduce yourself again after this.`
+    ? system + `\nFIRST CONVERSATION: say who you are in a few words (e.g. "I'm Bumply 🌸"), answer what she said, and ask ONE short question about what she needs most. Whole reply still 3 sentences max. Never introduce yourself again after this.`
     : system;
 
   // Strong model first (best conversation quality); admin override via settings;
@@ -69,7 +72,7 @@ ${languageInstruction(mother.language || "en")}${preferencesBlock(mother)}`;
     ai.chat.completions.create({
       model: m,
       temperature: 0.7,
-      max_tokens: toneMaxTokens(mother, 600),
+      max_tokens: Math.min(toneMaxTokens(mother, 600), 300),
       stream: true,
       stop: CHAT_STOPS,
       messages: [

@@ -130,7 +130,10 @@ export default function ChatPanel({
         if (userCancelledTts.current) return;
       }
     }
-    // Last resort ONLY (offline / SoroTTS down): the phone's generic voice.
+    // ONLINE but SoroTTS unavailable → do NOT substitute the generic phone voice
+    // (the Nigerian voice IS the product). Reset so she can tap again (it will be
+    // warm by then). The phone voice is used ONLY when she's fully offline.
+    if (navigator.onLine) { setVoiceMsg(null); setVoiceStage(null); return; }
     setVoiceStage("playing");
     await speakLocal(text, L);
     setVoiceMsg(null); setVoiceStage(null);

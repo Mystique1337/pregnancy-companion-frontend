@@ -106,7 +106,9 @@ ${languageInstruction(detectMessageLanguage(lastUser) || mother.language || "en"
       let full = "";
       try {
         for await (const part of stream) {
-          const tok = part.choices?.[0]?.delta?.content || "";
+          // Plain text only — the web pane renders raw text, so markdown asterisks
+          // and heading hashes would show literally. Dropping every '*' is chunk-safe.
+          const tok = (part.choices?.[0]?.delta?.content || "").replace(/[*#]+/g, "");
           if (tok) {
             full += tok;
             safe(tok);

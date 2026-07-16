@@ -70,7 +70,10 @@ export async function sendVoiceReply(chatId: string | number, mp3: Buffer): Prom
 }
 
 export async function sendTelegram(chatId: string | number, text: string): Promise<{ sent: boolean; error?: string }> {
-  const d = await tg("sendMessage", { chat_id: chatId, text });
+  // Telegram is sent WITHOUT parse_mode, so markdown asterisks would show as
+  // literal ** characters — strip them; plain, properly spaced text only.
+  const plain = text.replace(/\*+/g, "").replace(/[ \t]{2,}/g, " ");
+  const d = await tg("sendMessage", { chat_id: chatId, text: plain });
   return { sent: !!d.ok, error: d.ok ? undefined : String(d.description || "") };
 }
 

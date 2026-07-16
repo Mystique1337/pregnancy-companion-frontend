@@ -144,7 +144,7 @@ export async function aiComplete(
     );
     return cleanReply(r.choices?.[0]?.message?.content || "");
   };
-  for (const [attempt, timeout] of [[1, 25000], [2, 20000]] as const) {
+  for (const [attempt, timeout] of [[1, 35000], [2, 30000]] as const) { // NVIDIA from Railway can queue; bots show typing, so patience beats the fallback line
     try {
       const out = await run(timeout);
       if (out && !looksBad(out) && !looksReversed(out)) return out;

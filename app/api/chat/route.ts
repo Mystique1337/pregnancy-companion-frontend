@@ -98,29 +98,34 @@ ${languageInstruction(detectMessageLanguage(lastUser) || mother.language || "en"
   const encoder = new TextEncoder();
   const rs = new ReadableStream<Uint8Array>({
     async start(controller) {
+      // A closed controller (client gone / proxy timeout) must never crash the route.
+      const safe = (s: string) => { try { controller.enqueue(encoder.encode(s)); } catch { /* closed */ } };
+      // Heartbeat: flush an invisible byte IMMEDIATELY — with zero bytes sent, the
+      // proxy kills slow-first-token streams with a 502 before the model speaks.
+      safe("​");
       let full = "";
       try {
         for await (const part of stream) {
           const tok = part.choices?.[0]?.delta?.content || "";
           if (tok) {
             full += tok;
-            controller.enqueue(encoder.encode(tok));
+            safe(tok);
           }
         }
       } catch (e) {
         console.error("chat stream error:", e);
-        controller.enqueue(encoder.encode("\n\n(Sorry mama, I lost my train of thought — please try again. 🌸)"));
+        safe("\n\n(Sorry mama, I lost my train of thought — please try again. 🌸)");
       }
-      // Cite the vetted sources the answer drew on.
-      if (full.trim() && sources.length) {
+      // Cite the vetted sources the answer drew on (once).
+      if (full.trim() && sources.length && !full.includes("📚")) {
         const foot = `\n\n📚 ${sources.join(" · ")}`;
-        controller.enqueue(encoder.encode(foot));
+        safe(foot);
         full += foot;
       }
-      controller.close();
+      try { controller.close(); } catch { /* already closed */ }
       try {
         if (lastUser) await saveChat(mother.id, "user", lastUser, week);
-        if (full.trim()) await saveChat(mother.id, "assistant", full, week);
+        if (full.trim()) await saveChat(mother.id, "assistant", full.trim(), week);
       } catch (e) {
         console.error("chat save error:", e);
       }

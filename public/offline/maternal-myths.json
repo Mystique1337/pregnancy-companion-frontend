@@ -95,7 +95,7 @@
     {
       "claim": "Iron and folic acid tablets make the baby too big, so it is better to skip them",
       "verdict": "false",
-      "keywords": ["iron tablet", "iron tablets", "iron drugs", "skip the tablets", "stop the tablets", "tablets make baby big"],
+      "keywords": ["iron", "tablets", "skip", "iron tablet", "iron drugs", "skip the tablets", "stop the tablets", "tablets make baby big"],
       "explanation": "Iron and folic acid do not grow the baby too big. They protect you from bleeding badly at delivery and help the baby brain, so take them daily, with food if your stomach turns."
     },
     {
@@ -125,7 +125,7 @@
     {
       "claim": "Once you have had a caesarean you can never deliver normally again",
       "verdict": "careful",
-      "keywords": ["after cs", "once cs", "never deliver normally", "vbac", "second cs", "always operation"],
+      "keywords": ["cs", "vbac", "after cs", "once cs", "second cs", "never deliver normally", "deliver normally", "push a baby out", "never again", "normal birth after", "always operation"],
       "explanation": "Some women can safely deliver normally after one caesarean, but only in a hospital that can act fast if there is a problem. Ask your doctor what is safest for you."
     },
     {
@@ -173,7 +173,7 @@
     {
       "claim": "Giving a baby several injections on the same day is too much for the body",
       "verdict": "false",
-      "keywords": ["many injections", "too many vaccines", "same day injections", "small body cannot take", "overload the baby"],
+      "keywords": ["injection", "same day", "at once", "at the same time", "many injections", "too many vaccines", "small body cannot take", "overload the baby"],
       "explanation": "A baby body handles several vaccines at once easily, and the schedule is built that way so no visit is missed. Mild fever or a sore leg for a day is normal."
     },
     {
@@ -197,19 +197,19 @@
     {
       "claim": "Tying the belly tightly straight after birth flattens the stomach",
       "verdict": "careful",
-      "keywords": ["tie belly", "belly band", "binder", "bandage the stomach", "flat tummy", "tight cloth", "tie the stomach"],
+      "keywords": ["tying", "tight", "tightly", "tie belly", "tie the stomach", "belly band", "binder", "bandage the stomach", "flat stomach", "flat tummy", "tight cloth"],
       "explanation": "A gentle wrap can feel supportive, but tying too tightly makes breathing and healing harder, especially after a caesarean. Keep it loose, and tell the nurse if it starts to pain you."
     },
     {
       "claim": "Newborns should be given herbal mixture or purge to clean their stomach",
       "verdict": "false",
-      "keywords": ["herbal for baby", "purge the baby", "clean the baby stomach", "agbo for baby", "enema", "bitter leaf water", "give the baby medicine"],
+      "keywords": ["purge", "newborn", "enema", "herbal for baby", "purge the baby", "clean the stomach", "agbo for baby", "bitter leaf water", "give the baby medicine"],
       "explanation": "A newborn stomach is tiny, and these mixtures cause diarrhoea, poisoning and sometimes death. Only breastmilk for the first six months, nothing else, not even water."
     },
     {
       "claim": "A pregnancy can hide or sleep in the body for years and come out later",
       "verdict": "false",
-      "keywords": ["pregnancy hide", "hidden pregnancy", "sleeping baby", "pregnancy sleep", "stay in the body for years", "omo inu"],
+      "keywords": ["hide", "hidden", "years", "pregnancy hide", "hidden pregnancy", "sleeping baby", "pregnancy sleep", "sleep in the body", "sleep in the womb", "stay in the body", "come out later", "omo inu"],
       "explanation": "A pregnancy cannot pause or hide for years. If your period stopped or your belly is growing, a clinic test and scan will show you what is really happening."
     },
     {
@@ -221,13 +221,13 @@
     {
       "claim": "Sex near your due date brings labour",
       "verdict": "careful",
-      "keywords": ["sex near due date", "sex to bring labour", "overdue", "past my date", "sex induce"],
+      "keywords": ["sex", "overdue", "due date", "past my date", "bring labour", "sex to bring labour", "sex near due", "sex induce"],
       "explanation": "It may help a little when your body is already ready, and it is safe if your water has not broken and there is no bleeding. If you are past your date, let the clinic check the baby."
     },
     {
       "claim": "Eating a certain yam or okra makes you give birth to twins",
       "verdict": "careful",
-      "keywords": ["twins", "ibeji", "two babies", "yam cause twins", "food for twins"],
+      "keywords": ["twins", "yam", "ibeji", "two babies", "give birth to twins", "have twins", "food for twins"],
       "explanation": "Twins run in families and are common in the South West, and wild yam may play a small part, but no food guarantees it. Twin pregnancies need extra checks, so attend every visit."
     },
     {
@@ -239,7 +239,7 @@
     {
       "claim": "Painkillers like Alabukun, aspirin or ibuprofen are safe for pregnancy aches",
       "verdict": "false",
-      "keywords": ["alabukun", "aspirin", "ibuprofen", "diclofenac", "painkiller", "pain killer", "apc"],
+      "keywords": ["alabukun", "aspirin", "ibuprofen", "diclofenac", "painkiller", "pain killer", "apc", "back pain", "body pain", "drug for pain"],
       "explanation": "These can harm the baby heart and kidneys, especially later in pregnancy. Paracetamol at the right dose is the safer choice, and ask the clinic before taking any medicine."
     },
     {
@@ -281,13 +281,13 @@
     {
       "claim": "Waiting about two years between births is better for mother and baby",
       "verdict": "true",
-      "keywords": ["space births", "child spacing", "two years apart", "wait before next baby"],
+      "keywords": ["spacing", "years", "waiting", "space births", "child spacing", "between births", "two years apart", "wait before next baby", "next baby"],
       "explanation": "True. Waiting about two years lets your body rebuild, lowers the risk of early or small babies, and gives the child you have more milk and care."
     },
     {
       "claim": "Delivering with a skilled health worker is safer than delivering at home",
       "verdict": "true",
-      "keywords": ["deliver at home", "traditional birth attendant", "tba", "agbebi", "mission house", "skilled birth", "deliver in the house"],
+      "keywords": ["skilled", "home", "agbebi", "deliver at home", "delivering at home", "traditional birth", "birth attendant", "mission house", "skilled birth", "deliver in the house"],
       "explanation": "True. Most birth emergencies cannot be predicted, and a skilled worker with drugs and blood nearby saves lives. If money or distance is the problem, tell the clinic, many can help."
     }
   ]

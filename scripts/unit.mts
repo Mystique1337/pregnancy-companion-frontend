@@ -81,6 +81,52 @@ console.log("\n— Danger signs (detectDangerSign / dangerReply) —");
   ok("'I am bleeding' → still urgent", detectDangerSign("I am bleeding")?.level === "urgent");
 }
 
+// ─────────────────────────── referral.ts ───────────────────────────
+console.log("\n— referral codes (time-to-care loop) —");
+{
+  const { newReferralCode, findReferralCode, referralLine } = await import("../lib/referral.ts");
+  const codes = Array.from({ length: 200 }, () => newReferralCode());
+  ok("code format BMP-XXXX", codes.every((c) => /^BMP-[A-Z0-9]{4}$/.test(c)));
+  ok("no ambiguous chars (O,0,I,1,S,5)", codes.every((c) => !/[O0I1S5]/.test(c.slice(4))));
+  ok("codes are not trivially colliding", new Set(codes).size > 190);
+  const c = codes[0];
+  ok("findReferralCode reads it back", findReferralCode(`we don arrive ${c} for clinic`) === c);
+  ok("findReferralCode tolerates a space", findReferralCode(c.replace("-", " ")) === c);
+  ok("findReferralCode returns null when absent", findReferralCode("she arrived at the clinic") === null);
+  ok("referralLine shows the code", referralLine(c).includes(c));
+}
+
+// ─────────────────────────── transport.ts (Delay 2) ───────────────────────────
+console.log("\n— transport plan parsing —");
+{
+  const { parseTransportReply, hasTransportPlan } = await import("../lib/transport.ts");
+  const a = parseTransportReply("Musa 08031234567");
+  ok("parses 'Musa 08031234567'", a?.phone === "08031234567" && a?.name === "Musa");
+  const b = parseTransportReply("08031234567");
+  ok("parses a bare number (no name)", b?.phone === "08031234567" && b?.name === null);
+  const c2 = parseTransportReply("my brother chidi - 0803 123 4567");
+  ok("parses messy 'my brother chidi - 0803 123 4567'", (c2?.phone || "").replace(/\D/g, "") === "08031234567");
+  ok("rejects text with no number", parseTransportReply("my husband") === null);
+  const withPlan = { transport_phone: "08031234567" } as never;
+  const noPlan = { transport_phone: null } as never;
+  ok("hasTransportPlan true with a number", hasTransportPlan(withPlan) === true);
+  ok("hasTransportPlan false without", hasTransportPlan(noPlan) === false);
+}
+
+// ─────────────────────────── profileFlow / partner ───────────────────────────
+console.log("\n— progressive profiling + partner channel —");
+{
+  const { isProfileSetupRequest } = await import("../lib/profileFlow.ts");
+  const { isPartnerOptOut } = await import("../lib/partner.ts");
+  ok("'setup' starts the flow", isProfileSetupRequest("setup") === true);
+  ok("'/setup' starts the flow", isProfileSetupRequest("/setup") === true);
+  ok("'emergency plan' starts the flow", isProfileSetupRequest("emergency plan") === true);
+  ok("normal chat does not", isProfileSetupRequest("what should I eat") === false);
+  ok("partner 'STOP' opts out", isPartnerOptOut("STOP") === true);
+  ok("partner 'stop sending' opts out", isPartnerOptOut("stop sending") === true);
+  ok("partner normal text does not opt out", isPartnerOptOut("thank you") === false);
+}
+
 // ─────────────────────────── detectLang.ts ───────────────────────────
 console.log("\n— detectLang (per-message language) —");
 {

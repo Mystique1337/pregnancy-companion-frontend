@@ -1,0 +1,294 @@
+{
+  "version": 1,
+  "note": "Curated Nigerian maternal myths for the 'Forward it to Bumply' checker (lib/misinfo.ts). Real rumours that circulate in WhatsApp family groups. Verdicts: false = wrong or unsafe, true = genuinely correct, careful = partly true / depends. Explanations are plain, non-judgemental and never mock traditional practice; where a practice is dangerous they say so and point to the clinic. NOT a diagnosis.",
+  "items": [
+    {
+      "claim": "Drinking salt water brings on labour",
+      "verdict": "false",
+      "keywords": ["salt water", "salty water", "drink salt", "plenty salt", "bring labour", "induce labour", "start labour", "force labour"],
+      "explanation": "Salt water does not start labour, and swallowing a lot of salt can push your blood pressure up and make you and the baby very sick. If you are tired of waiting, let the clinic check you first."
+    },
+    {
+      "claim": "Castor oil is a safe way to make labour start",
+      "verdict": "false",
+      "keywords": ["castor oil", "purge to bring labour", "oil to start labour", "flush the womb"],
+      "explanation": "Castor oil causes strong purging and dehydration and can distress the baby. It is not a safe way to bring labour. If you are past your date, the clinic has safe ways to help."
+    },
+    {
+      "claim": "Drinking agbo or local herbal mixture makes labour easy and washes the womb",
+      "verdict": "false",
+      "keywords": ["agbo", "herbal mixture", "local herbs", "concoction", "wash the womb", "clean the womb", "kayan magani", "ogun ibimo", "root and herbs"],
+      "explanation": "Herbal mixtures are not measured, and some squeeze the womb too hard or damage the liver and kidneys. If you already take one, just tell your midwife plainly so she can guide you."
+    },
+    {
+      "claim": "Ultrasound scans harm the baby or cause deformity",
+      "verdict": "false",
+      "keywords": ["ultrasound", "scan", "scan harm", "harm the baby", "hurt the baby", "scan is dangerous", "deformity", "scan radiation", "scan spoil"],
+      "explanation": "Ultrasound uses sound, not radiation, and has been used safely for over fifty years. Scans check the baby growth and position, so going for the one your midwife asks for is a good thing."
+    },
+    {
+      "claim": "Too many scans heat the baby or cause cancer",
+      "verdict": "false",
+      "keywords": ["too many scans", "many scans", "scan cause cancer", "scan cancer", "scan too much"],
+      "explanation": "Scans do not cause cancer and do not heat the baby. Your midwife only orders the scans that are needed, so it is safe to go for them."
+    },
+    {
+      "claim": "If you feel fine you do not need antenatal care",
+      "verdict": "false",
+      "keywords": ["feel fine", "no need antenatal", "antenatal not necessary", "skip antenatal", "skip anc", "not necessary to go to clinic", "healthy so no clinic"],
+      "explanation": "High blood pressure and low blood often give no sign at all until they turn dangerous. Antenatal visits catch them early, even when you feel perfectly well."
+    },
+    {
+      "claim": "You can wait until the last months before you start antenatal",
+      "verdict": "false",
+      "keywords": ["last months", "start antenatal late", "register late", "book late", "wait before registering", "seventh month"],
+      "explanation": "Booking early, in the first three months if you can, lets the clinic start iron, folic acid and malaria protection at the right time. If you are already late, still go this week."
+    },
+    {
+      "claim": "A pregnant woman must eat for two",
+      "verdict": "false",
+      "keywords": ["eat for two", "eating for two", "double food", "food for two people", "eat double"],
+      "explanation": "You need better food, not double food, only about one extra small meal a day in the last months. Too much can grow a very big baby and make delivery harder."
+    },
+    {
+      "claim": "Eating eggs in pregnancy makes the baby a thief or gives the baby a big head",
+      "verdict": "false",
+      "keywords": ["eggs", "egg make the baby", "baby will steal", "thief", "big head"],
+      "explanation": "Eggs do not shape a child character or head size. Well cooked eggs are cheap, safe protein that helps your baby grow, just avoid raw or runny ones."
+    },
+    {
+      "claim": "Eating snails makes the baby drool or slow",
+      "verdict": "false",
+      "keywords": ["snail", "snails", "drool", "saliva", "dull child", "slow child"],
+      "explanation": "Snails do not cause drooling or slowness. They are rich in iron and protein, just wash and cook them very well before eating."
+    },
+    {
+      "claim": "Eating okra or ogbono makes delivery slippery and easy",
+      "verdict": "false",
+      "keywords": ["okra", "okro", "ogbono", "slippery", "smooth delivery", "draw soup", "easy delivery food"],
+      "explanation": "Okra and ogbono are good food but they do not make delivery easier. What really helps is antenatal care, good food and delivering where a skilled worker can help you."
+    },
+    {
+      "claim": "Plenty sugar, bread and soft drinks do no harm in pregnancy",
+      "verdict": "careful",
+      "keywords": ["sugar", "soft drink", "minerals", "sweet things", "too much bread", "blood sugar", "diabetes"],
+      "explanation": "A little is fine, but too much sugar can raise your blood sugar and grow a very big baby. Ask the clinic to check your sugar, and choose water instead of soft drinks."
+    },
+    {
+      "claim": "Drinking cold water makes the baby big or gives the baby cough",
+      "verdict": "false",
+      "keywords": ["cold water", "iced water", "cold drink", "catarrh", "cough", "pneumonia"],
+      "explanation": "Cold water does not harm your baby or cause cough, germs cause cough. Drink plenty clean water at whatever temperature you like."
+    },
+    {
+      "claim": "Blood tonic from the chemist is enough to treat low blood in pregnancy",
+      "verdict": "false",
+      "keywords": ["blood tonic", "tonic", "low blood", "anaemia", "anemia", "chemist mixture", "shortage of blood"],
+      "explanation": "Most blood tonics carry very little iron. Low blood is dangerous at delivery, so please get your blood level tested at the clinic and take the iron tablets they give you."
+    },
+    {
+      "claim": "Beetroot, ugu juice or stout builds blood better than iron tablets",
+      "verdict": "false",
+      "keywords": ["beetroot", "ugu", "pumpkin leaf", "guinness", "stout", "builds blood", "build blood", "blood booster"],
+      "explanation": "Ugu and beetroot help a little but they cannot replace iron tablets. Never take stout or any alcohol in pregnancy, it reaches the baby brain."
+    },
+    {
+      "claim": "Iron and folic acid tablets make the baby too big, so it is better to skip them",
+      "verdict": "false",
+      "keywords": ["iron tablet", "iron tablets", "iron drugs", "skip the tablets", "stop the tablets", "tablets make baby big"],
+      "explanation": "Iron and folic acid do not grow the baby too big. They protect you from bleeding badly at delivery and help the baby brain, so take them daily, with food if your stomach turns."
+    },
+    {
+      "claim": "Agbo jedi or dogonyaro treats malaria in pregnancy",
+      "verdict": "false",
+      "keywords": ["agbo jedi", "dogonyaro", "neem", "herbal malaria", "boil leaves", "local medicine for fever"],
+      "explanation": "These are not measured and some harm the liver or the baby. Malaria in pregnancy causes low blood and small babies, so get a test and the proper medicine at the clinic, it is usually free."
+    },
+    {
+      "claim": "Sleeping under a treated mosquito net makes the woman or baby weak",
+      "verdict": "false",
+      "keywords": ["mosquito net", "treated net", "net make", "under net", "net chemical"],
+      "explanation": "Treated nets are safe for pregnant women and babies and are one of the best ways to prevent malaria. Sleep under yours every night, even in the dry season."
+    },
+    {
+      "claim": "The malaria prevention drug (SP or Fansidar) given at antenatal harms the baby",
+      "verdict": "false",
+      "keywords": ["fansidar", "iptp", "prevention drug", "malaria drug at clinic", "the drug they give at antenatal"],
+      "explanation": "That medicine is given from the fourth month exactly because it protects you and the baby from malaria. It is well tested in pregnancy, take it with food as the nurse shows you."
+    },
+    {
+      "claim": "A caesarean section means you failed or you are not a real woman",
+      "verdict": "false",
+      "keywords": ["caesarean", "cs", "c section", "operation", "real woman", "failed", "not strong", "weak woman", "cut me open"],
+      "explanation": "A caesarean is a life saving operation, not a failure. Many strong mothers deliver this way when the baby position or their health needs it. What matters is that you and the baby are alive."
+    },
+    {
+      "claim": "Once you have had a caesarean you can never deliver normally again",
+      "verdict": "careful",
+      "keywords": ["after cs", "once cs", "never deliver normally", "vbac", "second cs", "always operation"],
+      "explanation": "Some women can safely deliver normally after one caesarean, but only in a hospital that can act fast if there is a problem. Ask your doctor what is safest for you."
+    },
+    {
+      "claim": "Babies born by caesarean are less intelligent or weaker",
+      "verdict": "false",
+      "keywords": ["cs baby", "caesarean baby", "less intelligent", "not smart", "weak baby", "operation baby"],
+      "explanation": "How a baby is born does not decide how clever or healthy the child becomes. Love, breastmilk, good food and immunisation matter far more."
+    },
+    {
+      "claim": "The first yellow breastmilk (colostrum) is dirty and should be thrown away",
+      "verdict": "false",
+      "keywords": ["colostrum", "yellow", "dirty", "yellow milk", "first milk", "first breast milk", "dirty milk", "throw away", "squeeze out first milk"],
+      "explanation": "That thick yellow milk is the baby first vaccine, full of protection against infection. Put the baby to the breast within the first hour and give that milk."
+    },
+    {
+      "claim": "A newborn needs water, glucose water or pap before six months",
+      "verdict": "false",
+      "keywords": ["give water", "glucose water", "sugar water", "pap", "give baby water", "water for newborn", "baby is thirsty"],
+      "explanation": "Breastmilk is mostly water and it is enough, even in hot weather. Water or pap before six months brings diarrhoea and takes away the baby appetite for milk."
+    },
+    {
+      "claim": "Breastmilk spoils if the mother is angry or walks in the hot sun",
+      "verdict": "false",
+      "keywords": ["milk spoil", "spoilt milk", "bad milk", "milk turn", "angry", "hot sun"],
+      "explanation": "Anger, heat and hard work do not spoil breastmilk. Keep breastfeeding, and rest and drink water so your milk keeps flowing."
+    },
+    {
+      "claim": "You cannot get pregnant while you are breastfeeding",
+      "verdict": "careful",
+      "keywords": ["breastfeeding family planning", "cannot get pregnant", "while breastfeeding", "no period yet", "breastfeeding protect"],
+      "explanation": "Breastfeeding only protects in the first six months, and only if the baby takes nothing but breastmilk and your period has not returned. Outside that you can conceive, so ask the clinic about a method."
+    },
+    {
+      "claim": "Family planning makes a woman barren forever",
+      "verdict": "false",
+      "keywords": ["family planning", "barren", "infertile", "never born again", "block the womb", "contraceptive", "prevent pregnancy"],
+      "explanation": "Family planning methods are reversible, and fertility usually returns within a few months of stopping. Spacing births by about two years keeps you and your next baby healthier."
+    },
+    {
+      "claim": "Vaccines make girls infertile",
+      "verdict": "false",
+      "keywords": ["vaccine", "immunisation", "immunization", "infertile", "infertility", "vaccine cause infertility", "girls infertile", "injection to reduce population", "sterilise our children"],
+      "explanation": "The vaccines used in Nigeria have been given for decades and do not affect a girl ability to have children. They protect against killers like measles, polio and tetanus."
+    },
+    {
+      "claim": "Giving a baby several injections on the same day is too much for the body",
+      "verdict": "false",
+      "keywords": ["many injections", "too many vaccines", "same day injections", "small body cannot take", "overload the baby"],
+      "explanation": "A baby body handles several vaccines at once easily, and the schedule is built that way so no visit is missed. Mild fever or a sore leg for a day is normal."
+    },
+    {
+      "claim": "The tetanus injection given to pregnant women is secret family planning",
+      "verdict": "false",
+      "keywords": ["tetanus injection", "td injection", "secret family planning", "injection at antenatal", "population control"],
+      "explanation": "That injection protects you and your newborn from tetanus, which still kills babies through the cord. It has no effect on future pregnancies."
+    },
+    {
+      "claim": "Sitting on very hot water after birth shrinks the womb back",
+      "verdict": "careful",
+      "keywords": ["hot water", "hot compress", "fomentation", "sitz bath", "sitting on hot water", "shrink the womb", "hot water after birth"],
+      "explanation": "Warm water soothes and is fine, but water that is too hot burns delicate skin and can bring infection. Let it be warm enough to be comfortable, never scalding."
+    },
+    {
+      "claim": "Rubbing sand, ash, cow dung, palm oil or balm on the baby cord helps it dry",
+      "verdict": "false",
+      "keywords": ["cord", "umbilical", "navel", "belly button", "sand", "ash", "cow dung", "palm oil on cord", "dry the cord", "navel dressing"],
+      "explanation": "Anything rubbed on the cord can carry tetanus germs that kill newborns. Keep the cord clean and dry, or use the chlorhexidine gel from the clinic, and nothing else."
+    },
+    {
+      "claim": "Tying the belly tightly straight after birth flattens the stomach",
+      "verdict": "careful",
+      "keywords": ["tie belly", "belly band", "binder", "bandage the stomach", "flat tummy", "tight cloth", "tie the stomach"],
+      "explanation": "A gentle wrap can feel supportive, but tying too tightly makes breathing and healing harder, especially after a caesarean. Keep it loose, and tell the nurse if it starts to pain you."
+    },
+    {
+      "claim": "Newborns should be given herbal mixture or purge to clean their stomach",
+      "verdict": "false",
+      "keywords": ["herbal for baby", "purge the baby", "clean the baby stomach", "agbo for baby", "enema", "bitter leaf water", "give the baby medicine"],
+      "explanation": "A newborn stomach is tiny, and these mixtures cause diarrhoea, poisoning and sometimes death. Only breastmilk for the first six months, nothing else, not even water."
+    },
+    {
+      "claim": "A pregnancy can hide or sleep in the body for years and come out later",
+      "verdict": "false",
+      "keywords": ["pregnancy hide", "hidden pregnancy", "sleeping baby", "pregnancy sleep", "stay in the body for years", "omo inu"],
+      "explanation": "A pregnancy cannot pause or hide for years. If your period stopped or your belly is growing, a clinic test and scan will show you what is really happening."
+    },
+    {
+      "claim": "Having sex during pregnancy hurts the baby",
+      "verdict": "false",
+      "keywords": ["sex", "intercourse", "sleep with my husband", "touch the baby", "poke the baby", "sex hurt the baby"],
+      "explanation": "In a normal pregnancy the baby sits protected inside the womb and cannot be touched. Stop and see the clinic if there is bleeding, pain, or your water has broken."
+    },
+    {
+      "claim": "Sex near your due date brings labour",
+      "verdict": "careful",
+      "keywords": ["sex near due date", "sex to bring labour", "overdue", "past my date", "sex induce"],
+      "explanation": "It may help a little when your body is already ready, and it is safe if your water has not broken and there is no bleeding. If you are past your date, let the clinic check the baby."
+    },
+    {
+      "claim": "Eating a certain yam or okra makes you give birth to twins",
+      "verdict": "careful",
+      "keywords": ["twins", "ibeji", "two babies", "yam cause twins", "food for twins"],
+      "explanation": "Twins run in families and are common in the South West, and wild yam may play a small part, but no food guarantees it. Twin pregnancies need extra checks, so attend every visit."
+    },
+    {
+      "claim": "Swollen feet with headache late in pregnancy is just normal tiredness",
+      "verdict": "false",
+      "keywords": ["swollen feet", "swelling", "swollen face", "headache", "just normal", "blurred vision", "pre eclampsia"],
+      "explanation": "Mild ankle swelling is common, but swelling of the face or hands with headache or blurred vision can mean pre eclampsia, which is dangerous. Get your blood pressure checked the same day."
+    },
+    {
+      "claim": "Painkillers like Alabukun, aspirin or ibuprofen are safe for pregnancy aches",
+      "verdict": "false",
+      "keywords": ["alabukun", "aspirin", "ibuprofen", "diclofenac", "painkiller", "pain killer", "apc"],
+      "explanation": "These can harm the baby heart and kidneys, especially later in pregnancy. Paracetamol at the right dose is the safer choice, and ask the clinic before taking any medicine."
+    },
+    {
+      "claim": "Prayer alone is enough, so there is no need for the clinic",
+      "verdict": "careful",
+      "keywords": ["prayer", "faith", "pastor", "imam", "church", "mosque", "god will do it", "no need for hospital"],
+      "explanation": "Faith carries many families through pregnancy, and it works best alongside the clinic. Keep praying, and keep your antenatal visits too so any problem is caught early."
+    },
+    {
+      "claim": "A very big baby is always a healthy baby",
+      "verdict": "careful",
+      "keywords": ["big baby", "fat baby", "heavy baby", "big is healthy"],
+      "explanation": "A very big baby can make delivery harder and can be a sign of high blood sugar. Steady growth checked at antenatal is the real sign of a healthy baby."
+    },
+    {
+      "claim": "Breastmilk alone for the first six months is best for the baby",
+      "verdict": "true",
+      "keywords": ["exclusive breastfeeding", "breastmilk alone", "only breastmilk", "six months breastfeeding", "nothing but breastmilk"],
+      "explanation": "This one is true. Breastmilk alone for six months protects against diarrhoea and pneumonia and helps the baby grow well. Add other food from six months and keep breastfeeding."
+    },
+    {
+      "claim": "Malaria in pregnancy is dangerous for mother and baby",
+      "verdict": "true",
+      "keywords": ["malaria in pregnancy", "malaria is dangerous", "malaria and pregnancy", "fever in pregnancy"],
+      "explanation": "True. Malaria brings low blood, miscarriage and small babies. Sleep under a treated net, take the prevention medicine from the clinic, and test quickly for any fever."
+    },
+    {
+      "claim": "Folic acid taken early prevents some birth defects",
+      "verdict": "true",
+      "keywords": ["folic acid", "spine defect", "birth defect", "before pregnancy tablet"],
+      "explanation": "True. Folic acid before and in early pregnancy helps prevent serious spine and brain problems in the baby. Start as soon as you are planning or as soon as you find out."
+    },
+    {
+      "claim": "Alcohol and smoking in pregnancy harm the baby",
+      "verdict": "true",
+      "keywords": ["alcohol", "smoking", "cigarette", "beer", "drinking in pregnancy", "smoke"],
+      "explanation": "True, and there is no safe amount. Alcohol and smoke reach the baby and affect growth and the brain. Stopping at any point still helps, and the clinic can support you."
+    },
+    {
+      "claim": "Waiting about two years between births is better for mother and baby",
+      "verdict": "true",
+      "keywords": ["space births", "child spacing", "two years apart", "wait before next baby"],
+      "explanation": "True. Waiting about two years lets your body rebuild, lowers the risk of early or small babies, and gives the child you have more milk and care."
+    },
+    {
+      "claim": "Delivering with a skilled health worker is safer than delivering at home",
+      "verdict": "true",
+      "keywords": ["deliver at home", "traditional birth attendant", "tba", "agbebi", "mission house", "skilled birth", "deliver in the house"],
+      "explanation": "True. Most birth emergencies cannot be predicted, and a skilled worker with drugs and blood nearby saves lives. If money or distance is the problem, tell the clinic, many can help."
+    }
+  ]
+}

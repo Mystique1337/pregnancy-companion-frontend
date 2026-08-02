@@ -202,3 +202,69 @@ alter table preg_companion.alerts add column if not exists outcome_by text;
 
 -- Postpartum: recorded when the mother tells us her baby is born.
 alter table preg_companion.mothers add column if not exists birth_date date;
+
+-- ============================================================================
+-- Grant-readiness layer (2026-07-16): evidence, equity, safety, Three Delays.
+-- ============================================================================
+
+-- Equity + programme markers — lets us EVIDENCE who we actually reach.
+alter table preg_companion.mothers add column if not exists state text;
+alter table preg_companion.mothers add column if not exists lga text;
+alter table preg_companion.mothers add column if not exists ward text;
+alter table preg_companion.mothers add column if not exists facility_name text;
+alter table preg_companion.mothers add column if not exists residence text;        -- urban | rural
+alter table preg_companion.mothers add column if not exists anc_attended boolean;  -- attended ANC before Bumply?
+
+-- Delay 2: her transport plan, captured BEFORE the emergency.
+alter table preg_companion.mothers add column if not exists transport_name text;
+alter table preg_companion.mothers add column if not exists transport_phone text;
+alter table preg_companion.mothers add column if not exists transport_note text;
+
+-- The decision-maker channel (husband / mother-in-law).
+alter table preg_companion.mothers add column if not exists partner_phone text;
+alter table preg_companion.mothers add column if not exists partner_opt_in boolean default false;
+
+-- Consent + right to erasure (NDPA 2023).
+alter table preg_companion.mothers add column if not exists consent_at timestamptz;
+alter table preg_companion.mothers add column if not exists consent_version text;
+alter table preg_companion.mothers add column if not exists deleted_at timestamptz;
+
+-- Time-to-care: the outcome metric (danger sign -> facility arrival).
+alter table preg_companion.alerts add column if not exists referral_code text;
+alter table preg_companion.alerts add column if not exists referred_at timestamptz;
+alter table preg_companion.alerts add column if not exists arrived_at timestamptz;
+alter table preg_companion.alerts add column if not exists facility_name text;
+
+-- Immutable-ish audit trail of every AI/clinical action.
+create table if not exists preg_companion.audit_log (
+  id         uuid primary key default gen_random_uuid(),
+  mother_id  uuid,
+  actor      text,          -- 'ai' | 'chw' | 'mother' | 'system'
+  action     text not null, -- 'ai_reply' | 'danger_detected' | 'alert_outcome' | 'consent' | 'data_deleted' ...
+  channel    text,          -- 'whatsapp' | 'telegram' | 'web'
+  summary    text,
+  meta       jsonb,
+  created_at timestamptz not null default now()
+);
+create index if not exists audit_log_mother_idx on preg_companion.audit_log (mother_id, created_at desc);
+
+-- Misinformation checks — powers "forward it to Bumply" AND builds a myths dataset.
+create table if not exists preg_companion.misinfo_checks (
+  id         uuid primary key default gen_random_uuid(),
+  mother_id  uuid,
+  claim      text not null,
+  verdict    text not null, -- 'false' | 'true' | 'careful'
+  language   text,
+  channel    text,
+  created_at timestamptz not null default now()
+);
+
+-- "Flag this answer" — clinical quality feedback on AI replies.
+create table if not exists preg_companion.ai_feedback (
+  id         uuid primary key default gen_random_uuid(),
+  mother_id  uuid,
+  message    text,
+  reason     text,
+  flagged_by text,
+  created_at timestamptz not null default now()
+);

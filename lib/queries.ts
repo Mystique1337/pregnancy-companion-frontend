@@ -28,6 +28,21 @@ export type Mother = {
   family_token: string | null;
   last_sent_at: string | null;
   created_at: string;
+  // Grant-readiness layer (equity, Three Delays, consent)
+  state: string | null;
+  lga: string | null;
+  ward: string | null;
+  facility_name: string | null;
+  residence: string | null;        // 'urban' | 'rural'
+  anc_attended: boolean | null;
+  transport_name: string | null;
+  transport_phone: string | null;
+  transport_note: string | null;
+  partner_phone: string | null;
+  partner_opt_in: boolean | null;
+  consent_at: string | null;
+  consent_version: string | null;
+  deleted_at: string | null;
 };
 
 export type WeeklyUpdate = {
@@ -665,4 +680,274 @@ export async function saveKickSession(
 export async function listKickSessions(motherId: string, limit = 20): Promise<KickSession[]> {
   return sql<KickSession[]>`
     select * from kick_sessions where mother_id = ${motherId} order by created_at desc limit ${limit}`;
+}
+
+// ============================================================================
+// Grant-readiness layer: evidence, equity, safety, Three Delays.
+// ============================================================================
+
+// --- Audit trail (#5/#6): every AI + clinical action is recorded ------------
+export type AuditEntry = {
+  mother_id?: string | null;
+  actor: "ai" | "chw" | "mother" | "system";
+  action: string;
+  channel?: string | null;
+  summary?: string | null;
+  meta?: Record<string, unknown>;
+};
+
+/** Fire-and-forget audit write — must never break a mother's conversation. */
+export function logAudit(e: AuditEntry): void {
+  void sql`
+    insert into audit_log (mother_id, actor, action, channel, summary, meta)
+    values (${e.mother_id ?? null}, ${e.actor}, ${e.action}, ${e.channel ?? null}, ${e.summary ?? null},
+            ${sql.json((e.meta ?? {}) as Parameters<typeof sql.json>[0])})`
+    .catch((err) => console.error("audit write failed:", err));
+}
+
+export type AuditRow = { id: string; mother_id: string | null; actor: string; action: string; channel: string | null; summary: string | null; created_at: string };
+export async function recentAudit(limit = 100): Promise<AuditRow[]> {
+  return sql<AuditRow[]>`
+    select id::text, mother_id::text, actor, action, channel, summary, created_at
+    from audit_log order by created_at desc limit ${limit}`;
+}
+
+// --- Time-to-care + referral loop (#2/#11) ----------------------------------
+/** Issue a referral for an alert; the short code is what the facility confirms. */
+export async function setAlertReferral(id: string, code: string, facility: string | null) {
+  await sql`update alerts set referral_code = ${code}, referred_at = now(), facility_name = ${facility} where id = ${id}`;
+}
+
+/** A facility/CHW confirms she arrived. Returns the alert, or null if unknown code. */
+export async function confirmArrivalByCode(code: string, facility?: string | null): Promise<Alert | null> {
+  const rows = await sql<Alert[]>`
+    update alerts set arrived_at = coalesce(arrived_at, now()),
+                      facility_name = coalesce(${facility ?? null}, facility_name),
+                      outcome = coalesce(outcome, 'sought_care'),
+                      outcome_at = coalesce(outcome_at, now()),
+                      status = 'resolved'
+    where upper(referral_code) = upper(${code}) returning *`;
+  return rows[0] ?? null;
+}
+
+export type TimeToCare = {
+  referrals: number;        // alerts where a referral was issued
+  arrivals: number;         // alerts with a confirmed arrival
+  arrivalRatePct: number;
+  medianHours: number;      // danger sign -> facility arrival
+  fastestHours: number;
+};
+
+/** THE outcome metric: median hours from danger sign to facility arrival. */
+export async function timeToCare(): Promise<TimeToCare> {
+  const rows = await sql<{ referrals: string; arrivals: string; median_h: string | null; fastest_h: string | null }[]>`
+    select count(*) filter (where referral_code is not null)                      as referrals,
+           count(*) filter (where arrived_at is not null)                          as arrivals,
+           percentile_cont(0.5) within group (
+             order by extract(epoch from (arrived_at - created_at)) / 3600.0
+           ) filter (where arrived_at is not null)                                 as median_h,
+           min(extract(epoch from (arrived_at - created_at)) / 3600.0)
+             filter (where arrived_at is not null)                                 as fastest_h
+    from alerts`;
+  const r = rows[0] || { referrals: "0", arrivals: "0", median_h: null, fastest_h: null };
+  const referrals = Number(r.referrals), arrivals = Number(r.arrivals);
+  return {
+    referrals, arrivals,
+    arrivalRatePct: referrals ? Math.round((arrivals / referrals) * 100) : 0,
+    medianHours: r.median_h ? Math.round(Number(r.median_h) * 10) / 10 : 0,
+    fastestHours: r.fastest_h ? Math.round(Number(r.fastest_h) * 10) / 10 : 0,
+  };
+}
+
+// --- Equity / reach report (#4) ---------------------------------------------
+export type ReachReport = {
+  total: number;
+  rural: number; urban: number; locationKnown: number;
+  ruralPct: number;
+  newToAnc: number;            // had NOT attended ANC before Bumply
+  firstPregnancy: number;
+  byLanguage: { language: string; n: number }[];
+  byState: { state: string; n: number }[];
+  withTransportPlan: number;
+  withPartnerChannel: number;
+  consented: number;
+};
+
+export async function reachReport(): Promise<ReachReport> {
+  const [agg, langs, states] = await Promise.all([
+    sql<Record<string, string>[]>`
+      select count(*)                                                    as total,
+             count(*) filter (where residence = 'rural')                 as rural,
+             count(*) filter (where residence = 'urban')                 as urban,
+             count(*) filter (where residence is not null)               as location_known,
+             count(*) filter (where anc_attended = false)                as new_to_anc,
+             count(*) filter (where first_pregnancy)                     as first_pregnancy,
+             count(*) filter (where transport_phone is not null)         as with_transport,
+             count(*) filter (where partner_opt_in)                      as with_partner,
+             count(*) filter (where consent_at is not null)              as consented
+      from mothers where deleted_at is null`,
+    sql<{ language: string; n: string }[]>`
+      select coalesce(language,'en') as language, count(*) as n from mothers
+      where deleted_at is null group by 1 order by count(*) desc limit 8`,
+    sql<{ state: string; n: string }[]>`
+      select coalesce(state,'unknown') as state, count(*) as n from mothers
+      where deleted_at is null group by 1 order by count(*) desc limit 8`,
+  ]);
+  const a = agg[0] || {};
+  const total = Number(a.total || 0), rural = Number(a.rural || 0), known = Number(a.location_known || 0);
+  return {
+    total, rural, urban: Number(a.urban || 0), locationKnown: known,
+    ruralPct: known ? Math.round((rural / known) * 100) : 0,
+    newToAnc: Number(a.new_to_anc || 0),
+    firstPregnancy: Number(a.first_pregnancy || 0),
+    byLanguage: langs.map((l) => ({ language: l.language, n: Number(l.n) })),
+    byState: states.map((s) => ({ state: s.state, n: Number(s.n) })),
+    withTransportPlan: Number(a.with_transport || 0),
+    withPartnerChannel: Number(a.with_partner || 0),
+    consented: Number(a.consented || 0),
+  };
+}
+
+// --- Profile fields: equity, transport plan, partner channel ----------------
+export type MotherProfilePatch = Partial<Pick<Mother,
+  "state" | "lga" | "ward" | "facility_name" | "residence" | "anc_attended" |
+  "transport_name" | "transport_phone" | "transport_note" | "partner_phone" | "partner_opt_in">>;
+
+/** Update only the provided profile fields (whitelisted keys, one statement each). */
+export async function updateMotherProfile(id: string, patch: MotherProfilePatch): Promise<void> {
+  const setters: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(patch)) if (v !== undefined) setters[k] = v;
+  const keys = Object.keys(setters);
+  if (!keys.length) return;
+  for (const k of keys) {
+    // Whitelisted column names only — never interpolate user input as SQL.
+    switch (k) {
+      case "state": await sql`update mothers set state = ${setters[k] as string} where id = ${id}`; break;
+      case "lga": await sql`update mothers set lga = ${setters[k] as string} where id = ${id}`; break;
+      case "ward": await sql`update mothers set ward = ${setters[k] as string} where id = ${id}`; break;
+      case "facility_name": await sql`update mothers set facility_name = ${setters[k] as string} where id = ${id}`; break;
+      case "residence": await sql`update mothers set residence = ${setters[k] as string} where id = ${id}`; break;
+      case "anc_attended": await sql`update mothers set anc_attended = ${setters[k] as boolean} where id = ${id}`; break;
+      case "transport_name": await sql`update mothers set transport_name = ${setters[k] as string} where id = ${id}`; break;
+      case "transport_phone": await sql`update mothers set transport_phone = ${setters[k] as string} where id = ${id}`; break;
+      case "transport_note": await sql`update mothers set transport_note = ${setters[k] as string} where id = ${id}`; break;
+      case "partner_phone": await sql`update mothers set partner_phone = ${setters[k] as string} where id = ${id}`; break;
+      case "partner_opt_in": await sql`update mothers set partner_opt_in = ${setters[k] as boolean} where id = ${id}`; break;
+    }
+  }
+}
+
+// --- Consent + right to erasure (#5) ----------------------------------------
+export async function recordConsent(id: string, version: string) {
+  await sql`update mothers set consent_at = now(), consent_version = ${version} where id = ${id}`;
+  logAudit({ mother_id: id, actor: "mother", action: "consent", summary: `consented to ${version}` });
+}
+
+/** NDPA right to erasure: wipe her content, keep an anonymous outcome row for M&E. */
+export async function eraseMotherData(id: string): Promise<void> {
+  await sql`delete from chat_messages where mother_id = ${id}`;
+  await sql`delete from journal_entries where mother_id = ${id}`;
+  await sql`delete from bump_photos where mother_id = ${id}`;
+  await sql`delete from vitals where mother_id = ${id}`;
+  await sql`update misinfo_checks set mother_id = null where mother_id = ${id}`;
+  await sql`update audit_log set mother_id = null where mother_id = ${id}`;
+  await sql`
+    update mothers set deleted_at = now(), full_name = 'Deleted user', email = concat('deleted-', id, '@bumply.invalid'),
+      phone = null, whatsapp_number = null, telegram_chat_id = null, partner_phone = null,
+      transport_name = null, transport_phone = null, transport_note = null, preferences = null
+    where id = ${id}`;
+  logAudit({ actor: "mother", action: "data_deleted", summary: "erasure request completed" });
+}
+
+// --- Misinformation checks (#7) — also builds the myths dataset -------------
+export async function logMisinfoCheck(motherId: string | null, claim: string, verdict: string, language: string | null, channel: string) {
+  await sql`
+    insert into misinfo_checks (mother_id, claim, verdict, language, channel)
+    values (${motherId}, ${claim.slice(0, 500)}, ${verdict}, ${language}, ${channel})`;
+}
+
+export type MythRow = { claim: string; verdict: string; n: number };
+export async function topMyths(limit = 20): Promise<MythRow[]> {
+  const rows = await sql<{ claim: string; verdict: string; n: string }[]>`
+    select claim, verdict, count(*) as n from misinfo_checks
+    group by claim, verdict order by count(*) desc limit ${limit}`;
+  return rows.map((r) => ({ claim: r.claim, verdict: r.verdict, n: Number(r.n) }));
+}
+
+export async function misinfoStats(): Promise<{ total: number; falseClaims: number }> {
+  const rows = await sql<{ total: string; false_claims: string }[]>`
+    select count(*) as total, count(*) filter (where verdict = 'false') as false_claims from misinfo_checks`;
+  return { total: Number(rows[0]?.total || 0), falseClaims: Number(rows[0]?.false_claims || 0) };
+}
+
+// --- "Flag this answer" (#6) -------------------------------------------------
+export async function flagAiAnswer(motherId: string | null, message: string, reason: string, by: string) {
+  await sql`insert into ai_feedback (mother_id, message, reason, flagged_by) values (${motherId}, ${message.slice(0, 2000)}, ${reason}, ${by})`;
+}
+
+// --- CHW prioritisation worklist (#10) --------------------------------------
+export type WorklistRow = {
+  id: string; full_name: string; phone: string | null; whatsapp_number: string | null;
+  current_week: number; language: string | null; open_alerts: number; urgent_alerts: number;
+  last_alert_at: string | null; last_message_at: string | null; days_silent: number | null;
+  transport_phone: string | null; anc_attended: boolean | null;
+};
+
+/** Every mother a CHW is responsible for, with the signals that drive priority. */
+export async function chwWorklist(chwId: string): Promise<WorklistRow[]> {
+  return sql<WorklistRow[]>`
+    select m.id::text, m.full_name, m.phone, m.whatsapp_number, m.current_week, m.language,
+           m.transport_phone, m.anc_attended,
+           coalesce(a.open_alerts, 0)::int   as open_alerts,
+           coalesce(a.urgent_alerts, 0)::int as urgent_alerts,
+           a.last_alert_at,
+           c.last_message_at,
+           case when c.last_message_at is null then null
+                else floor(extract(epoch from (now() - c.last_message_at)) / 86400)::int end as days_silent
+    from mothers m
+    left join (
+      select mother_id,
+             count(*) filter (where status = 'open')                        as open_alerts,
+             count(*) filter (where status = 'open' and level = 'urgent')   as urgent_alerts,
+             max(created_at)                                                as last_alert_at
+      from alerts group by mother_id
+    ) a on a.mother_id = m.id
+    left join (
+      select mother_id, max(created_at) as last_message_at from chat_messages group by mother_id
+    ) c on c.mother_id = m.id
+    where m.chw_id = ${chwId} and m.deleted_at is null
+    order by coalesce(a.urgent_alerts,0) desc, coalesce(a.open_alerts,0) desc, c.last_message_at asc nulls first
+    limit 200`;
+}
+
+// --- DHIS2 / HMIS aggregate (#15) -------------------------------------------
+export type Hmis = {
+  mothersEnrolled: number; ancReminders: number; dangerSignsDetected: number;
+  referralsIssued: number; arrivalsConfirmed: number; deliveries: number; immunisationReminders: number;
+};
+export async function hmisAggregate(sinceIso: string, untilIso: string): Promise<Hmis> {
+  const [m, a, n] = await Promise.all([
+    sql<Record<string, string>[]>`
+      select count(*) filter (where created_at >= ${sinceIso} and created_at < ${untilIso}) as enrolled,
+             count(*) filter (where birth_date is not null and birth_date >= ${sinceIso}::date and birth_date < ${untilIso}::date) as deliveries
+      from mothers where deleted_at is null`,
+    sql<Record<string, string>[]>`
+      select count(*) filter (where kind = 'danger-sign')                       as danger,
+             count(*) filter (where referral_code is not null)                  as referrals,
+             count(*) filter (where arrived_at is not null)                     as arrivals
+      from alerts where created_at >= ${sinceIso} and created_at < ${untilIso}`,
+    sql<Record<string, string>[]>`
+      select count(*) filter (where kind = 'anc')          as anc,
+             count(*) filter (where kind = 'immunization') as imm
+      from notification_log where created_at >= ${sinceIso} and created_at < ${untilIso}`,
+  ]);
+  return {
+    mothersEnrolled: Number(m[0]?.enrolled || 0),
+    deliveries: Number(m[0]?.deliveries || 0),
+    dangerSignsDetected: Number(a[0]?.danger || 0),
+    referralsIssued: Number(a[0]?.referrals || 0),
+    arrivalsConfirmed: Number(a[0]?.arrivals || 0),
+    ancReminders: Number(n[0]?.anc || 0),
+    immunisationReminders: Number(n[0]?.imm || 0),
+  };
 }

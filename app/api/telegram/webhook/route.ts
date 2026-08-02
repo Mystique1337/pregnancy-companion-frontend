@@ -17,7 +17,13 @@ import { detectBirthAnnouncement, birthCongratsReply } from "@/lib/postpartum";
 import { immunizationReminder } from "@/lib/immunization";
 import { readImage, safetyNote, visionConfigured } from "@/lib/vision";
 import { detectLanguageChange, isLanguageMenuRequest, LANG_CONFIRM, LANG_MENU } from "@/lib/langSwitch";
-import { updateMotherLanguage } from "@/lib/queries";
+import { updateMotherLanguage, setAlertReferral, recordConsent, eraseMotherData, logAudit, logMisinfoCheck } from "@/lib/queries";
+import { CONSENT_VERSION, consentMessage, isConsentAccepted, isDeleteRequest, isDeleteConfirmed, DELETE_CONFIRM_MESSAGE, DELETE_DONE_MESSAGE } from "@/lib/consent";
+import { handleProfileStep, beginProfileFlow, isProfileSetupRequest } from "@/lib/profileFlow";
+import { checkClaim, looksLikeForwardedClaim, isFactCheckRequest } from "@/lib/misinfo";
+import { newReferralCode, referralLine } from "@/lib/referral";
+import { dispatchTransport, transportLine } from "@/lib/transport";
+import { alertPartnerDanger } from "@/lib/partner";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -95,11 +101,20 @@ export async function POST(req: Request) {
           await sendTelegram(chatId, dangerReply(first, danger));
           await voiceBack(danger.level === "emergency" ? "Please go to the nearest hospital now. Do not wait." : "Please go to your clinic today. Do not wait.");
           if (mother) {
-            await createAlert(mother.id, {
+            const alert = await createAlert(mother.id, {
               level: danger.level === "emergency" ? "urgent" : "warning",
               kind: "danger-sign",
               message: `Telegram danger sign — ${danger.sign}: "${userText.slice(0, 160)}"`,
-            }).catch(() => {});
+            }).catch(() => null);
+            // Make time-to-care measurable, and pull in the people who get her there.
+            if (alert) {
+              const code = newReferralCode();
+              await setAlertReferral(alert.id, code, mother.facility_name ?? null).catch(() => {});
+              await sendTelegram(chatId, `${transportLine(mother)}\n\n${referralLine(code)}`);
+            }
+            void alertPartnerDanger(mother, danger.sign).catch(() => {});
+            if (danger.level === "emergency") void dispatchTransport(mother).catch(() => {});
+            logAudit({ mother_id: mother.id, actor: "ai", action: "danger_detected", channel: "telegram", summary: danger.sign });
           }
           console.log(`[tg] DANGER (${danger.sign}) from ${chatId}${mother ? " (" + mother.full_name + ")" : " (unregistered)"}`);
           return;
@@ -123,6 +138,10 @@ export async function POST(req: Request) {
         }
         const res = await handleOnboarding(userText, telegramChannel(chatId));
         if (res.kind !== "skip") await sendTelegram(chatId, res.text);
+        if (res.kind === "done") {
+          await recordConsent(res.mother.id, CONSENT_VERSION).catch(() => {});
+          await sendTelegram(chatId, await beginProfileFlow(`tg:${chatId}`));
+        }
         console.log(`[tg] onboarding ${res.kind} for ${chatId}`);
         return;
       }
@@ -154,6 +173,38 @@ export async function POST(req: Request) {
       if (!userText) {
         await sendTelegram(chatId, "Sorry, I couldn't hear that clearly 🌸 Please try again, or type your message.");
         return;
+      }
+
+      // Right to erasure (NDPA 2023).
+      if (isDeleteConfirmed(userText)) {
+        await eraseMotherData(mother.id);
+        await sendTelegram(chatId, DELETE_DONE_MESSAGE);
+        return;
+      }
+      if (isDeleteRequest(userText)) { await sendTelegram(chatId, DELETE_CONFIRM_MESSAGE); return; }
+
+      // Consent: told once, recorded, never blocking (danger already handled above).
+      if (!mother.consent_at) {
+        await sendTelegram(chatId, consentMessage(mother.language));
+        await recordConsent(mother.id, isConsentAccepted(userText) ? CONSENT_VERSION : `${CONSENT_VERSION}-notified`).catch(() => {});
+      }
+
+      // Progressive profiling (place → transport → partner).
+      if (isProfileSetupRequest(userText)) { await sendTelegram(chatId, await beginProfileFlow(`tg:${chatId}`)); return; }
+      const profileReply = await handleProfileStep(mother, userText, `tg:${chatId}`, "telegram");
+      if (profileReply) { await sendTelegram(chatId, profileReply); return; }
+
+      // "Forward it to Bumply" — the misinformation fact-check layer.
+      if (isFactCheckRequest(userText) || looksLikeForwardedClaim(userText)) {
+        const check = await checkClaim(userText, mother.language).catch(() => null);
+        if (check) {
+          await sendTelegram(chatId, check.reply);
+          await voiceBack(check.reply);
+          void logMisinfoCheck(mother.id, check.claim, check.verdict, mother.language, "telegram").catch(() => {});
+          logAudit({ mother_id: mother.id, actor: "ai", action: "misinfo_check", channel: "telegram", summary: check.verdict });
+          console.log(`[tg] misinfo check (${check.verdict}) for ${chatId}`);
+          return;
+        }
       }
 
       // Language switch: "speak yoruba", "/language hausa", or "/language" for the menu.

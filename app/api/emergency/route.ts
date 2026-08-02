@@ -3,6 +3,10 @@ import { getSession } from "@/lib/session";
 import { getMotherById, createAlert, updateEmergencyContact } from "@/lib/queries";
 import { findHospitals } from "@/lib/hospitals";
 import { sendAlert } from "@/lib/notify";
+import { dispatchTransport, hasTransportPlan } from "@/lib/transport";
+import { alertPartnerDanger } from "@/lib/partner";
+import { newReferralCode } from "@/lib/referral";
+import { setAlertReferral, logAudit } from "@/lib/queries";
 
 export const maxDuration = 30;
 
@@ -31,14 +35,25 @@ export async function POST(req: Request) {
   const hasLoc = Number.isFinite(lat) && Number.isFinite(lon);
   const locText = hasLoc ? ` Location: https://maps.google.com/?q=${lat},${lon}` : " (location not shared)";
 
-  await createAlert(mother.id, {
+  const alert = await createAlert(mother.id, {
     level: "urgent",
     kind: "emergency",
     message: `🚨 EMERGENCY MODE triggered by ${mother.full_name}.${locText}`,
   });
-  // Fan out to the mother's own channels as confirmation (push/telegram/email).
+
+  // Issue a referral code so her arrival at the facility can be confirmed — that
+  // is what turns "we alerted someone" into a measured time-to-care.
+  const referralCode = newReferralCode();
+  await setAlertReferral(alert.id, referralCode, mother.facility_name ?? null).catch(() => {});
+
+  const mapsUrl = hasLoc ? `https://maps.google.com/?q=${lat},${lon}` : null;
+  // Fan out: her own channels, the people who physically get her there (Delay 2),
+  // and the decision-maker who says yes to going.
   after(async () => {
-    await sendAlert(mother, { level: "urgent", message: `Emergency Mode is active. If this is a real emergency, get to the nearest hospital now.${locText}` }).catch(() => {});
+    await sendAlert(mother, { level: "urgent", message: `Emergency Mode is active. If this is a real emergency, get to the nearest hospital now. Show code ${referralCode} at the clinic.${locText}` }).catch(() => {});
+    await dispatchTransport(mother, { mapsUrl }).catch(() => {});
+    await alertPartnerDanger(mother, "emergency mode", mapsUrl).catch(() => {});
+    logAudit({ mother_id: mother.id, actor: "mother", action: "emergency_triggered", channel: "web", summary: referralCode, meta: { hasLoc } });
   });
 
   let hospitals: Awaited<ReturnType<typeof findHospitals>> = [];
@@ -48,6 +63,10 @@ export async function POST(req: Request) {
 
   return NextResponse.json({
     ok: true,
+    referralCode,
+    transportPlan: hasTransportPlan(mother)
+      ? { name: mother.transport_name, phone: mother.transport_phone }
+      : null,
     hospitals,
     contact: mother.emergency_contact_name || mother.emergency_contact_phone
       ? { name: mother.emergency_contact_name, phone: mother.emergency_contact_phone }

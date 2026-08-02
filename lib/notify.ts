@@ -18,6 +18,12 @@ import { sendWhatsApp, whatsappConfigured } from "./whatsapp";
 import { sendTelegram } from "./telegram";
 import { sendSms, smsConfigured } from "./sms";
 import { nextImmunization, immunizationReminder } from "./immunization";
+import { partnerWeeklyNudge, partnerEnabled } from "./partner";
+import { speak, normalizeVoice } from "./voice";
+import { wavToMp3 } from "./audio";
+import { sendWhatsAppAudio } from "./evolution";
+import { sendVoiceReply } from "./telegram";
+import { stripForSpeech } from "./speechText";
 
 function firstName(m: Mother): string {
   return (m.full_name || "mama").split(" ")[0];
@@ -89,7 +95,7 @@ function daySeed(dateStr: string): number {
   return Number.isNaN(ms) ? 0 : Math.floor(ms / 86400000);
 }
 
-export type DailyResult = { mothers: number; anc: number; milestone: number; daily: number; proactive: number; immunization: number; checkin: number };
+export type DailyResult = { mothers: number; anc: number; milestone: number; daily: number; proactive: number; immunization: number; checkin: number; partnerNudge: number; bulletin: number };
 
 /**
  * Daily engagement pass: ANC reminders + milestone celebrations + a daily tip,
@@ -103,7 +109,9 @@ export async function runDailyEngagement(dateStr: string): Promise<DailyResult> 
     daily = 0,
     proactive = 0,
     immunization = 0,
-    checkin = 0;
+    checkin = 0,
+    partnerNudge = 0,
+    bulletin = 0;
 
   for (const m of mothers) {
     // Postpartum: her baby is born → immunization reminders instead of pregnancy
@@ -178,9 +186,31 @@ export async function runDailyEngagement(dateStr: string): Promise<DailyResult> 
       if (!sent) sent = await tgNotify(m, msg);
       if (sent) { await markNotified(m.id, "checkin", cref); checkin++; }
     }
+
+    // 6) The decision-maker's weekly nudge — he is often the one who says
+    //    "yes, we go to hospital", so he gets one practical ask a week.
+    const pref = `partner-${wkBucket}`;
+    if (partnerEnabled(m) && !(await alreadyNotified(m.id, "partner", pref))) {
+      if (await partnerWeeklyNudge(m, wkBucket + week)) { await markNotified(m.id, "partner", pref); partnerNudge++; }
+    }
+
+    // 7) Spoken weekly bulletin in her own language — the highest-engagement
+    //    format for a mother who cannot read. GPU-metered, so it is opt-in via env.
+    const bref = `bulletin-${wkBucket}`;
+    if (process.env.VOICE_BULLETIN_ENABLED === "true" && !(await alreadyNotified(m.id, "bulletin", bref))) {
+      const line = `Hello ${firstName(m)}. You are in week ${week}. ${dailyTipFor(week, wkBucket)} Remember, if you see heavy bleeding, fits, or your baby stops moving, go to the hospital straight away.`;
+      try {
+        const mp3 = await wavToMp3(await speak(stripForSpeech(line), normalizeVoice(m.language)));
+        const wa = m.whatsapp_number || m.phone;
+        let ok = false;
+        if (whatsappConfigured() && wa) ok = (await sendWhatsAppAudio(wa, mp3)).ok === true;
+        if (!ok && m.telegram_chat_id) ok = (await sendVoiceReply(m.telegram_chat_id, mp3)).sent === true;
+        if (ok) { await markNotified(m.id, "bulletin", bref); bulletin++; }
+      } catch (e) { console.error("voice bulletin error:", e); }
+    }
   }
 
-  return { mothers: mothers.length, anc, milestone, daily, proactive, immunization, checkin };
+  return { mothers: mothers.length, anc, milestone, daily, proactive, immunization, checkin, partnerNudge, bulletin };
 }
 
 /**

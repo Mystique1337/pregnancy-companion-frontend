@@ -10,7 +10,13 @@ import { markDelivered } from "@/lib/queries";
 import { immunizationReminder } from "@/lib/immunization";
 import { readImage, safetyNote, visionConfigured } from "@/lib/vision";
 import { detectLanguageChange, isLanguageMenuRequest, LANG_CONFIRM, LANG_MENU } from "@/lib/langSwitch";
-import { updateMotherLanguage } from "@/lib/queries";
+import { updateMotherLanguage, setAlertReferral, recordConsent, eraseMotherData, logAudit, logMisinfoCheck } from "@/lib/queries";
+import { CONSENT_VERSION, consentMessage, isConsentAccepted, isDeleteRequest, isDeleteConfirmed, DELETE_CONFIRM_MESSAGE, DELETE_DONE_MESSAGE } from "@/lib/consent";
+import { handleProfileStep, beginProfileFlow, isProfileSetupRequest } from "@/lib/profileFlow";
+import { checkClaim, looksLikeForwardedClaim, isFactCheckRequest } from "@/lib/misinfo";
+import { newReferralCode, referralLine } from "@/lib/referral";
+import { dispatchTransport, transportLine } from "@/lib/transport";
+import { alertPartnerDanger } from "@/lib/partner";
 import { transcribe, speak, normalizeVoice, warm } from "@/lib/voice";
 import { wavToMp3 } from "@/lib/audio";
 
@@ -100,6 +106,12 @@ export async function POST(req: Request) {
           }
           const res = await handleOnboarding(text, whatsappChannel(phone));
           if (res.kind !== "skip") await sendText(phone, res.text);
+          if (res.kind === "done") {
+            // She's enrolled — NOW ask the three high-value questions. Enrolling first
+            // means abandoning this flow costs us nothing.
+            await recordConsent(res.mother.id, CONSENT_VERSION).catch(() => {});
+            await sendText(phone, await beginProfileFlow(phone));
+          }
           console.log(`[wa] onboarding ${res.kind} for ${phone}`);
           continue;
         }
@@ -157,14 +169,63 @@ export async function POST(req: Request) {
           await sendText(phone, dr);
           await voiceBack(danger.level === "emergency" ? "Please go to the nearest hospital now. Do not wait." : "Please go to your clinic today. Do not wait.");
           const level = danger.level === "emergency" ? "urgent" : "warning";
-          await createAlert(mother.id, {
+          const alert = await createAlert(mother.id, {
             level,
             kind: "danger-sign",
             message: `WhatsApp danger sign — ${danger.sign}: "${text.slice(0, 160)}"`,
-          }).catch(() => {});
+          }).catch(() => null);
+
+          // Close the loop so time-to-care is measurable, and pull in the people who
+          // actually get her there (Delay 2 + the decision-maker).
+          if (alert) {
+            const code = newReferralCode();
+            await setAlertReferral(alert.id, code, mother.facility_name ?? null).catch(() => {});
+            await sendText(phone, `${transportLine(mother)}\n\n${referralLine(code)}`);
+          }
+          void alertPartnerDanger(mother, danger.sign).catch(() => {});
+          if (danger.level === "emergency") void dispatchTransport(mother).catch(() => {});
+          logAudit({ mother_id: mother.id, actor: "ai", action: "danger_detected", channel: "whatsapp", summary: danger.sign, meta: { level } });
           console.log(`[wa] DANGER (${danger.sign}) from ${phone} (${mother.full_name}) voice=${viaVoice}`);
           continue;
         }
+
+        // Right to erasure (NDPA 2023) — she can always take her data back.
+        if (isDeleteConfirmed(text)) {
+          await eraseMotherData(mother.id);
+          await sendText(phone, DELETE_DONE_MESSAGE);
+          console.log(`[wa] data erased for ${phone}`);
+          continue;
+        }
+        if (isDeleteRequest(text)) { await sendText(phone, DELETE_CONFIRM_MESSAGE); continue; }
+
+        // Consent (NDPA 2023): tell her once, in her language, and record it — but
+        // NEVER block the conversation on it. This runs AFTER the danger fast-path,
+        // so a mother in danger is never met with a privacy notice.
+        if (!mother.consent_at) {
+          await sendText(phone, consentMessage(mother.language));
+          await recordConsent(mother.id, isConsentAccepted(text) ? CONSENT_VERSION : `${CONSENT_VERSION}-notified`).catch(() => {});
+          // fall through and answer her normally
+        }
+
+        // Progressive profiling (place → transport → partner), or a restart request.
+        if (isProfileSetupRequest(text)) { await sendText(phone, await beginProfileFlow(phone)); continue; }
+        const profileReply = await handleProfileStep(mother, text, phone, "whatsapp");
+        if (profileReply) { await sendText(phone, profileReply); continue; }
+
+        // "Forward it to Bumply" — WhatsApp is where maternal misinformation spreads,
+        // so Bumply is the fact-check layer inside the same app.
+        if (text && (isFactCheckRequest(text) || looksLikeForwardedClaim(text))) {
+          const check = await checkClaim(text, mother.language).catch(() => null);
+          if (check) {
+            await sendText(phone, check.reply);
+            await voiceBack(check.reply);
+            void logMisinfoCheck(mother.id, check.claim, check.verdict, mother.language, "whatsapp").catch(() => {});
+            logAudit({ mother_id: mother.id, actor: "ai", action: "misinfo_check", channel: "whatsapp", summary: check.verdict });
+            console.log(`[wa] misinfo check (${check.verdict}) for ${phone}`);
+            continue;
+          }
+        }
+
 
         // Language switch: "speak yoruba", "language hausa", or "language" for the menu.
         if (isLanguageMenuRequest(text)) { await sendText(phone, LANG_MENU); continue; }

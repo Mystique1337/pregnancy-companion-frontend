@@ -843,12 +843,28 @@ export async function recordConsent(id: string, version: string) {
   logAudit({ mother_id: id, actor: "mother", action: "consent", summary: `consented to ${version}` });
 }
 
-/** NDPA right to erasure: wipe her content, keep an anonymous outcome row for M&E. */
+/**
+ * NDPA right to erasure: wipe every piece of her content, keeping only anonymous
+ * aggregate rows for M&E. NOTE: we TOMBSTONE the mothers row rather than deleting
+ * it, so `on delete cascade` never fires — every child table must therefore be
+ * cleared explicitly here. Missing one would leave her words in the database.
+ */
 export async function eraseMotherData(id: string): Promise<void> {
   await sql`delete from chat_messages where mother_id = ${id}`;
   await sql`delete from journal_entries where mother_id = ${id}`;
   await sql`delete from bump_photos where mother_id = ${id}`;
   await sql`delete from vitals where mother_id = ${id}`;
+  await sql`delete from weekly_updates where mother_id = ${id}`;
+  await sql`delete from kick_sessions where mother_id = ${id}`;
+  await sql`delete from push_subscriptions where mother_id = ${id}`;
+  await sql`delete from notification_log where mother_id = ${id}`;
+  await sql`delete from ai_feedback where mother_id = ${id}`;
+  await sql`delete from wa_onboarding where phone in (
+              select regexp_replace(coalesce(whatsapp_number, phone, ''), '\D', '', 'g') from mothers where id = ${id}
+              union select concat('tg:', telegram_chat_id) from mothers where id = ${id} and telegram_chat_id is not null)`;
+  // Alerts quote her own words — scrub the text but keep the row so the programme's
+  // outcome statistics (danger signs raised, reached care) stay truthful.
+  await sql`update alerts set message = '[erased at the mother''s request]' where mother_id = ${id}`;
   await sql`update misinfo_checks set mother_id = null where mother_id = ${id}`;
   await sql`update audit_log set mother_id = null where mother_id = ${id}`;
   await sql`

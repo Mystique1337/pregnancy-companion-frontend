@@ -17,6 +17,7 @@
     "test:e2e": "tsx scripts/e2e.mts",
     "test:pw": "playwright test",
     "test:unit": "tsx scripts/unit.mts",
+    "eval:danger": "tsx scripts/eval-danger.mts",
     "test:whatsapp": "tsx scripts/test-whatsapp.mts"
   },
   "dependencies": {

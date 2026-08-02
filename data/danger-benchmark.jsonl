@@ -1,0 +1,258 @@
+{"text":"i am bleeding heavily since morning i have soaked three pads already","lang":"en","expect":"emergency","sign":"heavy bleeding"}
+{"text":"blood dey rush comot for my body i don soak two wrapper","lang":"pcm","expect":"emergency","sign":"heavy bleeding"}
+{"text":"plenty blood dey comot for my down since night","lang":"pcm","expect":"emergency","sign":"heavy bleeding"}
+{"text":"heavy bleeding with big clots coming out sorry to disturb you","lang":"en","expect":"emergency","sign":"heavy bleeding"}
+{"text":"i am passing clots the size of my palm and the bleeding will not stop","lang":"en","expect":"emergency","sign":"heavy bleeding"}
+{"text":"ẹjẹ ń jáde púpọ̀ láti àárọ̀","lang":"yo","expect":"emergency","sign":"heavy bleeding","note":"yoruba: blood is coming out plenty since morning"}
+{"text":"jini yana zuba sosai ban tsaya ba tun da safe","lang":"ha","expect":"emergency","sign":"heavy bleeding","note":"hausa: blood pouring badly, has not stopped since morning"}
+{"text":"ọbara na-agba m nke ukwuu, m emeela soak pad abụọ","lang":"ig","expect":"emergency","sign":"heavy bleeding","note":"igbo/english code-switch: heavy bleeding, two pads soaked"}
+{"text":"i soak cloth with blood two times this night","lang":"pcm","expect":"emergency","sign":"heavy bleeding"}
+{"text":"ẹ̀jẹ̀ ń jáde lọ́pọ̀lọpọ̀, mo ti rẹ̀","lang":"yo","expect":"emergency","sign":"heavy bleeding","note":"same yoruba word as above but written with tone marks, which is how it is normally typed"}
+{"text":"i don soak three pad since afternoon, blood no gree stop","lang":"pcm","expect":"emergency","sign":"heavy bleeding"}
+{"text":"i noticed some blood in my underwear this morning","lang":"en","expect":"urgent","sign":"vaginal bleeding"}
+{"text":"i see small blood for my pant when i wipe","lang":"pcm","expect":"urgent","sign":"vaginal bleeding"}
+{"text":"i am spotting a little today is that normal","lang":"en","expect":"urgent","sign":"vaginal bleeding"}
+{"text":"there was blood when i went to the toilet just now","lang":"en","expect":"urgent","sign":"vaginal bleeding"}
+{"text":"blood dey drop small small since yesterday","lang":"pcm","expect":"urgent","sign":"vaginal bleeding"}
+{"text":"my bp was 130 over 85 at the clinic and now i am seeing blood","lang":"en","expect":"urgent","sign":"vaginal bleeding","note":"real bleeding reported alongside a bp reading - the message is still a danger sign"}
+{"text":"i did a blood test yesterday and today i am bleeding","lang":"en","expect":"urgent","sign":"vaginal bleeding","note":"mentions a blood test but the live symptom is bleeding today"}
+{"text":"mo rí ẹjẹ díẹ̀ lóni, kò pọ̀ ṣùgbọ́n ó dẹ́rùbà mí","lang":"yo","expect":"urgent","sign":"vaginal bleeding","note":"yoruba: i saw a little blood today, not much but it frightens me"}
+{"text":"na ga jini kadan a cikin wando na","lang":"ha","expect":"urgent","sign":"vaginal bleeding","note":"hausa: i saw a little blood in my underwear"}
+{"text":"ahụrụ m obara na uwe m taa","lang":"ig","expect":"urgent","sign":"vaginal bleeding","note":"igbo: i saw blood on my clothes today"}
+{"text":"my wife just had a convulsion and she is not responding","lang":"en","expect":"emergency","sign":"fits/convulsions"}
+{"text":"she just get fit now, her body dey shake","lang":"pcm","expect":"emergency","sign":"fits/convulsions"}
+{"text":"i had a seizure this morning and bit my tongue","lang":"en","expect":"emergency","sign":"fits/convulsions"}
+{"text":"my whole body started jerking and i blacked out for a minute","lang":"en","expect":"emergency","sign":"fits/convulsions"}
+{"text":"ó ní wárápá, ara rẹ̀ ń gbọ̀n","lang":"yo","expect":"emergency","sign":"fits/convulsions","note":"yoruba: she has convulsions, her body is shaking"}
+{"text":"tana da farfadiya yanzu, jikinta na jijiji","lang":"ha","expect":"emergency","sign":"fits/convulsions","note":"hausa: she is convulsing now, her body is trembling"}
+{"text":"ahụ ya na-ama jijiji, ọ naghị aza","lang":"ig","expect":"emergency","sign":"fits/convulsions","note":"igbo: her body is shaking, she is not answering"}
+{"text":"my baby has not moved since yesterday afternoon","lang":"en","expect":"urgent","sign":"baby not moving"}
+{"text":"my pikin no dey move since morning, i dey fear","lang":"pcm","expect":"urgent","sign":"baby not moving"}
+{"text":"i have not felt any kicks today at all","lang":"en","expect":"urgent","sign":"baby not moving","note":"reduced fetal movement without using the word baby"}
+{"text":"baby movement don reduce since two days","lang":"pcm","expect":"urgent","sign":"baby not moving"}
+{"text":"reduced movement for the past twelve hours and no kicks","lang":"en","expect":"urgent","sign":"baby not moving"}
+{"text":"my baby is very quiet today, not like him at all","lang":"en","expect":"urgent","sign":"baby not moving"}
+{"text":"ọmọ mi kò yí padà lati àná","lang":"yo","expect":"urgent","sign":"baby not moving","note":"yoruba: my baby has not moved since yesterday"}
+{"text":"jaririn bai motsi ba tun safe, baby never move today","lang":"ha","expect":"urgent","sign":"baby not moving","note":"hausa/english code-switch: the baby has not moved since morning"}
+{"text":"my water just broke and i am only 33 weeks","lang":"en","expect":"urgent","sign":"waters broken"}
+{"text":"water don burst for my body since morning","lang":"pcm","expect":"urgent","sign":"waters broken"}
+{"text":"i felt a gush of fluid leaking down my legs","lang":"en","expect":"urgent","sign":"waters broken"}
+{"text":"omi mi ti bú, ó ń jáde","lang":"yo","expect":"urgent","sign":"waters broken","note":"yoruba: my water has broken, it is coming out"}
+{"text":"ruwana ya fashe, my water don break","lang":"ha","expect":"urgent","sign":"waters broken","note":"hausa/english code-switch"}
+{"text":"clear fluid keeps leaking out and i am 35 weeks","lang":"en","expect":"urgent","sign":"waters broken"}
+{"text":"my vision has been blurry since this morning and my head is banging","lang":"en","expect":"urgent","sign":"vision changes"}
+{"text":"my eye dey blur, i no fit see well","lang":"pcm","expect":"urgent","sign":"vision changes"}
+{"text":"i keep seeing flashing lights and spots before my eyes","lang":"en","expect":"urgent","sign":"vision changes"}
+{"text":"everything looks double and i feel like vomiting","lang":"en","expect":"urgent","sign":"vision changes","note":"diplopia is a pre-eclampsia red flag but phrased without the word blur"}
+{"text":"anya m na-agba ọchịchịrị, ahụghị m ụzọ nke ọma","lang":"ig","expect":"urgent","sign":"vision changes","note":"igbo: my eyes are going dark, i cannot see properly"}
+{"text":"my eyes dey blurry since afternoon abeg wetin dey happen","lang":"pcm","expect":"urgent","sign":"vision changes"}
+{"text":"i have a very bad headache that panadol is not touching","lang":"en","expect":"urgent","sign":"severe headache","note":"severe persistent headache unrelieved by analgesia is a WHO pregnancy danger sign"}
+{"text":"my head dey bang me since morning, e no gree stop","lang":"pcm","expect":"urgent","sign":"severe headache"}
+{"text":"severe headache for two days and my face is swollen","lang":"en","expect":"urgent","sign":"severe headache","note":"headache plus facial oedema - classic pre-eclampsia pair"}
+{"text":"orí mi ń fọ́ gan an, kò dúró rárá","lang":"yo","expect":"urgent","sign":"severe headache","note":"yoruba: my head is splitting badly, it does not stop"}
+{"text":"ina jin ciwon kai mai tsanani tun jiya","lang":"ha","expect":"urgent","sign":"severe headache","note":"hausa: i have had a severe headache since yesterday"}
+{"text":"worst headache of my life and the light is hurting my eyes","lang":"en","expect":"urgent","sign":"severe headache","note":"thunderclap headache with photophobia"}
+{"text":"my face and hands are swollen since yesterday morning","lang":"en","expect":"urgent","sign":"sudden swelling"}
+{"text":"my hand and face don swell up like balloon","lang":"pcm","expect":"urgent","sign":"sudden swelling"}
+{"text":"swollen face and puffy fingers when i woke up today","lang":"en","expect":"urgent","sign":"sudden swelling","note":"same symptom as the row above, only the word order is reversed"}
+{"text":"my fingers are so swollen i cannot remove my ring","lang":"en","expect":"urgent","sign":"sudden swelling"}
+{"text":"ojú mi àti ọwọ́ mi ti wú gan","lang":"yo","expect":"urgent","sign":"sudden swelling","note":"yoruba: my face and my hands have swollen badly"}
+{"text":"fuskata da hannuna sun kumbura tun jiya","lang":"ha","expect":"urgent","sign":"sudden swelling","note":"hausa: my face and hands have been swollen since yesterday"}
+{"text":"i have severe pain in my lower belly and it will not stop","lang":"en","expect":"urgent","sign":"severe abdominal pain"}
+{"text":"my belle dey pain me well well, i no fit stand","lang":"pcm","expect":"urgent","sign":"severe abdominal pain"}
+{"text":"sharp constant pain in my stomach since last night","lang":"en","expect":"urgent","sign":"severe abdominal pain","note":"constant severe abdominal pain, phrased with the adjective before the noun"}
+{"text":"strong belle pain wey no dey stop since night","lang":"pcm","expect":"urgent","sign":"severe abdominal pain"}
+{"text":"the pain in my tummy is so bad i am crying","lang":"en","expect":"urgent","sign":"severe abdominal pain","note":"very common phrasing - pain word comes before the body part"}
+{"text":"ina jin severe pain a ciki na tun jiya","lang":"ha","expect":"urgent","sign":"severe abdominal pain","note":"hausa/english code-switch: severe pain in my abdomen since yesterday"}
+{"text":"afọ na-egbu m nke ukwuu, enweghị m ike iguzo","lang":"ig","expect":"urgent","sign":"severe abdominal pain","note":"igbo: my abdomen is hurting me badly, i cannot stand"}
+{"text":"i cannot breathe well and my chest is paining me","lang":"en","expect":"emergency","sign":"difficulty breathing"}
+{"text":"i no fit breath since morning, my chest dey tight","lang":"pcm","expect":"emergency","sign":"difficulty breathing"}
+{"text":"i am breathless just from walking to the toilet","lang":"en","expect":"emergency","sign":"difficulty breathing","note":"breathlessness at minimal exertion, not exertional puffing"}
+{"text":"sharp chest pain and my heart is racing","lang":"en","expect":"emergency","sign":"difficulty breathing"}
+{"text":"ina fama da numfashi, kirjina na ciwo","lang":"ha","expect":"emergency","sign":"difficulty breathing","note":"hausa: i am struggling to breathe, my chest hurts"}
+{"text":"mí ò lè mí dáadáa, àyà mi ń dùn","lang":"yo","expect":"emergency","sign":"difficulty breathing","note":"yoruba: i cannot breathe well, my chest hurts"}
+{"text":"i fainted at the market this afternoon","lang":"en","expect":"urgent","sign":"fainting"}
+{"text":"i just black out for kitchen now, i wake up on the floor","lang":"pcm","expect":"emergency","sign":"fainting","note":"actual loss of consciousness is a WHO emergency sign, not a same-day one"}
+{"text":"she collapsed and is not waking up","lang":"en","expect":"emergency","sign":"fainting","note":"unconscious - emergency"}
+{"text":"i feel like i am going to pass out any moment","lang":"en","expect":"urgent","sign":"fainting"}
+{"text":"isi na-agba m gburugburu, adara m n'ala","lang":"ig","expect":"urgent","sign":"fainting","note":"igbo: my head is spinning, i fell to the ground"}
+{"text":"i have a high fever of 39 degrees and body pain","lang":"en","expect":"urgent","sign":"high fever"}
+{"text":"my body dey hot well well since night and i dey shiver","lang":"pcm","expect":"urgent","sign":"high fever"}
+{"text":"ina da zazzabi mai zafi tun jiya","lang":"ha","expect":"urgent","sign":"high fever","note":"hausa: i have had a high fever since yesterday"}
+{"text":"ibà ń pa mí gan, ara mi gbóná","lang":"yo","expect":"urgent","sign":"high fever","note":"yoruba: fever is killing me, my body is hot"}
+{"text":"ahụ ọkụ na-eme m kemgbe ụnyaahụ","lang":"ig","expect":"urgent","sign":"high fever","note":"igbo: i have had a hot body since yesterday"}
+{"text":"my temperature is 39.5 and i am shivering badly","lang":"en","expect":"urgent","sign":"high fever","note":"a measured temperature with a decimal point"}
+{"text":"my discharge after birth smells very bad","lang":"en","expect":"urgent","sign":"foul-smelling discharge"}
+{"text":"the thing wey dey comot for my down dey smell bad","lang":"pcm","expect":"urgent","sign":"foul-smelling discharge","note":"pidgin for offensive lochia after delivery"}
+{"text":"two weeks after delivery and i have foul smelling lochia","lang":"en","expect":"urgent","sign":"foul-smelling discharge","note":"clinical wording with the adjective before the noun"}
+{"text":"my discharge dey smell like something don spoil","lang":"pcm","expect":"urgent","sign":"foul-smelling discharge"}
+{"text":"my breast is red hot and hard and i have fever","lang":"en","expect":"urgent","sign":"mastitis"}
+{"text":"my breast dey pain me, e red and i get fever","lang":"pcm","expect":"urgent","sign":"mastitis"}
+{"text":"i think i have mastitis, one side is swollen and painful","lang":"en","expect":"urgent","sign":"mastitis"}
+{"text":"my newborn is breathing very fast and grunting","lang":"en","expect":"emergency","sign":"newborn: not breathing"}
+{"text":"my pikin no dey breathe well since we come house","lang":"pcm","expect":"emergency","sign":"newborn: not breathing"}
+{"text":"baby is not breathing properly, his chest is going in and out","lang":"en","expect":"emergency","sign":"newborn: not breathing"}
+{"text":"jaririna yana numfashi da sauri sosai","lang":"ha","expect":"emergency","sign":"newborn: not breathing","note":"hausa: my newborn is breathing very fast"}
+{"text":"the baby stopped breathing for some seconds then started again","lang":"en","expect":"emergency","sign":"newborn: not breathing"}
+{"text":"my one day old baby is breathing very fast, more than i can count","lang":"en","expect":"emergency","sign":"newborn: not breathing"}
+{"text":"my baby is very cold and floppy and will not wake up","lang":"en","expect":"emergency","sign":"newborn: cold"}
+{"text":"the pikin body cold and e no dey wake","lang":"pcm","expect":"emergency","sign":"newborn: cold"}
+{"text":"newborn is limp and not responding to me","lang":"en","expect":"emergency","sign":"newborn: cold","note":"uses newborn rather than baby"}
+{"text":"nwa m ahụ ya na-ajụ oyi, ọ naghị eteta","lang":"ig","expect":"emergency","sign":"newborn: cold","note":"igbo: my baby body is cold, he is not waking"}
+{"text":"my baby is refusing the breast since last night","lang":"en","expect":"urgent","sign":"newborn: not feeding"}
+{"text":"pikin no dey suck breast at all today","lang":"pcm","expect":"urgent","sign":"newborn: not feeding"}
+{"text":"the baby wont latch and has not fed in eight hours","lang":"en","expect":"urgent","sign":"newborn: not feeding"}
+{"text":"ọmọ mi kò mu ọmú lati àná","lang":"yo","expect":"urgent","sign":"newborn: not feeding","note":"yoruba: my baby has not sucked the breast since yesterday"}
+{"text":"my baby eyes are turning yellow","lang":"en","expect":"urgent","sign":"newborn: yellow"}
+{"text":"pikin skin dey yellow since two days","lang":"pcm","expect":"urgent","sign":"newborn: yellow"}
+{"text":"the whites of his eyes look yellow today","lang":"en","expect":"urgent","sign":"newborn: yellow"}
+{"text":"jikin jaririn ya zama rawaya","lang":"ha","expect":"urgent","sign":"newborn: yellow","note":"hausa: the newborn body has turned yellow"}
+{"text":"my baby has fever and his body feels very hot","lang":"en","expect":"urgent","sign":"newborn: fever"}
+{"text":"pikin body hot well well since night","lang":"pcm","expect":"urgent","sign":"newborn: fever"}
+{"text":"ahụ nwa m na-ekpo ọkụ nke ukwuu","lang":"ig","expect":"urgent","sign":"newborn: fever","note":"igbo: my baby body is very hot"}
+{"text":"the cord stump is red and smelling with some pus","lang":"en","expect":"urgent","sign":"newborn: cord"}
+{"text":"baby navel dey bleed small and e swollen","lang":"pcm","expect":"urgent","sign":"newborn: cord"}
+{"text":"ìdodo ọmọ mi ń rùn, ó sì pọ́n","lang":"yo","expect":"urgent","sign":"newborn: cord","note":"yoruba: my baby navel is smelling and it is red"}
+{"text":"which food dey give blood","lang":"pcm","expect":"none","note":"anaemia diet question - the word blood with no bleeding at all"}
+{"text":"my blood level is low, doctor say i need iron","lang":"pcm","expect":"none","note":"anaemia, not haemorrhage"}
+{"text":"i have blood test tomorrow morning","lang":"en","expect":"none","note":"scheduled investigation"}
+{"text":"my gums bleed small when i brush my teeth","lang":"pcm","expect":"none","note":"pregnancy gingivitis is common and benign"}
+{"text":"bleeding gums since i change toothpaste","lang":"en","expect":"none","note":"gingival, not vaginal"}
+{"text":"my blood pressure was normal today 118 over 76","lang":"en","expect":"none","note":"a reassuring bp reading"}
+{"text":"i dey fear say i go bleed like my sister","lang":"pcm","expect":"none","note":"anticipatory worry, not a current symptom"}
+{"text":"what blood tonic can i take for low blood","lang":"pcm","expect":"none"}
+{"text":"my blood group is O positive","lang":"en","expect":"none"}
+{"text":"do i need to donate blood before delivery","lang":"en","expect":"none"}
+{"text":"the nurse do blood count for me last week","lang":"pcm","expect":"none"}
+{"text":"small nose bleed this morning but it stop quick","lang":"en","expect":"none","note":"epistaxis is common in pregnancy and self limiting"}
+{"text":"blood dey comot for my nose small","lang":"pcm","expect":"none","note":"nosebleed written in pidgin - the words nose and bleed are not adjacent"}
+{"text":"i saw blood on the meat i bought from market, is it safe to eat","lang":"en","expect":"none","note":"food question that literally contains saw blood"}
+{"text":"they check my blood sugar and it was fine","lang":"en","expect":"none"}
+{"text":"my iron and blood work came back good","lang":"en","expect":"none"}
+{"text":"i am scared of blood, i cannot watch delivery videos","lang":"en","expect":"none","note":"squeamishness, not a symptom"}
+{"text":"does beetroot really build blood","lang":"en","expect":"none"}
+{"text":"kí ni mo lè jẹ láti mú ẹjẹ pọ̀ sí","lang":"yo","expect":"none","note":"yoruba: what can i eat to increase my blood - a nutrition question, not bleeding"}
+{"text":"wanne abinci ke kara jini a jiki","lang":"ha","expect":"none","note":"hausa: which food increases blood in the body - anaemia diet question"}
+{"text":"gịnị ka m ga-eri iji baa ọbara","lang":"ig","expect":"none","note":"igbo: what should i eat to build blood"}
+{"text":"my sister had convulsion last year, can it affect my pregnancy","lang":"en","expect":"none","note":"third party history, no current symptom"}
+{"text":"i read about eclampsia and convulsions online and i am scared","lang":"en","expect":"none","note":"health anxiety from reading, not a symptom report"}
+{"text":"this dress still fits me at 30 weeks","lang":"en","expect":"none","note":"the word fits with no clinical meaning"}
+{"text":"my baby dey kick like say e dey shake my belle","lang":"pcm","expect":"none","note":"strong fetal movement described as shaking - reassuring, not a fit"}
+{"text":"my body dey shake because i bath with cold water","lang":"pcm","expect":"none","note":"shivering from a cold bath"}
+{"text":"does epilepsy medicine affect pregnancy, asking for my cousin","lang":"en","expect":"none","note":"medication question about another person"}
+{"text":"baby was very active today, e no gree stop kicking","lang":"pcm","expect":"none","note":"good fetal movement, phrased with the words no and kicking"}
+{"text":"my baby is still moving well","lang":"en","expect":"none","note":"explicit reassurance about movement"}
+{"text":"baby is kicking so much i cannot sleep","lang":"en","expect":"none"}
+{"text":"how many kicks should i count in a day","lang":"en","expect":"none"}
+{"text":"i can feel my baby hiccups, is that normal","lang":"en","expect":"none"}
+{"text":"at what week will i start to feel baby movement","lang":"en","expect":"none"}
+{"text":"my baby dey move well well since morning","lang":"pcm","expect":"none"}
+{"text":"does baby movement reduce at night","lang":"en","expect":"none","note":"general question, no symptom"}
+{"text":"my first baby never used to move much either and she is fine","lang":"en","expect":"none","note":"reassurance seeking about a past pregnancy"}
+{"text":"i no dey drink my water well, how many cups i suppose drink","lang":"pcm","expect":"none","note":"hydration question containing the words my water"}
+{"text":"my water bottle leak inside my bag today","lang":"en","expect":"none","note":"contains my water and leak"}
+{"text":"the water tank for our house dey leak","lang":"pcm","expect":"none"}
+{"text":"should i drink my water before or after eating","lang":"en","expect":"none"}
+{"text":"there is no water in the house since morning","lang":"en","expect":"none"}
+{"text":"how much water should i take daily at 28 weeks","lang":"en","expect":"none"}
+{"text":"my waist dey pain me when i carry water from the tap","lang":"pcm","expect":"none","note":"musculoskeletal ache from lifting"}
+{"text":"amniotic fluid, what exactly is it made of","lang":"en","expect":"none","note":"curiosity question"}
+{"text":"does drinking plenty water help with swelling","lang":"en","expect":"none"}
+{"text":"my phone screen dey blur, i need to change am","lang":"pcm","expect":"none","note":"the word blur about an object"}
+{"text":"the photo of the scan came out blurry","lang":"en","expect":"none"}
+{"text":"everything was a blur after the scan appointment, so much information","lang":"en","expect":"none","note":"figurative use of blur"}
+{"text":"i need new glasses my sight don change small","lang":"pcm","expect":"none","note":"gradual refractive change, not sudden visual disturbance"}
+{"text":"my eyes are itching from the dust outside","lang":"en","expect":"none"}
+{"text":"i saw spots on my baby scan picture, what are they","lang":"en","expect":"none"}
+{"text":"the flashing light on my charger keeps blinking, is it bad","lang":"en","expect":"none","note":"contains flashing light with no visual symptom"}
+{"text":"small swelling in my feet in the evening only","lang":"en","expect":"none","note":"dependent oedema of the feet late in the day is physiological"}
+{"text":"my legs swell small when i stand for long","lang":"pcm","expect":"none","note":"postural leg oedema"}
+{"text":"my ankles are a bit puffy at night","lang":"en","expect":"none"}
+{"text":"is it normal for feet to swell in third trimester","lang":"en","expect":"none"}
+{"text":"my hands feel a bit stiff in the morning","lang":"en","expect":"none","note":"stiffness without swelling"}
+{"text":"the mosquito bite on my hand is swollen","lang":"en","expect":"none","note":"localised bite reaction, not generalised oedema"}
+{"text":"my gum is swollen where the tooth dey grow","lang":"pcm","expect":"none"}
+{"text":"my belle dey pain me small when i walk","lang":"pcm","expect":"none","note":"mild round ligament type discomfort"}
+{"text":"mild cramps like period pain since morning","lang":"en","expect":"none","note":"mild self limiting cramping"}
+{"text":"back pain is killing me after standing all day","lang":"en","expect":"none","note":"mechanical back pain"}
+{"text":"my sister get severe pain for her tooth","lang":"pcm","expect":"none","note":"third party, dental"}
+{"text":"i have severe tooth pain, which drug is safe for me","lang":"en","expect":"none","note":"dental pain, not an obstetric danger sign"}
+{"text":"round ligament pain when i sneeze","lang":"en","expect":"none"}
+{"text":"heartburn after eating pepper soup last night","lang":"en","expect":"none"}
+{"text":"the pain don stop after i rest small","lang":"pcm","expect":"none","note":"resolved symptom"}
+{"text":"i get small breathless when i climb the stairs but it settle when i rest","lang":"pcm","expect":"none","note":"mild exertional breathlessness that resolves with rest is physiological in later pregnancy"}
+{"text":"my chest dey burn after i eat pepper","lang":"pcm","expect":"none","note":"reflux"}
+{"text":"breathing exercises for labour, where can i learn them","lang":"en","expect":"none"}
+{"text":"the room is stuffy and hard to breathe with this heat","lang":"en","expect":"none","note":"environmental, not clinical"}
+{"text":"baby is pressing my chest, i feel full after small food","lang":"pcm","expect":"none","note":"normal third trimester pressure"}
+{"text":"my husband has chest pain, should he see a doctor","lang":"en","expect":"none","note":"third party symptom - not the mother, should not trigger her escalation"}
+{"text":"shortness of breath is normal in pregnancy right","lang":"en","expect":"none","note":"a general question, not a report of breathlessness now"}
+{"text":"the second line on the test was very faint","lang":"en","expect":"none","note":"pregnancy test line, the word faint used as an adjective"}
+{"text":"we get blackout since yesterday, no light at all","lang":"pcm","expect":"none","note":"power cut, not loss of consciousness"}
+{"text":"nepa don take light, blackout everywhere for our street","lang":"pcm","expect":"none","note":"power cut"}
+{"text":"i feel a bit dizzy when i stand up fast, then it pass quickly","lang":"en","expect":"none","note":"transient postural dizziness"}
+{"text":"the faint smell of the drug makes me nauseous","lang":"en","expect":"none","note":"faint used to describe a smell"}
+{"text":"i almost fell in the bathroom because the floor was wet","lang":"en","expect":"none","note":"a slip, not a collapse"}
+{"text":"my plastic chair collapse when i sit on am yesterday","lang":"pcm","expect":"none","note":"furniture broke"}
+{"text":"i feel weak but i no faint","lang":"pcm","expect":"none","note":"explicitly denies fainting"}
+{"text":"i had fever last week but it don finish","lang":"pcm","expect":"none","note":"resolved illness"}
+{"text":"the weather is hot well well, my body dey hot from the sun","lang":"pcm","expect":"none","note":"environmental heat, not pyrexia"}
+{"text":"my six month old had small fever after immunization and nurse said it is normal, it went after one day","lang":"en","expect":"none","note":"expected post vaccination fever in an older infant that already resolved"}
+{"text":"is it normal to feel hot at night in pregnancy","lang":"en","expect":"none"}
+{"text":"i take my temperature and it is 36.8","lang":"en","expect":"none","note":"a normal reading"}
+{"text":"what can i use for malaria prevention","lang":"en","expect":"none"}
+{"text":"zazzabi ba ni da shi yanzu, na sha magani","lang":"ha","expect":"none","note":"hausa: i do not have fever now, i took medicine - a negation"}
+{"text":"how i go know if na malaria or ordinary tiredness","lang":"pcm","expect":"none"}
+{"text":"the drug for fever, is it safe for pregnant woman","lang":"en","expect":"none"}
+{"text":"my discharge is white and has no smell, is it normal","lang":"en","expect":"none","note":"normal leucorrhoea described with an explicit negation"}
+{"text":"white discharge increased this week but no itching","lang":"en","expect":"none"}
+{"text":"is watery discharge normal at 30 weeks","lang":"en","expect":"none"}
+{"text":"the lochia has reduced and looks brown now","lang":"en","expect":"none","note":"normal involution"}
+{"text":"does discharge smell always mean infection","lang":"en","expect":"none","note":"a general question about smell, not a report of one"}
+{"text":"my breast is heavy and tender since week 8","lang":"en","expect":"none","note":"normal early pregnancy breast changes"}
+{"text":"my nipples are sore from breastfeeding","lang":"en","expect":"none","note":"latch related soreness without infection"}
+{"text":"my breast is hard because milk is full, baby just fed and it is soft again","lang":"en","expect":"none","note":"physiological fullness that resolves after a feed"}
+{"text":"my breast is swollen and painful since milk came in on day three, no fever","lang":"en","expect":"none","note":"day three engorgement without fever or redness"}
+{"text":"my baby sleeps a lot and feeds well every 3 hours","lang":"en","expect":"none"}
+{"text":"baby is feeding every 2 hours, is that too much","lang":"en","expect":"none"}
+{"text":"the baby room is cold at night, should i use blanket","lang":"en","expect":"none","note":"the room is cold, not the baby"}
+{"text":"my baby wear yellow cloth for the naming ceremony","lang":"pcm","expect":"none","note":"the word yellow about clothing"}
+{"text":"my baby is not crying much, she is a calm baby and feeding fine","lang":"en","expect":"none","note":"explicitly says feeding is fine"}
+{"text":"when will baby umbilical cord fall off","lang":"en","expect":"none"}
+{"text":"the cord stump fell off today and there is no smell or pus","lang":"en","expect":"none","note":"normal separation, described with a negation"}
+{"text":"baby not sleeping at night at all, i am tired","lang":"en","expect":"none","note":"sleep complaint, feeding and breathing not mentioned"}
+{"text":"should i give my newborn water before six months","lang":"en","expect":"none"}
+{"text":"my baby cries when i bath am with cold water","lang":"pcm","expect":"none","note":"the water is cold, not the baby"}
+{"text":"the nurse record that my legs are swollen small, she said keep them up","lang":"pcm","expect":"none","note":"record contains the letters cord, and legs are not face or hands"}
+{"text":"good morning ma how are you today","lang":"en","expect":"none"}
+{"text":"thank you so much for your help yesterday","lang":"en","expect":"none"}
+{"text":"wetin i fit chop for breakfast wey go good for baby","lang":"pcm","expect":"none"}
+{"text":"can i eat pineapple during pregnancy","lang":"en","expect":"none"}
+{"text":"is it safe to drink zobo while pregnant","lang":"en","expect":"none"}
+{"text":"my appointment is on tuesday, what time should i come","lang":"en","expect":"none"}
+{"text":"how much is the antenatal registration in general hospital","lang":"en","expect":"none"}
+{"text":"i want to change my clinic to one closer to my house","lang":"en","expect":"none"}
+{"text":"what should i pack in my hospital bag","lang":"en","expect":"none"}
+{"text":"abeg how many weeks be 7 months","lang":"pcm","expect":"none"}
+{"text":"sannu, ina kwana","lang":"ha","expect":"none","note":"hausa greeting"}
+{"text":"e kaaro ma, se alaafia ni","lang":"yo","expect":"none","note":"yoruba greeting"}
+{"text":"kedu ka i mere n'ututu a","lang":"ig","expect":"none","note":"igbo greeting"}
+{"text":"please what vitamins should i be taking now","lang":"en","expect":"none"}
+{"text":"my husband wants to know if sex is safe now","lang":"en","expect":"none"}
+{"text":"can i travel by road at 32 weeks","lang":"en","expect":"none"}
+{"text":"which hospital is good for delivery in ibadan","lang":"en","expect":"none","note":"ibadan contains iba, the yoruba word for fever"}
+{"text":"thank you bumply, this app is helping me a lot","lang":"en","expect":"none"}
+{"text":"how do i know if i am in labour","lang":"en","expect":"none"}
+{"text":"what is the cost of cesarean section these days","lang":"en","expect":"none"}
+{"text":"can i fast during ramadan while pregnant","lang":"en","expect":"none"}
+{"text":"my scan is booked for next week thursday","lang":"en","expect":"none"}
+{"text":"i want to know my baby gender at the next scan","lang":"en","expect":"none"}
+{"text":"please send me the immunization schedule again","lang":"en","expect":"none"}
+{"text":"mo fẹ́ mọ̀ nípa oúnjẹ tó dára fún aboyún","lang":"yo","expect":"none","note":"yoruba: i want to know about good food for a pregnant woman"}
+{"text":"ina son sanin lokacin da zan zo asibiti","lang":"ha","expect":"none","note":"hausa: i want to know when i should come to the hospital"}
+{"text":"achọrọ m ịmara mgbe m ga-abịa ụlọ ọgwụ","lang":"ig","expect":"none","note":"igbo: i want to know when to come to the hospital"}
+{"text":"i just registered for antenatal today, they gave me folic acid","lang":"en","expect":"none"}
+{"text":"my mother in law say make i no eat egg, na true","lang":"pcm","expect":"none"}
+{"text":"how i go take reduce stress for work","lang":"pcm","expect":"none"}
+{"text":"is it ok to sleep on my back at 30 weeks","lang":"en","expect":"none"}
+{"text":"i dey do small exercise everyday, walking for like 20 minutes","lang":"pcm","expect":"none"}

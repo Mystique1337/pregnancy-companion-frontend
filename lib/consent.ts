@@ -20,8 +20,8 @@ export const CONSENT_VERSION = "v1-2026-07";
 // Rules for this text (deliberate, not stylistic):
 //  • ≤ 60 words — it has to be readable on a ₦45k phone screen in one glance.
 //  • Plain text only. No markdown, no headings — WhatsApp renders ** literally.
-//  • Covers the four things NDPA s.27 requires her to actually understand:
-//    WHAT we keep, WHY, WHO sees it, and that she can withdraw at any time.
+//  • Covers the four things the NDPA's transparency duty requires her to actually
+//    understand: WHAT we keep, WHY, WHO sees it, and that she can withdraw any time.
 //  • Translations are natural, not literal — a low-literacy mother must get it.
 const CONSENT_MESSAGES: Record<LangCode, string> = {
   en:
@@ -138,7 +138,7 @@ export function isConsentAccepted(text: string): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Right to erasure (NDPA 2023, s.34) — she can ask in her own words
+// Right to erasure (NDPA 2023) — she can ask in her own words
 // ---------------------------------------------------------------------------
 const DELETE_PATTERNS: RegExp[] = [
   // "delete my data", "remove my data", "erase my information", "comot my details"

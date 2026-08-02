@@ -67,6 +67,10 @@ export default function LoginPage() {
         <p className="f-note" style={{ marginTop: 18 }}>
           {t("login.newhere", L)} <a className="auth-link" href="/#register">{t("login.create", L)}</a>
         </p>
+        {/* Data-protection notice must be findable without an account (NDPA 2023). */}
+        <p className="f-note" style={{ marginTop: 10 }}>
+          <a className="auth-link" href="/privacy">Privacy &amp; your data</a>
+        </p>
       </div>
     </div>
   );

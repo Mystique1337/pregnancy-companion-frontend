@@ -1,9 +1,11 @@
 import React from "react";
 import { Composition } from "remotion";
 import { WeekRecap, weekRecapSchema } from "./WeekRecap";
+import { PitchDemo } from "./PitchDemo";
 
 export const RemotionRoot: React.FC = () => {
   return (
+    <>
     <Composition
       id="WeekRecap"
       component={WeekRecap}
@@ -22,5 +24,8 @@ export const RemotionRoot: React.FC = () => {
         trimester: "first",
       }}
     />
+    {/* 29s pitch-deck demo: danger sign → escalation → CHW → confirmed arrival. */}
+    <Composition id="PitchDemo" component={PitchDemo} durationInFrames={1063} fps={30} width={1920} height={1080} />
+    </>
   );
 };

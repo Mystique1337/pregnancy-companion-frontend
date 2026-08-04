@@ -274,6 +274,11 @@ strong { font-weight: 700; }
 #playbtn .disc svg { width: 40px; height: 40px; fill: var(--terracotta-deep); stroke: none; margin-left: 5px; }
 #playbtn .lbl { position: absolute; bottom: 84px; color: #fff; font-size: 19px; font-weight: 600; letter-spacing: .04em; }
 
+#soundchip .dot { width: 9px; height: 9px; border-radius: 5px; background: rgba(46,38,32,.28); transition: .3s; }
+#soundchip.on .dot { background: #25D366; box-shadow: 0 0 0 4px rgba(37,211,102,.22); }
+#soundchip.on .txt::after { content: ""; }
+#playbtn { transition: opacity .25s; }
+
 /* ---------- charts ---------- */
 .chartbox { position: relative; width: 100%; }
 

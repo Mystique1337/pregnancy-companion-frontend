@@ -313,25 +313,89 @@ function wireStagger() {
 }
 
 /* ---- demo video ----
-   The demo is narrated, so it has to play with sound. Browsers only allow that
-   once the page has been interacted with; by slide 7 the presenter has pressed
-   the arrow keys several times, which satisfies the policy. If sound is still
-   refused we fall back to muted playback and ask for one click, so the picture
-   never stalls in front of a room. */
+   The demo is narrated, so it has to reach the room with sound. Browsers refuse
+   unmuted playback until the page has a real user gesture, and a gesture spent
+   on slide 1 does not automatically carry to a <video> first touched on slide 7.
+   So we prime the element on the very first interaction: play it muted for a
+   tick and pause. That marks it as user-activated, and every later play() is
+   allowed with sound. Everything after this is belt and braces. */
+let audioUnlocked = false;
+
+function unlockAudio() {
+  if (audioUnlocked) return;
+  const v = document.getElementById("demo");
+  if (!v) return;
+  audioUnlocked = true;
+  const wasMuted = v.muted;
+  v.muted = true;
+  const p = v.play();
+  if (p && p.then) {
+    p.then(() => { v.pause(); v.currentTime = 0; v.muted = wasMuted; })
+     .catch(() => { audioUnlocked = false; v.muted = wasMuted; });
+  }
+}
+
+function soundState(on) {
+  const btn = document.getElementById("playbtn");
+  const chip = document.getElementById("soundchip");
+  if (btn) btn.classList.toggle("show", !on);
+  if (chip) chip.classList.toggle("on", on);
+  const t = chip && chip.querySelector(".txt");
+  if (t) t.textContent = "LIVE PRODUCT · 37 SECONDS · SOUND " + (on ? "ON" : "OFF");
+}
+
 function playDemo() {
   const v = document.getElementById("demo");
-  const btn = document.getElementById("playbtn");
   if (!v) return;
+  const btn = document.getElementById("playbtn");
   const label = (t) => { const l = btn && btn.querySelector(".lbl"); if (l) l.textContent = t; };
   v.muted = false;
+  v.volume = 1;
   v.play()
-    .then(() => btn && btn.classList.remove("show"))
+    .then(() => soundState(true))
     .catch(() => {
+      // Sound refused. Show the picture anyway and make the ask unmissable.
       v.muted = true;
       v.play().catch(() => {});
-      label("Click for sound");
-      if (btn) btn.classList.add("show");
+      label("Click anywhere for sound");
+      soundState(false);
     });
+}
+
+function wireVideo() {
+  const v = document.getElementById("demo");
+  const btn = document.getElementById("playbtn");
+  if (!v || !btn) return;
+  const label = (t) => { const l = btn.querySelector(".lbl"); if (l) l.textContent = t; };
+
+  // Any interaction anywhere primes the element for unmuted playback later.
+  ["pointerdown", "keydown", "touchstart"].forEach((ev) =>
+    addEventListener(ev, unlockAudio, { once: false, passive: true }));
+
+  const startWithSound = () => {
+    v.muted = false;
+    v.volume = 1;
+    if (v.ended || v.currentTime >= v.duration - 0.1) v.currentTime = 0;
+    v.play().then(() => soundState(true)).catch(() => {});
+  };
+  btn.addEventListener("click", startWithSound);
+  // The whole slide is a hit target, not just the disc.
+  btn.closest(".slide").addEventListener("click", (e) => {
+    if (v.paused || v.muted) { startWithSound(); e.stopPropagation(); }
+    else v.pause();
+  });
+  v.addEventListener("ended", () => { label("Replay with sound"); soundState(false); });
+  v.addEventListener("playing", () => soundState(!v.muted));
+  v.addEventListener("volumechange", () => soundState(!v.muted && !v.paused));
+  v.addEventListener("error", () => { label("Open assets/bumply-demo.mp4"); soundState(false); });
+
+  // "m" toggles sound from anywhere, for a room that has to go quiet fast.
+  addEventListener("keydown", (e) => {
+    if (e.key !== "m" && e.key !== "M") return;
+    v.muted = !v.muted;
+    if (!v.muted && v.paused) v.play().catch(() => {});
+    soundState(!v.muted);
+  });
 }
 
 function wireVideo() {

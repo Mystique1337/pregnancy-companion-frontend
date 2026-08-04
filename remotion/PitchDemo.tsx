@@ -4,7 +4,7 @@
 // That loop is what turns "an app" into measurable maternal impact.
 import React from "react";
 import {
-  AbsoluteFill, Audio, Sequence, staticFile,
+  AbsoluteFill, Audio, Img, Sequence, staticFile,
   useCurrentFrame, useVideoConfig, interpolate, spring, Easing,
 } from "remotion";
 
@@ -13,6 +13,23 @@ import {
 const VO: React.FC<{ id: string }> = ({ id }) => (
   <Audio src={staticFile(`vo/${id}.wav`)} volume={1} />
 );
+
+/** Full-bleed documentary still with a slow push-in. Real Nigerian mothers and
+ *  health workers, so the film is about people rather than user interface.
+ *  DFID / UK Aid via Wikimedia Commons, CC BY-SA 2.0. */
+const PhotoBg: React.FC<{ src: string; from?: number; to?: number; pos?: string; scrim?: string }> = ({
+  src, from = 1.06, to = 1.16, pos = "center", scrim,
+}) => {
+  const frame = useCurrentFrame();
+  const { durationInFrames } = useVideoConfig();
+  const k = interpolate(frame, [0, durationInFrames], [from, to], { extrapolateRight: "clamp" });
+  return (
+    <AbsoluteFill>
+      <Img src={staticFile(src)} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: pos, transform: `scale(${k})` }} />
+      <AbsoluteFill style={{ background: scrim ?? "linear-gradient(90deg,rgba(18,13,11,.93) 0%,rgba(18,13,11,.78) 38%,rgba(18,13,11,.35) 68%,rgba(18,13,11,.15) 100%)" }} />
+    </AbsoluteFill>
+  );
+};
 
 const C = {
   cream: "#FBF7F1",
@@ -97,12 +114,14 @@ const Phone: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 const Hook: React.FC = () => {
   const a = useRise(6), b = useRise(20);
   return (
-    <AbsoluteFill style={{ background: C.cream, justifyContent: "center", alignItems: "center", padding: 100 }}>
+    <AbsoluteFill style={{ justifyContent: "center", padding: "0 120px" }}>
       <VO id="hook" />
-      <div style={{ ...a, fontFamily: SERIF, fontSize: 96, color: C.ink, textAlign: "center", lineHeight: 1.1, maxWidth: 1500 }}>
+      <PhotoBg src="photos/health-edu.jpg" pos="62% center"
+        scrim="linear-gradient(85deg,rgba(18,13,11,.95) 0%,rgba(18,13,11,.88) 30%,rgba(18,13,11,.45) 62%,rgba(18,13,11,.2) 100%)" />
+      <div style={{ ...a, position: "relative", fontFamily: SERIF, fontSize: 92, color: "#fff", lineHeight: 1.1, maxWidth: 1180 }}>
         She may never download a health app.
       </div>
-      <div style={{ ...b, fontFamily: SERIF, fontSize: 96, color: C.terracotta, marginTop: 18, fontStyle: "italic" }}>
+      <div style={{ ...b, position: "relative", fontFamily: SERIF, fontSize: 92, color: C.goldOnInk, marginTop: 14, fontStyle: "italic" }}>
         But she is already on WhatsApp.
       </div>
     </AbsoluteFill>
@@ -180,13 +199,18 @@ const LoopScene: React.FC = () => {
             );
           })}
         </div>
-        <div style={{ ...useRise(86), width: 520, background: C.ink, color: "#fff", borderRadius: 26, padding: 40, textAlign: "center" }}>
+        <div style={{ ...useRise(86), width: 520 }}>
+          <div style={{ borderRadius: 26, overflow: "hidden", height: 220, marginBottom: 18, boxShadow: "0 24px 60px rgba(46,38,32,.18)" }}>
+            <Img src={staticFile("photos/midwife.jpg")} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "60% 22%" }} />
+          </div>
+          <div style={{ background: C.ink, color: "#fff", borderRadius: 26, padding: "30px 40px", textAlign: "center" }}>
           <div style={{ fontFamily: SANS, fontSize: 21, letterSpacing: ".12em", opacity: 0.7 }}>ARRIVAL CONFIRMED</div>
-          <div style={{ fontFamily: SERIF, fontSize: 130, lineHeight: 1, margin: "14px 0 4px", color: C.goldOnInk }}>
+          <div style={{ fontFamily: SERIF, fontSize: 104, lineHeight: 1, margin: "10px 0 4px", color: C.goldOnInk }}>
             {confirmed ? minutes : 0}
           </div>
           <div style={{ fontFamily: SANS, fontSize: 26, opacity: 0.9 }}>minutes from danger sign<br />to facility arrival</div>
           <div style={{ marginTop: 22, fontFamily: SANS, fontSize: 20, opacity: 0.6 }}>code BMP-4KX9 · measured, not estimated</div>
+        </div>
         </div>
       </div>
     </AbsoluteFill>
@@ -224,11 +248,16 @@ const ProofScene: React.FC = () => {
 
 /** Scene 5 — sign-off. */
 const Outro: React.FC = () => (
-  <AbsoluteFill style={{ background: C.cream, alignItems: "center", justifyContent: "center" }}>
+  <AbsoluteFill style={{ alignItems: "center", justifyContent: "center" }}>
       <VO id="outro" />
-    <div style={{ ...useRise(4), fontFamily: SERIF, fontSize: 190, color: C.ink, letterSpacing: "-.02em" }}>Bumply</div>
-    <div style={{ ...useRise(14), fontFamily: SANS, letterSpacing: ".34em", fontSize: 26, color: C.terracotta, marginTop: -6 }}>PREGNANCY COMPANION</div>
-    <div style={{ ...useRise(26), fontFamily: SANS, fontSize: 30, color: C.inkMid, marginTop: 42 }}>app.bumply.mom · @My_bumplycompanionbot</div>
+      <PhotoBg src="photos/midwife.jpg" pos="62% 26%" from={1.1} to={1.02}
+        scrim="radial-gradient(ellipse 62% 52% at 50% 46%,rgba(18,13,11,.86) 0%,rgba(18,13,11,.62) 55%,rgba(18,13,11,.34) 100%)" />
+    <div style={{ ...useRise(4), position: "relative", fontFamily: SERIF, fontSize: 190, color: "#fff", letterSpacing: "-.02em" }}>Bumply</div>
+    <div style={{ ...useRise(14), position: "relative", fontFamily: SANS, letterSpacing: ".34em", fontSize: 26, color: C.goldOnInk, marginTop: -6 }}>PREGNANCY COMPANION</div>
+    <div style={{ ...useRise(26), position: "relative", fontFamily: SANS, fontSize: 30, color: "rgba(255,255,255,.86)", marginTop: 42 }}>app.bumply.mom · @My_bumplycompanionbot</div>
+    <div style={{ ...useRise(38), position: "absolute", bottom: 34, fontFamily: SANS, fontSize: 17, color: "rgba(255,255,255,.42)" }}>
+      Photographs: DFID / UK Aid, Nigeria · CC BY-SA 2.0
+    </div>
   </AbsoluteFill>
 );
 

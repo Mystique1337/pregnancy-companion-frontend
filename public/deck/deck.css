@@ -272,8 +272,19 @@ strong { font-weight: 700; }
   display: grid; place-items: center; box-shadow: 0 16px 50px rgba(0,0,0,.35);
 }
 #playbtn .disc svg { width: 40px; height: 40px; fill: var(--terracotta-deep); stroke: none; margin-left: 5px; }
-#playbtn .lbl { position: absolute; bottom: 84px; color: #fff; font-size: 19px; font-weight: 600; letter-spacing: .04em; }
+#playbtn .lbl {
+  position: absolute; bottom: 78px; color: #fff; font-size: 21px; font-weight: 700;
+  letter-spacing: .03em; padding: 12px 26px; border-radius: 100px;
+  background: rgba(190,90,56,.96); box-shadow: 0 12px 34px rgba(0,0,0,.34);
+}
+#playbtn .disc { animation: pulse 2.4s ease-in-out infinite; }
+@keyframes pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 16px 50px rgba(0,0,0,.35) }
+  50% { transform: scale(1.06); box-shadow: 0 20px 60px rgba(0,0,0,.42) }
+}
+body.export #playbtn .disc { animation: none }
 
+#soundchip { cursor: pointer; user-select: none; }
 #soundchip .dot { width: 9px; height: 9px; border-radius: 5px; background: rgba(46,38,32,.28); transition: .3s; }
 #soundchip.on .dot { background: #25D366; box-shadow: 0 0 0 4px rgba(37,211,102,.22); }
 #soundchip.on .txt::after { content: ""; }

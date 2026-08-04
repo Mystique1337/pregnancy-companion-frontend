@@ -313,26 +313,121 @@ function wireStagger() {
 }
 
 /* ---- demo video ----
-   The demo is narrated, so it has to reach the room with sound. Browsers refuse
-   unmuted playback until the page has a real user gesture, and a gesture spent
-   on slide 1 does not automatically carry to a <video> first touched on slide 7.
-   So we prime the element on the very first interaction: play it muted for a
-   tick and pause. That marks it as user-activated, and every later play() is
-   allowed with sound. Everything after this is belt and braces. */
+   The demo is narrated, so it has to reach the room with sound.
+
+   Two things make that unreliable and both are handled here:
+   1. A gesture spent on slide 1 does not grant permission to a <video> first
+      touched on slide 7, so we unlock the element on the first interaction by
+      calling play() on it UNMUTED (at volume 0, so the room hears nothing)
+      inside the gesture. Playing it muted grants nothing, which is the trap.
+   2. Safari resolves play() and then silently mutes. So we never trust the
+      promise: 600ms later we check the clock and the decoded audio counter,
+      and if no sound is actually flowing we surface the prompt. */
 let audioUnlocked = false;
 
+function demoEl() { return document.getElementById("demo"); }
+
 function unlockAudio() {
-  if (audioUnlocked) return;
-  const v = document.getElementById("demo");
-  if (!v) return;
+  const v = demoEl();
+  if (!v || audioUnlocked) return;
   audioUnlocked = true;
-  const wasMuted = v.muted;
-  v.muted = true;
+  const vol = v.volume;
+  v.muted = false;
+  v.volume = 0; // silent to the room, but still counts as an unmuted play
   const p = v.play();
   if (p && p.then) {
-    p.then(() => { v.pause(); v.currentTime = 0; v.muted = wasMuted; })
-     .catch(() => { audioUnlocked = false; v.muted = wasMuted; });
+    p.then(() => { v.pause(); v.currentTime = 0; v.volume = vol; })
+     .catch(() => { v.volume = vol; audioUnlocked = false; });
+  } else {
+    v.volume = vol;
   }
+}
+
+function soundState(on) {
+  const btn = document.getElementById("playbtn");
+  const chip = document.getElementById("soundchip");
+  if (btn) btn.classList.toggle("show", !on);
+  if (chip) {
+    chip.classList.toggle("on", on);
+    const t = chip.querySelector(".txt");
+    if (t) t.textContent = "LIVE PRODUCT · 37 SECONDS · SOUND " + (on ? "ON" : "OFF");
+  }
+}
+
+/** Is sound genuinely reaching the speakers right now? */
+function audible() {
+  const v = demoEl();
+  if (!v) return false;
+  const bytes = v.webkitAudioDecodedByteCount;
+  return !v.paused && !v.muted && v.volume > 0 && (bytes === undefined || bytes > 0);
+}
+
+let verifyTimer = null;
+function verifySound(label) {
+  clearTimeout(verifyTimer);
+  // Give the element a beat to actually start decoding before judging it.
+  verifyTimer = setTimeout(() => {
+    const ok = audible();
+    soundState(ok);
+    if (!ok) {
+      const v = demoEl();
+      if (v && v.paused) { v.muted = true; v.play().catch(() => {}); } // keep the picture moving
+      label("Click anywhere for sound");
+    }
+  }, 600);
+}
+
+function playDemo() {
+  const v = demoEl();
+  if (!v) return;
+  const btn = document.getElementById("playbtn");
+  const label = (t) => { const l = btn && btn.querySelector(".lbl"); if (l) l.textContent = t; };
+  v.muted = false;
+  v.volume = 1;
+  v.play().catch(() => {});
+  verifySound(label);
+}
+
+function wireVideo() {
+  const v = demoEl();
+  const btn = document.getElementById("playbtn");
+  if (!v || !btn) return;
+  const label = (t) => { const l = btn.querySelector(".lbl"); if (l) l.textContent = t; };
+
+
+  // Any interaction anywhere primes the element for unmuted playback later.
+  ["pointerdown", "keydown", "touchstart"].forEach((ev) =>
+    addEventListener(ev, unlockAudio, { passive: true }));
+
+  // A click is a real user gesture, so this path works in every browser.
+  const startWithSound = (e) => {
+    if (e) e.stopPropagation();
+    v.muted = false;
+    v.volume = 1;
+    if (v.ended || v.currentTime >= v.duration - 0.1) v.currentTime = 0;
+    v.play().catch(() => {});
+    verifySound(label);
+  };
+  btn.addEventListener("click", startWithSound);
+  const chip = document.getElementById("soundchip");
+  if (chip) chip.addEventListener("click", (e) => { e.stopPropagation(); startWithSound(e); });
+  btn.closest(".slide").addEventListener("click", (e) => {
+    if (e.target === btn || btn.contains(e.target)) return; // handled above
+    if (!audible()) startWithSound(e); else v.pause();
+  });
+
+  v.addEventListener("ended", () => { label("Replay with sound"); soundState(false); });
+  v.addEventListener("playing", () => verifySound(label));
+  v.addEventListener("pause", () => { if (!v.ended) soundState(false); });
+  v.addEventListener("error", () => { label("Open assets/bumply-demo.mp4"); soundState(false); });
+
+  // "m" toggles sound from anywhere, for a room that has to go quiet fast.
+  addEventListener("keydown", (e) => {
+    if (e.key !== "m" && e.key !== "M") return;
+    v.muted = !v.muted;
+    if (!v.muted) { v.volume = 1; if (v.paused) v.play().catch(() => {}); }
+    verifySound(label);
+  });
 }
 
 function soundState(on) {
@@ -379,6 +474,8 @@ function wireVideo() {
     v.play().then(() => soundState(true)).catch(() => {});
   };
   btn.addEventListener("click", startWithSound);
+  const chip = document.getElementById("soundchip");
+  if (chip) chip.addEventListener("click", (e) => { e.stopPropagation(); startWithSound(e); });
   // The whole slide is a hit target, not just the disc.
   btn.closest(".slide").addEventListener("click", (e) => {
     if (v.paused || v.muted) { startWithSound(); e.stopPropagation(); }
@@ -410,6 +507,8 @@ function wireVideo() {
     v.play().then(() => btn.classList.remove("show")).catch(() => {});
   };
   btn.addEventListener("click", startWithSound);
+  const chip = document.getElementById("soundchip");
+  if (chip) chip.addEventListener("click", (e) => { e.stopPropagation(); startWithSound(e); });
   v.addEventListener("click", () => (v.paused ? startWithSound() : v.pause()));
   v.addEventListener("ended", () => { label("Replay the demo"); btn.classList.add("show"); });
   v.addEventListener("playing", () => { if (!v.muted) btn.classList.remove("show"); });

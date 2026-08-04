@@ -1,4 +1,4 @@
-// 35-second narrated pitch demo: the single most important thing Bumply does — a mother
+// 37-second narrated pitch demo: the single most important thing Bumply does — a mother
 // writes a danger sign in Pidgin, gets an instant correct escalation, a referral
 // code is issued, her CHW sees it, and her arrival at the facility is confirmed.
 // That loop is what turns "an app" into measurable maternal impact.
@@ -116,11 +116,11 @@ const DangerScene: React.FC = () => {
     <AbsoluteFill style={{ background: C.cream, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 90, padding: 80 }}>
       <VO id="danger" />
       <Phone>
-        <Bubble from="her" delay={24}>i dey see plenty blood</Bubble>
-        <Bubble from="bot" delay={86} danger>
+        <Bubble from="her" delay={26}>i dey see plenty blood</Bubble>
+        <Bubble from="bot" delay={96} danger>
           🚨 Blessing, this can be very serious. Abeg, GO to the nearest hospital NOW — no wait.
         </Bubble>
-        <Bubble from="bot" delay={172}>
+        <Bubble from="bot" delay={196}>
           🚕 I am alerting Musa (0803…) to carry you now.
           <br />
           <br />
@@ -152,8 +152,8 @@ const LoopScene: React.FC = () => {
     { n: "Amina B.", s: "BP 150/95", t: "Review", d: 26 },
     { n: "Chioma O.", s: "Fever + dizziness", t: "Review", d: 34 },
   ];
-  const confirmed = frame > 146;
-  const minutes = Math.round(interpolate(frame, [150, 200], [0, 47], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }));
+  const confirmed = frame > 96;
+  const minutes = Math.round(interpolate(frame, [100, 140], [0, 47], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }));
   return (
     <AbsoluteFill style={{ background: C.cream, alignItems: "center", justifyContent: "center", padding: 90 }}>
       <VO id="loop" />
@@ -180,7 +180,7 @@ const LoopScene: React.FC = () => {
             );
           })}
         </div>
-        <div style={{ ...useRise(130), width: 520, background: C.ink, color: "#fff", borderRadius: 26, padding: 40, textAlign: "center" }}>
+        <div style={{ ...useRise(86), width: 520, background: C.ink, color: "#fff", borderRadius: 26, padding: 40, textAlign: "center" }}>
           <div style={{ fontFamily: SANS, fontSize: 21, letterSpacing: ".12em", opacity: 0.7 }}>ARRIVAL CONFIRMED</div>
           <div style={{ fontFamily: SERIF, fontSize: 130, lineHeight: 1, margin: "14px 0 4px", color: C.goldOnInk }}>
             {confirmed ? minutes : 0}
@@ -196,7 +196,7 @@ const LoopScene: React.FC = () => {
 /** Scene 4 — the evidence a funder actually scores. */
 const ProofScene: React.FC = () => {
   const frame = useCurrentFrame();
-  const sens = Math.round(interpolate(frame, [10, 55], [0, 100], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.cubic) }));
+  const sens = Math.round(interpolate(frame, [16, 70], [0, 100], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.cubic) }));
   const stats = [
     { v: `${sens}%`, l: "danger-sign sensitivity", s: "across all 5 languages", c: C.terracottaOnInk },
     { v: "₦240", l: "cost per mother / month", s: "at 10,000 mothers", c: C.blueOnInk },
@@ -236,11 +236,11 @@ export const PitchDemo: React.FC = () => {
   // Cross-fade between scenes so nothing ever cuts hard.
   return (
     <AbsoluteFill style={{ background: C.cream }}>
-      <Sequence durationInFrames={133}><Hook /></Sequence>
-      <Sequence from={133} durationInFrames={282}><DangerScene /></Sequence>
-      <Sequence from={415} durationInFrames={250}><LoopScene /></Sequence>
-      <Sequence from={665} durationInFrames={270}><ProofScene /></Sequence>
-      <Sequence from={935} durationInFrames={128}><Outro /></Sequence>
+      <Sequence durationInFrames={143}><Hook /></Sequence>
+      <Sequence from={143} durationInFrames={318}><DangerScene /></Sequence>
+      <Sequence from={461} durationInFrames={184}><LoopScene /></Sequence>
+      <Sequence from={645} durationInFrames={305}><ProofScene /></Sequence>
+      <Sequence from={950} durationInFrames={157}><Outro /></Sequence>
     </AbsoluteFill>
   );
 };

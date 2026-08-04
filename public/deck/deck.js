@@ -38,7 +38,7 @@ function goto(n) {
     if (i !== cur) { v.pause(); return; }
     // In export we only ever get a still, so park on a representative frame
     // rather than whatever the transition happens to land on.
-    if (isExport()) { v.pause(); v.currentTime = 22; return; }
+    if (isExport()) { v.pause(); v.currentTime = 25; return; }
     v.currentTime = 0;
     playDemo();
   });
@@ -50,7 +50,7 @@ window.__goto = goto;
 window.__printMode = () => {
   document.body.classList.add("print", "export");
   slides.forEach((s) => { s.classList.add("active"); countUp(s, true); });
-  document.querySelectorAll("video").forEach((v) => { v.pause(); v.currentTime = 22; });
+  document.querySelectorAll("video").forEach((v) => { v.pause(); v.currentTime = 25; });
 };
 
 addEventListener("keydown", (e) => {

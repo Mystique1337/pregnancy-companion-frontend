@@ -40,11 +40,7 @@ function goto(n) {
     // rather than whatever the transition happens to land on.
     if (isExport()) { v.pause(); v.currentTime = 22; return; }
     v.currentTime = 0;
-    // Autoplay is blocked under file:// in most browsers even when muted, so
-    // never assume it started: surface a play control whenever the promise rejects.
-    const btn = document.getElementById("playbtn");
-    v.play().then(() => btn && btn.classList.remove("show"))
-            .catch(() => btn && btn.classList.add("show"));
+    playDemo();
   });
 
   countUp(slides[cur]);
@@ -316,23 +312,50 @@ function wireStagger() {
   });
 }
 
-/* ---- demo video: play control + click-anywhere-to-toggle ---- */
+/* ---- demo video ----
+   The demo is narrated, so it has to play with sound. Browsers only allow that
+   once the page has been interacted with; by slide 7 the presenter has pressed
+   the arrow keys several times, which satisfies the policy. If sound is still
+   refused we fall back to muted playback and ask for one click, so the picture
+   never stalls in front of a room. */
+function playDemo() {
+  const v = document.getElementById("demo");
+  const btn = document.getElementById("playbtn");
+  if (!v) return;
+  const label = (t) => { const l = btn && btn.querySelector(".lbl"); if (l) l.textContent = t; };
+  v.muted = false;
+  v.play()
+    .then(() => btn && btn.classList.remove("show"))
+    .catch(() => {
+      v.muted = true;
+      v.play().catch(() => {});
+      label("Click for sound");
+      if (btn) btn.classList.add("show");
+    });
+}
+
 function wireVideo() {
   const v = document.getElementById("demo");
   const btn = document.getElementById("playbtn");
   if (!v || !btn) return;
-  const start = () => {
-    v.play().then(() => btn.classList.remove("show")).catch(() => btn.classList.add("show"));
+  const label = (t) => { const l = btn.querySelector(".lbl"); if (l) l.textContent = t; };
+
+  const startWithSound = () => {
+    v.muted = false;
+    if (v.ended || v.currentTime >= v.duration - 0.1) v.currentTime = 0;
+    v.play().then(() => btn.classList.remove("show")).catch(() => {});
   };
-  btn.addEventListener("click", start);
-  v.addEventListener("click", () => (v.paused ? start() : v.pause()));
-  v.addEventListener("ended", () => btn.classList.add("show"));
-  v.addEventListener("playing", () => btn.classList.remove("show"));
-  // If the file never loads at all, the poster still shows; say so rather than hang.
-  v.addEventListener("error", () => {
-    btn.classList.add("show");
-    const lbl = btn.querySelector(".lbl");
-    if (lbl) lbl.textContent = "Open assets/bumply-demo.mp4";
+  btn.addEventListener("click", startWithSound);
+  v.addEventListener("click", () => (v.paused ? startWithSound() : v.pause()));
+  v.addEventListener("ended", () => { label("Replay the demo"); btn.classList.add("show"); });
+  v.addEventListener("playing", () => { if (!v.muted) btn.classList.remove("show"); });
+  v.addEventListener("error", () => { label("Open assets/bumply-demo.mp4"); btn.classList.add("show"); });
+
+  // "m" toggles sound from anywhere, for a room where audio has to go quiet fast.
+  addEventListener("keydown", (e) => {
+    if (e.key !== "m" && e.key !== "M") return;
+    v.muted = !v.muted;
+    if (!v.muted) btn.classList.remove("show");
   });
 }
 

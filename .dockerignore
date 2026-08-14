@@ -1,0 +1,34 @@
+# Keep the build context small and keep secrets out of the image.
+.env
+.env.*
+!.env.example
+
+node_modules
+.next
+out
+build
+
+.git
+.github
+.claude
+
+# Local-only material that must never ship
+slide details/
+*.pptx
+docs/
+test-results/
+playwright-report/
+
+# Remotion sources: the rendered mp4 is already in public/, the project is not needed
+remotion/
+scripts/render-*.mts
+scripts/make-vo.mts
+
+npm-debug.log*
+yarn-error.log*
+.DS_Store
+*.log
+coverage
+.vscode
+.idea
+README.md

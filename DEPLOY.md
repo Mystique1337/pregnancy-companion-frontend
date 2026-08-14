@@ -1,7 +1,91 @@
-# Deploying Bumply to Railway (with GitHub CI/CD)
+# Deploying Bumply
 
-Bumply is a standard Next.js app. Railway builds it with Nixpacks and runs `npm run start`.
-`next start` binds to Railway's `PORT` automatically. Health check: `/api/health`.
+The app is host-agnostic: a Next.js 16 server in a Docker image, no platform SDKs,
+no build hooks. It runs on Coolify, plain Docker, Fly, or anything that can run a
+container.
+
+## Coolify
+
+### 1. Create the resource
+
+Coolify → **New Resource → Application → Public/Private Repository**
+
+| Setting | Value |
+|---|---|
+| Repository | `Mystique1337/pregnancy-companion-frontend` |
+| Branch | `dev-shinzii` |
+| Build Pack | **Dockerfile** |
+| Dockerfile location | `/Dockerfile` |
+| Port | `3000` |
+| Health check path | `/api/health` |
+
+Leave the build and start commands empty. The Dockerfile owns both.
+
+### 2. Environment variables
+
+Copy the names from [`.env.example`](.env.example) into Coolify's environment panel
+and fill in the values from your current `.env.local`. That file is generated from
+the code, so it lists every variable the app actually reads.
+
+**`APP_URL` is the one that matters most.** Set it to the public URL you are serving
+from, for example `https://app.bumply.mom`. Webhooks and email links are built from
+it, and if it is wrong they fail silently rather than erroring.
+
+Coolify injects `COOLIFY_URL` as a fallback, but set `APP_URL` explicitly.
+
+### 3. Domain and TLS
+
+Set the domain in Coolify's **Domains** field. Coolify provisions Let's Encrypt
+automatically. Point your DNS A record at the VPS first, or the certificate fails.
+
+### 4. Re-point the webhooks
+
+The app is the webhook target for both channels, so after the domain is live:
+
+- **WhatsApp (Evolution):** update the instance webhook to `https://<domain>/api/whatsapp/webhook`
+- **Telegram:** re-register with `https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://<domain>/api/telegram/webhook`
+
+Neither happens automatically. Missing this is the usual reason a migrated
+deployment looks healthy but stops receiving messages.
+
+### 5. Verify
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' https://<domain>/api/health   # 200
+curl -s https://<domain>/deck | grep -c '<section class="slide'         # 22
+```
+
+## Running it locally as a container
+
+```bash
+docker build -t bumply .
+docker run --rm -p 3000:3000 --env-file .env.local bumply
+```
+
+## How the image is built
+
+Three stages, so the runtime carries the built app and nothing else:
+
+1. **deps** installs from `package.json` alone, so the layer caches until
+   dependencies actually change.
+2. **builder** runs `next build`. `output: "standalone"` traces the exact
+   `node_modules` the server needs.
+3. **runner** copies the standalone bundle, the static chunks, and `public/`,
+   then drops to a non-root user.
+
+### Why `public/` is copied explicitly
+
+Next's standalone tracer only copies the parts of `public/` it sees referenced in
+code. It **drops `public/deck` entirely**, because the pitch deck is static HTML the
+tracer never sees imported. Verified: without the explicit `COPY public`, `/deck`
+returns 404 while `/api/health` returns 200.
+
+If you ever trim the Dockerfile, keep that line.
+
+## Railway (the previous host, still wired up)
+
+Kept for reference. `railway.json` and `nixpacks.toml` are still in the repo and
+Railway builds with Nixpacks rather than the Dockerfile.
 
 ## 1. CI (GitHub Actions)
 `.github/workflows/ci.yml` runs `npm ci && npm run build` (type-check + compile) on every
@@ -20,56 +104,15 @@ push to `main` / `dev-shinzii` and on PRs. This is your build gate.
 Use `.github/workflows/deploy.yml`. Add repo secrets `RAILWAY_TOKEN` (a Railway **project token**)
 and `RAILWAY_SERVICE` (the service name). It runs `railway up` on push to `main`.
 
-## 3. Environment variables to set in Railway
-Railway injects `PORT` and `RAILWAY_PUBLIC_DOMAIN` automatically. Bumply derives its public URL
-from `RAILWAY_PUBLIC_DOMAIN` if `APP_URL`/`PUBLIC_WEBHOOK_URL` aren't set — so webhooks just work.
+Railway injects `PORT` and `RAILWAY_PUBLIC_DOMAIN` automatically, so webhooks work
+there without `APP_URL`. On Coolify you must set `APP_URL` yourself.
 
-**Required**
-```
-SUPABASE_DB_URL=postgresql://...        # your Postgres
-DB_SCHEMA=preg_companion
-NVIDIA_API_KEY=nvapi-...                 # AI + embeddings
-NVIDIA_BASE_URL=https://integrate.api.nvidia.com/v1
-NVIDIA_MODEL=meta/llama-3.1-8b-instruct
-NVIDIA_EMBED_MODEL=nvidia/nv-embedqa-e5-v5
-AUTH_SECRET=<openssl rand -hex 32>
-ADMIN_PASSWORD=<strong password>
-RESEND_API_KEY=re_...                    # email
-EMAIL_FROM=Bumply <onboarding@resend.dev>
-CRON_SECRET=<openssl rand -hex 16>
-```
+## Migrating off Railway
 
-**Telegram (reliable chat) — auto-registers its webhook on boot**
-```
-TELEGRAM_BOT_TOKEN=...
-TELEGRAM_WEBHOOK_SECRET=<openssl rand -hex 16>
-TELEGRAM_BOT_USERNAME=bumply_bot
-```
+Nothing in the app code is Railway-specific. `lib/baseUrl.ts` prefers `APP_URL`
+and only falls back to a host-provided domain, and `railway.json` / `nixpacks.toml`
+are simply ignored by other platforms. You can leave them in place or delete them.
 
-**Voice (Modal)**
-```
-MODAL_TTS_URL=https://chidi-ashinze--buildsmall-tts-tts-web.modal.run
-MODAL_ASR_URL=https://chidi-ashinze--buildsmall-whisper-asr-web.modal.run
-MODAL_API_KEY=ns_...
-```
-
-**Search (Meilisearch) + Push (VAPID) + optional**
-```
-MEILI_URL=...   MEILI_KEY=...   MEILI_INDEX=kb
-VAPID_PUBLIC_KEY=...   VAPID_PRIVATE_KEY=...   VAPID_SUBJECT=mailto:hello@thebrandnerve.com
-HF_TOKEN=                         # optional (KB translation)
-GMAIL_USER=   GMAIL_APP_PASSWORD= # optional, used instead of Resend if set
-# WhatsApp/Evolution (optional; Telegram is the primary channel now)
-EVOLUTION_API_URL=  EVOLUTION_API_KEY=  EVOLUTION_INSTANCE=bumply  WHATSAPP_WEBHOOK_SECRET=
-```
-
-## 4. After the first deploy
-1. Run the DB migration once: from your machine, `SUPABASE_DB_URL=... npm run db:setup`
-   (or run it via `railway run npm run db:setup`).
-2. Seed the knowledge base: `npm run kb:seed` (pgvector + Meili).
-3. The **Telegram webhook auto-registers** to the Railway domain on boot (see startup logs).
-4. Schedule cron: add Railway **cron** services (or an external scheduler) hitting:
-   - `GET https://<domain>/api/cron/weekly?secret=$CRON_SECRET` (weekly)
-   - `GET https://<domain>/api/cron/daily?secret=$CRON_SECRET` (daily)
-
-That's it — pushes to your deploy branch now ship automatically.
+The cost model in `lib/costs.ts` still lists a Railway line under fixed
+infrastructure. Update it to your VPS cost once you know it, since the deck's
+"₦240 per mother per month" figure is computed from that file.

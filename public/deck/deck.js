@@ -247,7 +247,7 @@ function chartMarket() {
       labels: ["TAM", "SAM", "SOM"],
       datasets: [{
         label: "mothers",
-        data: [7550000, 2400000, 120000],
+        data: [4500000, 1800000, 90000],
         backgroundColor: [C2(), C3(), C1()],
         borderRadius: 4, barPercentage: 0.6,
       }],
@@ -261,7 +261,7 @@ function chartMarket() {
         // Three orders of magnitude: decade ticks carry the scale, direct labels
         // carry the values. A full log tick set is unreadable noise.
         x: {
-          type: "logarithmic", min: 1e5, max: 1e7,
+          type: "logarithmic", min: 5e4, max: 1e7,
           grid: grid(false), border: { display: false },
           afterBuildTicks: (a) => { a.ticks = [1e5, 1e6, 1e7].map((value) => ({ value })); },
           ticks: { ...ticks(false, 15), autoSkip: false, callback: (v) => (v >= 1e6 ? v / 1e6 + "M" : v / 1e3 + "k") },
@@ -272,10 +272,63 @@ function chartMarket() {
     plugins: [{
       id: "mLabels",
       afterDatasetsDraw(c) {
-        const ctx = c.ctx, txt = ["7.55M live births / yr", "2.4M reachable on WhatsApp", "120k in 3 yrs"];
+        const ctx = c.ctx, txt = ["4.5M reachable mothers", "1.8M in states with budgets", "90k in 3 yrs"];
         c.getDatasetMeta(0).data.forEach((bar, i) => {
           ctx.save(); ctx.font = `600 17px ${FONT}`; ctx.fillStyle = INKMUT(); ctx.textBaseline = "middle";
           ctx.fillText(txt[i], bar.x + 12, bar.y); ctx.restore();
+        });
+      },
+    }],
+  });
+}
+
+
+function chartFunds() {
+  const el = document.getElementById("c-funds");
+  if (!el) return;
+  const rows = [
+    ["AI compute & GPU", 24420],
+    ["Health worker training", 20000],
+    ["Clinical validation study", 15000],
+    ["Midwife hire, 6 months", 12000],
+    ["Hosting & WhatsApp API", 10500],
+    ["SMS / USSD / voice layer", 8000],
+    ["Security & NDPA compliance", 6000],
+    ["Deployment & outreach", 5000],
+  ];
+  // One series, one axis, direct labels: no legend needed, the title names it.
+  new Chart(el, {
+    type: "bar",
+    data: {
+      labels: rows.map((r) => r[0]),
+      datasets: [{
+        data: rows.map((r) => r[1]),
+        backgroundColor: rows.map((_, i) => (i === 0 ? CSSV("--gold") : "rgba(224,144,106,.75)")),
+        borderRadius: 4, barPercentage: 0.78, categoryPercentage: 0.82,
+      }],
+    },
+    options: {
+      indexAxis: "y", responsive: true, maintainAspectRatio: false,
+      animation: { duration: isExport() ? 0 : 800 },
+      layout: { padding: { right: 92 } },
+      plugins: { legend: { display: false },
+                 tooltip: { callbacks: { label: (c) => ` $${c.parsed.x.toLocaleString()}` } } },
+      scales: {
+        x: { grid: grid(true), border: { display: false }, ticks: { ...ticks(true, 14), callback: (v) => "$" + v / 1000 + "k" } },
+        y: { grid: { display: false }, border: { display: false }, ticks: ticks(true, 16) },
+      },
+    },
+    plugins: [{
+      id: "fundLabels",
+      afterDatasetsDraw(c) {
+        const ctx = c.ctx;
+        c.getDatasetMeta(0).data.forEach((bar, i) => {
+          ctx.save();
+          ctx.font = `700 15px ${FONT}`;
+          ctx.fillStyle = i === 0 ? CSSV("--gold") : "rgba(255,255,255,.82)";
+          ctx.textBaseline = "middle";
+          ctx.fillText("$" + rows[i][1].toLocaleString(), bar.x + 10, bar.y);
+          ctx.restore();
         });
       },
     }],
@@ -535,7 +588,7 @@ function boot() {
   wireStagger();
   wireVideo();
   initHero();
-  chartSensitivity(); chartCost(); chartMarket();
+  chartSensitivity(); chartCost(); chartMarket(); chartFunds();
 
   if (location.hash === "#print" || location.hash === "#export") {
     document.body.classList.add("export");

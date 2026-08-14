@@ -294,6 +294,22 @@ body.export #playbtn .disc { animation: none }
 #soundchip.on .txt::after { content: ""; }
 #playbtn { transition: opacity .25s; }
 
+/* ---------- comparison table ----------
+   Thin rules only, no vertical lines, and our column tinted so the eye lands
+   there first without needing a colour legend. */
+table.cmp { width: 100%; border-collapse: collapse; font-size: 19px; }
+table.cmp th, table.cmp td { padding: 14px 18px; text-align: left; border-bottom: 1px solid var(--border); }
+table.cmp thead th { font-size: 17px; font-weight: 700; color: var(--ink-muted); vertical-align: bottom; border-bottom: 2px solid var(--border); }
+table.cmp thead th span { display: block; font-weight: 400; font-size: 14px; opacity: .7; }
+table.cmp td:first-child { font-weight: 600; color: var(--ink); width: 24%; }
+table.cmp td { color: var(--ink-mid); }
+table.cmp .us { background: var(--pale); }
+table.cmp thead th.us { background: var(--pale); color: var(--terracotta-deep); border-bottom-color: var(--terracotta-deep); border-radius: 12px 12px 0 0; }
+table.cmp tbody tr:last-child td.us { border-radius: 0 0 12px 12px; }
+table.cmp td.us { color: var(--ink); font-weight: 600; }
+table.cmp .yes { color: var(--sage); font-weight: 700; }
+table.cmp .no { color: rgba(46,38,32,.32); font-weight: 700; }
+
 /* ---------- charts ---------- */
 .chartbox { position: relative; width: 100%; }
 

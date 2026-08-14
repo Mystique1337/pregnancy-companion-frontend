@@ -33,7 +33,14 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
+# Bind all interfaces. Coolify probes http://localhost:3000 from inside the
+# container, so this must not be 127.0.0.1 only.
 ENV HOSTNAME=0.0.0.0
+
+# Coolify's own healthcheck shells out to curl (falling back to wget) inside the
+# container. node:*-alpine ships neither curl nor full wget, so the probe fails
+# with "curl: not found" and the deploy rolls back even though the app is up.
+RUN apk add --no-cache curl
 
 # Never run the server as root.
 RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
@@ -47,8 +54,10 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 USER nextjs
 EXPOSE 3000
 
-# Fails the container if the app stops answering, so Coolify restarts it.
+# Fails the container if the app stops answering, so the platform restarts it.
+# 127.0.0.1 rather than localhost: in a dual-stack container localhost can
+# resolve to ::1 first, which a 0.0.0.0 bind does not answer.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
-  CMD node -e "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+  CMD curl -fsS http://127.0.0.1:3000/api/health || exit 1
 
 CMD ["node", "server.js"]

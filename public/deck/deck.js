@@ -26,8 +26,15 @@ function fit() {
 }
 
 function goto(n) {
+  const prev = cur;
   cur = Math.max(0, Math.min(slides.length - 1, n));
-  slides.forEach((s, i) => s.classList.toggle("active", i === cur));
+  // Direction drives the transition: +1 travelling forward, -1 back. Set on
+  // every slide so the outgoing one leaves the way the incoming one arrives.
+  const dir = cur >= prev ? 1 : -1;
+  slides.forEach((s, i) => {
+    s.style.setProperty("--dir", i === cur ? String(dir) : String(-dir));
+    s.classList.toggle("active", i === cur);
+  });
   [...document.querySelectorAll("#nav button")].forEach((b, i) => b.classList.toggle("on", i === cur));
   const bar = document.getElementById("bar");
   if (bar) bar.style.width = `${((cur + 1) / slides.length) * 100}%`;
@@ -335,6 +342,52 @@ function chartFunds() {
   });
 }
 
+
+function chartCostPerPregnancy() {
+  const el = document.getElementById("c-cpp");
+  if (!el) return;
+  const rows = [
+    ["Global apps", 20.00, "rgba(46,38,32,.22)"],
+    ["Jacaranda, fully loaded", 2.50, CSSV("--c3")],
+    ["Bumply at pilot", 1.44, "rgba(190,90,56,.55)"],
+    ["Bumply at scale", 0.48, CSSV("--c1")],
+  ];
+  // One series, one axis, log scale because the range spans 40x. Direct labels
+  // carry the values, so no legend.
+  new Chart(el, {
+    type: "bar",
+    data: { labels: rows.map(r => r[0]), datasets: [{ data: rows.map(r => r[1]),
+      backgroundColor: rows.map(r => r[2]), borderRadius: 4, barPercentage: 0.68 }] },
+    options: {
+      indexAxis: "y", responsive: true, maintainAspectRatio: false,
+      animation: { duration: isExport() ? 0 : 800 },
+      layout: { padding: { right: 78 } },
+      plugins: { legend: { display: false },
+                 tooltip: { callbacks: { label: (c) => ` $${c.parsed.x.toFixed(2)} per pregnancy` } } },
+      scales: {
+        x: { type: "logarithmic", min: 0.3, max: 30, grid: grid(false), border: { display: false },
+             afterBuildTicks: (a) => { a.ticks = [0.5, 1, 5, 10, 30].map((value) => ({ value })); },
+             ticks: { ...ticks(false, 14), autoSkip: false, callback: (v) => "$" + v } },
+        y: { grid: { display: false }, border: { display: false }, ticks: ticks(false, 17) },
+      },
+    },
+    plugins: [{
+      id: "cppLabels",
+      afterDatasetsDraw(c) {
+        const ctx = c.ctx;
+        c.getDatasetMeta(0).data.forEach((bar, i) => {
+          ctx.save();
+          ctx.font = `700 16px ${FONT}`;
+          ctx.fillStyle = i === 3 ? C1() : INKMUT();
+          ctx.textBaseline = "middle";
+          ctx.fillText("$" + rows[i][1].toFixed(2), bar.x + 10, bar.y);
+          ctx.restore();
+        });
+      },
+    }],
+  });
+}
+
 /* ---- layout QA: a slide is a fixed canvas, so spill is silently clipped ---- */
 window.__overflow = () =>
   slides.flatMap((s, i) => {
@@ -588,7 +641,7 @@ function boot() {
   wireStagger();
   wireVideo();
   initHero();
-  chartSensitivity(); chartCost(); chartMarket(); chartFunds();
+  chartSensitivity(); chartCost(); chartMarket(); chartFunds(); chartCostPerPregnancy();
 
   if (location.hash === "#print" || location.hash === "#export") {
     document.body.classList.add("export");

@@ -42,18 +42,27 @@
 html, body { height: 100%; background: #0E0B09; font-family: var(--sans); -webkit-font-smoothing: antialiased; }
 
 /* ---------- stage: fixed 1600×900 canvas, scaled + centred by fit() ---------- */
-#stage { position: fixed; inset: 0; overflow: hidden; }
-#deck { width: 1600px; height: 900px; position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+#stage { position: fixed; inset: 0; overflow: hidden; perspective: 2400px; perspective-origin: 50% 50%; }
+#deck { width: 1600px; height: 900px; position: absolute; top: 0; left: 0; transform-origin: 0 0; transform-style: preserve-3d; }
 
 .slide {
   position: absolute; inset: 0; width: 1600px; height: 900px;
   background: var(--cream); color: var(--ink);
   padding: 74px 92px 78px; overflow: hidden;
-  opacity: 0; visibility: hidden;
-  transition: opacity .5s cubic-bezier(.4,0,.2,1);
   display: flex; flex-direction: column;
+  transform-style: preserve-3d; backface-visibility: hidden;
+  /* Off-stage default. goto() sets --dir to +1 forward, -1 back, so a slide
+     swings in from the side you are travelling towards. */
+  opacity: 0; visibility: hidden;
+  transform: perspective(2400px) translate3d(calc(var(--dir, 1) * 13%), 0, -420px) rotateY(calc(var(--dir, 1) * -14deg));
+  transition: opacity .58s cubic-bezier(.22,.9,.28,1), transform .68s cubic-bezier(.22,.9,.28,1), visibility 0s linear .68s;
 }
-.slide.active { opacity: 1; visibility: visible; }
+.slide.active {
+  opacity: 1; visibility: visible;
+  transform: perspective(2400px) translate3d(0, 0, 0) rotateY(0deg);
+  transition: opacity .5s cubic-bezier(.22,.9,.28,1), transform .72s cubic-bezier(.22,.9,.28,1), visibility 0s;
+  z-index: 2;
+}
 .slide.dark { background: var(--ink); color: #fff; }
 .slide.flush { padding: 0; }
 
@@ -69,20 +78,43 @@ html, body { height: 100%; background: #0E0B09; font-family: var(--sans); -webki
 @keyframes rise { to { opacity: 1; transform: none } }
 
 /* Per-item stagger inside a grid or stack, set by deck.js */
-.stg { opacity: 0; transform: translateY(20px) scale(.985); }
-.slide.active .stg { animation: stg .58s cubic-bezier(.16,.84,.36,1) forwards; animation-delay: var(--d, 0s); }
-@keyframes stg { to { opacity: 1; transform: none } }
+.stg { opacity: 0; transform: perspective(1200px) translate3d(0, 26px, -80px) rotateX(6deg); }
+.slide.active .stg { animation: stg .66s cubic-bezier(.18,.86,.3,1) forwards; animation-delay: var(--d, 0s); }
+@keyframes stg { to { opacity: 1; transform: perspective(1200px) translate3d(0,0,0) rotateX(0deg) } }
+
+/* A row marked .tilt keeps a shallow 3D presence after it lands, so the cards
+   read as objects rather than rectangles. Deliberately subtle: any more and it
+   fights the type. */
+.tilt { transform-style: preserve-3d; }
+.tilt > * { transition: transform .5s cubic-bezier(.22,.9,.28,1), box-shadow .5s; }
+.slide.active .tilt > *:nth-child(1) { transform: rotateY(2.2deg) translateZ(10px) }
+.slide.active .tilt > *:nth-child(2) { transform: rotateY(.8deg) translateZ(4px) }
+.slide.active .tilt > *:nth-child(3) { transform: rotateY(-.8deg) translateZ(4px) }
+.slide.active .tilt > *:nth-child(4) { transform: rotateY(-2.2deg) translateZ(10px) }
 
 /* Slow drift on full-bleed photography: the frame is never quite static,
    which reads as film rather than slideware. */
-.photo img { animation: drift 26s ease-in-out infinite alternate; }
-@keyframes drift { from { transform: scale(1.04) } to { transform: scale(1.12) } }
+.photo { transform: translateZ(-90px) scale(1.08); }
+.photo img { animation: drift 30s ease-in-out infinite alternate; will-change: transform; }
+@keyframes drift {
+  from { transform: scale(1.05) translate3d(0, 0, 0) }
+  to   { transform: scale(1.14) translate3d(-1.6%, -1.2%, 0) }
+}
+/* Overlay text sits forward of the photograph, so the parallax reads as depth. */
+.overlay { transform: translateZ(40px); }
 
-body.export .slide .rise, body.export .stg, body.export .photo img {
+body.export .slide .rise, body.export .stg, body.export .photo img,
+body.export .tilt > *, body.export .photo, body.export .overlay {
   animation: none !important; opacity: 1 !important; transform: none !important;
 }
+body.export .slide { transition: none !important; }
+body.export .slide.active { transform: none !important; }
 @media (prefers-reduced-motion: reduce) {
-  .slide .rise, .stg, .photo img { animation: none !important; opacity: 1 !important; transform: none !important; }
+  .slide .rise, .stg, .photo img, .tilt > *, .photo, .overlay {
+    animation: none !important; transform: none !important;
+  }
+  .slide { transition: opacity .25s linear !important; }
+  .slide:not(.active) { transform: none !important; }
 }
 
 /* ---------- type ---------- */
@@ -309,6 +341,17 @@ table.cmp tbody tr:last-child td.us { border-radius: 0 0 12px 12px; }
 table.cmp td.us { color: var(--ink); font-weight: 600; }
 table.cmp .yes { color: var(--sage); font-weight: 700; }
 table.cmp .no { color: rgba(46,38,32,.32); font-weight: 700; }
+
+table.cmp.dk th, table.cmp.dk td { border-bottom-color: rgba(255,255,255,.14); }
+table.cmp.dk thead th { color: rgba(255,255,255,.62); border-bottom-color: rgba(255,255,255,.24); }
+table.cmp.dk td { color: rgba(255,255,255,.78); }
+table.cmp.dk td:first-child { color: #fff; }
+table.cmp.dk .us { background: rgba(232,185,111,.10); }
+table.cmp.dk thead th.us { background: rgba(232,185,111,.10); color: var(--gold); border-bottom-color: var(--gold); }
+table.cmp.dk td.us { color: #fff; }
+table.cmp.dk .yes { color: #A9C79B; }
+table.cmp.dk .no { color: rgba(255,255,255,.3); }
+table.cmp.dk td { padding: 12px 18px; font-size: 18px; }
 
 /* ---------- charts ---------- */
 .chartbox { position: relative; width: 100%; }

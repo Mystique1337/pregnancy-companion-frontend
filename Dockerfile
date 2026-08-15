@@ -14,7 +14,14 @@ WORKDIR /app
 # libc6-compat: some native deps (sharp, swc) expect glibc symbols on musl.
 RUN apk add --no-cache libc6-compat
 COPY package.json package-lock.json* ./
-RUN npm ci --no-audit --no-fund
+# The registry pull is the least reliable step in the whole build, and a single
+# ECONNRESET fails the deploy. Retry hard and allow a slow link before giving up.
+RUN npm config set fetch-retries 6 \
+ && npm config set fetch-retry-mintimeout 20000 \
+ && npm config set fetch-retry-maxtimeout 180000 \
+ && npm config set fetch-timeout 900000 \
+ && (npm ci --no-audit --no-fund \
+     || (echo "npm ci failed, retrying once after backoff" && sleep 20 && npm ci --no-audit --no-fund))
 
 # ---------- build ----------
 FROM node:22-alpine AS builder

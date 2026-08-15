@@ -28,3 +28,9 @@ __pycache__/
 test-results/
 playwright-report/
 .last-run.json
+
+# Local-only: real values for pasting into the host's env panel
+coolify.env
+
+# Local-only demo runbook
+DEMO.md

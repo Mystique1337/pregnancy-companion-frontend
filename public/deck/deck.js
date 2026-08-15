@@ -200,45 +200,56 @@ function chartSensitivity() {
 function chartCost() {
   const el = document.getElementById("c-cost");
   if (!el) return;
-  // One series, one axis → no legend box; the title names it.
+  // Two series, so a legend is required and both are directly labelled. The gap
+  // between the lines IS the argument: it is the cost of keeping a human in it.
   new Chart(el, {
     type: "line",
     data: {
       labels: ["100", "1,000", "10,000", "100,000"],
-      datasets: [{
-        label: "₦ per mother / month",
-        data: [1393, 500, 240, 80],
-        borderColor: C1D(), backgroundColor: "rgba(224,144,106,.13)",
-        borderWidth: 2.5, fill: true, tension: 0.34,
-        pointRadius: 6, pointBackgroundColor: C1D(), pointBorderColor: "#231D18", pointBorderWidth: 2.5,
-      }],
+      datasets: [
+        { label: "Fully loaded", data: [6393, 1485, 425, 172],
+          borderColor: CSSV("--gold"), backgroundColor: "rgba(232,185,111,.12)",
+          borderWidth: 2.5, fill: true, tension: 0.34,
+          pointRadius: 5, pointBackgroundColor: CSSV("--gold"), pointBorderColor: "#231D18", pointBorderWidth: 2 },
+        { label: "Technology only", data: [1393, 500, 240, 80],
+          borderColor: C1D(), backgroundColor: "transparent",
+          borderWidth: 2, borderDash: [6, 4], fill: false, tension: 0.34,
+          pointRadius: 4, pointBackgroundColor: C1D(), pointBorderColor: "#231D18", pointBorderWidth: 2 },
+      ],
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       animation: { duration: isExport() ? 0 : 900 },
-      layout: { padding: { top: 38, right: 34 } },
+      layout: { padding: { top: 26, right: 22 } },
       plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: (c) => ` ₦${c.parsed.y.toLocaleString()} per mother / month` } },
+        legend: { position: "top", align: "start",
+          labels: { boxWidth: 11, boxHeight: 11, usePointStyle: true, pointStyle: "circle",
+                    font: { family: FONT, size: 16 }, color: "rgba(255,255,255,.72)", padding: 14 } },
+        tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: \u20A6${c.parsed.y.toLocaleString()}` } },
       },
       scales: {
-        y: { beginAtZero: true, grid: grid(true), border: { display: false }, ticks: { ...ticks(true, 15), callback: (v) => "₦" + v } },
-        x: { grid: { display: false }, border: { display: false }, ticks: ticks(true, 17),
-             title: { display: true, text: "mothers served", color: "rgba(255,255,255,.5)", font: { family: FONT, size: 15 } } },
+        y: { type: "logarithmic", min: 50, max: 8000, grid: grid(true), border: { display: false },
+             afterBuildTicks: (a) => { a.ticks = [100, 1000, 5000].map((value) => ({ value })); },
+             ticks: { ...ticks(true, 14), autoSkip: false, callback: (v) => "\u20A6" + v.toLocaleString() } },
+        x: { grid: { display: false }, border: { display: false }, ticks: ticks(true, 16),
+             title: { display: true, text: "mothers served", color: "rgba(255,255,255,.5)", font: { family: FONT, size: 14 } } },
       },
     },
     plugins: [{
       id: "ptLabels",
       afterDatasetsDraw(c) {
         const ctx = c.ctx;
-        c.getDatasetMeta(0).data.forEach((p, i) => {
-          const v = c.data.datasets[0].data[i];
-          ctx.save();
-          ctx.font = `700 19px ${FONT}`;
-          ctx.fillStyle = i === 3 ? CSSV("--gold") : "#fff";
-          ctx.textAlign = "center";
-          ctx.fillText("₦" + v.toLocaleString(), p.x, p.y - 17);
-          ctx.restore();
+        [0, 1].forEach((di) => {
+          const meta = c.getDatasetMeta(di);
+          [2, 3].forEach((i) => {
+            const pt = meta.data[i]; if (!pt) return;
+            ctx.save();
+            ctx.font = `700 15px ${FONT}`;
+            ctx.fillStyle = di === 0 ? CSSV("--gold") : C1D();
+            ctx.textAlign = "center";
+            ctx.fillText("\u20A6" + c.data.datasets[di].data[i].toLocaleString(), pt.x, pt.y - 13);
+            ctx.restore();
+          });
         });
       },
     }],
@@ -293,15 +304,16 @@ function chartMarket() {
 function chartFunds() {
   const el = document.getElementById("c-funds");
   if (!el) return;
+  // Share of the round, per the funding strategy's allocation bands. Labour is
+  // the largest block once clinical and frontline staffing are counted together.
   const rows = [
-    ["AI compute & GPU", 24420],
-    ["Health worker training", 20000],
-    ["Clinical validation study", 15000],
-    ["Midwife hire, 6 months", 12000],
-    ["Hosting & WhatsApp API", 10500],
-    ["SMS / USSD / voice layer", 8000],
-    ["Security & NDPA compliance", 6000],
-    ["Deployment & outreach", 5000],
+    ["Clinical & frontline staffing", 24],
+    ["AI compute & infrastructure", 22],
+    ["Pilot implementation & M&E", 20],
+    ["Engineering & product", 14],
+    ["SMS / USSD / IVR channels", 10],
+    ["Security, privacy & compliance", 6],
+    ["Partnerships & contingency", 4],
   ];
   // One series, one axis, direct labels: no legend needed, the title names it.
   new Chart(el, {
@@ -319,9 +331,9 @@ function chartFunds() {
       animation: { duration: isExport() ? 0 : 800 },
       layout: { padding: { right: 92 } },
       plugins: { legend: { display: false },
-                 tooltip: { callbacks: { label: (c) => ` $${c.parsed.x.toLocaleString()}` } } },
+                 tooltip: { callbacks: { label: (c) => ` ${c.parsed.x}% of the round` } } },
       scales: {
-        x: { grid: grid(true), border: { display: false }, ticks: { ...ticks(true, 14), callback: (v) => "$" + v / 1000 + "k" } },
+        x: { grid: grid(true), border: { display: false }, ticks: { ...ticks(true, 14), callback: (v) => v + "%" } },
         y: { grid: { display: false }, border: { display: false }, ticks: ticks(true, 16) },
       },
     },
@@ -334,7 +346,7 @@ function chartFunds() {
           ctx.font = `700 15px ${FONT}`;
           ctx.fillStyle = i === 0 ? CSSV("--gold") : "rgba(255,255,255,.82)";
           ctx.textBaseline = "middle";
-          ctx.fillText("$" + rows[i][1].toLocaleString(), bar.x + 10, bar.y);
+          ctx.fillText(rows[i][1] + "%", bar.x + 10, bar.y);
           ctx.restore();
         });
       },
@@ -382,6 +394,46 @@ function chartCostPerPregnancy() {
           ctx.textBaseline = "middle";
           ctx.fillText("$" + rows[i][1].toFixed(2), bar.x + 10, bar.y);
           ctx.restore();
+        });
+      },
+    }],
+  });
+}
+
+
+function chartSplit() {
+  const el = document.getElementById("c-split");
+  if (!el) return;
+  const rows = [
+    ["Technology", 240, CSSV("--c1")],
+    ["CHW stipends", 60, CSSV("--sage")],
+    ["Clinical lead", 25, "rgba(110,140,99,.7)"],
+    ["Engineering", 60, "rgba(190,90,56,.55)"],
+    ["Operations", 25, "rgba(190,90,56,.4)"],
+    ["Compliance", 15, "rgba(46,38,32,.28)"],
+  ];
+  new Chart(el, {
+    type: "bar",
+    data: { labels: rows.map(r => r[0]), datasets: [{ data: rows.map(r => r[1]),
+      backgroundColor: rows.map(r => r[2]), borderRadius: 4, barPercentage: 0.72 }] },
+    options: {
+      indexAxis: "y", responsive: true, maintainAspectRatio: false,
+      animation: { duration: isExport() ? 0 : 800 },
+      layout: { padding: { right: 64 } },
+      plugins: { legend: { display: false },
+                 tooltip: { callbacks: { label: (c) => ` \u20A6${c.parsed.x} per mother per month` } } },
+      scales: {
+        x: { grid: grid(false), border: { display: false }, ticks: { ...ticks(false, 14), callback: (v) => "\u20A6" + v } },
+        y: { grid: { display: false }, border: { display: false }, ticks: ticks(false, 16) },
+      },
+    },
+    plugins: [{
+      id: "splitLabels",
+      afterDatasetsDraw(c) {
+        const ctx = c.ctx;
+        c.getDatasetMeta(0).data.forEach((bar, i) => {
+          ctx.save(); ctx.font = `700 15px ${FONT}`; ctx.fillStyle = INKMUT(); ctx.textBaseline = "middle";
+          ctx.fillText("\u20A6" + rows[i][1], bar.x + 9, bar.y); ctx.restore();
         });
       },
     }],
@@ -641,7 +693,7 @@ function boot() {
   wireStagger();
   wireVideo();
   initHero();
-  chartSensitivity(); chartCost(); chartMarket(); chartFunds(); chartCostPerPregnancy();
+  chartSensitivity(); chartCost(); chartMarket(); chartFunds(); chartSplit();
 
   if (location.hash === "#print" || location.hash === "#export") {
     document.body.classList.add("export");

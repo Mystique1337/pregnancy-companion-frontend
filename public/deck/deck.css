@@ -358,6 +358,42 @@ table.cmp.dk td { padding: 12px 18px; font-size: 18px; }
 .tight table.cmp td { padding: 9px 18px; font-size: 17px; }
 .tight table.cmp th { padding: 9px 18px; }
 
+/* ---------- summary board ----------
+   The take-a-photo slide. Four vertical panels read left to right in one pass,
+   with the proof numbers banded underneath. No scrim, no photograph: this one
+   is meant to survive being shot on a phone from the back of a room. */
+.board { position: absolute; inset: 0; display: grid; grid-template-rows: 1fr auto; }
+.board-cols { display: grid; grid-template-columns: 1.05fr .82fr 1.05fr 1.02fr; min-height: 0; }
+.board-col { padding: 54px 40px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.board-col.brand { background: var(--ink); color: #fff; padding-left: 64px; }
+.board-col.prob { background: var(--pale); justify-content: flex-start; }
+.board-col.sol { background: var(--cream-2); }
+.board-col.sol .board-item { margin-top: 22px; }
+.board-col.how { background: var(--sage-pale); }
+.board-k { font-size: 13px; letter-spacing: .2em; text-transform: uppercase; font-weight: 700; color: var(--terracotta-deep); }
+.board-col.how .board-k { color: var(--sage); }
+.board-h { font-family: var(--serif); font-size: 34px; line-height: 1.12; font-weight: 600; margin-top: 8px; letter-spacing: -.015em; }
+.board-item { margin-top: 16px; }
+.board-item b { display: block; font-size: 18px; font-weight: 700; color: var(--ink); line-height: 1.25; }
+.board-item span { display: block; font-size: 15px; line-height: 1.4; color: var(--ink-muted); margin-top: 3px; }
+.board-col.how .board-item { background: rgba(255,255,255,.66); border-radius: 12px; padding: 13px 15px; margin-top: 11px; }
+/* Rotated figures, so the problem column reads as a poster rather than a list. */
+/* Even vertical rhythm, so the three figures read as a column rather than a clump. */
+.board-fig { display: flex; align-items: center; gap: 16px; margin-top: 42px; }
+.board-fig:first-of-type { margin-top: 30px; }
+.board-fig .n {
+  font-family: var(--serif); font-size: 56px; font-weight: 600; line-height: .9;
+  color: var(--terracotta); writing-mode: vertical-rl; transform: rotate(180deg); letter-spacing: -.03em;
+}
+.board-fig .t { font-size: 15px; line-height: 1.35; color: var(--ink-mid); }
+.board-stats { background: var(--ink); display: grid; grid-template-columns: repeat(5, 1fr); }
+.board-stats > div { padding: 24px 20px; text-align: center; border-left: 1px solid rgba(255,255,255,.12); }
+.board-stats > div:first-child { border-left: none; }
+.board-stats .n { font-family: var(--serif); font-size: 42px; font-weight: 600; color: var(--gold); line-height: 1; }
+.board-stats .l { font-size: 14px; color: rgba(255,255,255,.66); margin-top: 7px; line-height: 1.3; }
+.board-qr { margin-top: auto; display: flex; align-items: center; gap: 16px; }
+.board-qr img { width: 116px; height: 116px; border-radius: 10px; background: #fff; padding: 7px; display: block; }
+
 /* ---------- charts ---------- */
 .chartbox { position: relative; width: 100%; }
 

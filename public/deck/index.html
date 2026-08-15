@@ -267,34 +267,44 @@
 
 <!-- ══════════ 9 · AI NATIVE ══════════ -->
 <section class="slide dark">
-  <canvas id="hero3d" style="position:absolute;right:-22%;top:50%;transform:translateY(-50%);width:1040px;height:1040px;z-index:0;opacity:.34"></canvas>
-  <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,var(--ink) 30%,rgba(35,29,24,.86) 52%,rgba(35,29,24,.5) 72%,transparent 100%)"></div>
+  <canvas id="hero3d" style="position:absolute;right:-30%;top:50%;transform:translateY(-50%);width:1000px;height:1000px;z-index:0;opacity:.22"></canvas>
+  <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,var(--ink) 24%,rgba(35,29,24,.92) 46%,rgba(35,29,24,.62) 74%,transparent 100%)"></div>
   <div class="topbar"><span class="brand">Bumply</span><span>AI native</span></div>
   <div class="body" style="position:relative;z-index:2">
-    <div class="split l">
-      <div>
-        <div class="rise eyebrow">AI native</div>
-        <h2 class="rise" style="margin-top:20px;color:#fff">AI in five<br>places at once.</h2>
-        <p class="rise lede" style="margin-top:28px;max-width:500px">
-          Not a chatbot bolted onto a clinic app. Every one of them degrades to code, never to nothing.
+    <div class="rise eyebrow">AI native, on every surface</div>
+    <h2 class="rise sm" style="margin-top:14px;color:#fff;font-size:54px">Same brain, three doors. Only one of them needs a network.</h2>
+    <div class="rise tight" style="margin-top:24px">
+      <table class="cmp dk">
+        <thead><tr><th>Capability</th><th>Telegram<br><span>her first door</span></th><th>Web &amp; Android<br><span>installed app</span></th><th class="us">Where the model runs</th></tr></thead>
+        <tbody>
+          <tr><td>Danger detection</td><td><span class="yes">✓</span></td><td><span class="yes">✓</span> offline too</td><td class="us">No model at all. Deterministic code.</td></tr>
+          <tr><td>Grounded chat</td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td><td class="us">Our GPUs, scale to zero</td></tr>
+          <tr><td>Voice in and out</td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td><td class="us">SoroTTS + Whisper, self-hosted</td></tr>
+          <tr><td>Photo triage</td><td><span class="yes">✓</span></td><td><span class="yes">✓</span></td><td class="us">Our GPUs</td></tr>
+          <tr><td>Chat with zero signal</td><td><span class="no">✕</span></td><td><span class="yes">✓</span></td><td class="us">SmolLM2 135M, in the browser</td></tr>
+          <tr><td>Speech with zero signal</td><td><span class="no">✕</span></td><td><span class="yes">✓</span></td><td class="us">Whisper tiny, in the browser</td></tr>
+          <tr><td>Read a card with zero signal</td><td><span class="no">✕</span></td><td><span class="yes">✓</span></td><td class="us">SmolVLM 256M, in the browser</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="rise grid-2" style="margin-top:20px;gap:18px;align-items:stretch">
+      <div class="card glass" style="border-color:rgba(192,57,43,.5)">
+        <div class="k" style="color:#F3907F">The part that never depends on a model</div>
+        <p style="font-size:19px;margin-top:4px">
+          Danger screening is deterministic and runs first on every surface, including offline.
+          Speech models get African accents wrong about a third of the time, so safety never rests on a transcript.
         </p>
-        <div class="rise card gold" style="margin-top:32px;max-width:500px">
-          <p style="color:#fff;font-size:21px">
-            Speech models get African accents wrong
-            <strong style="color:var(--gold)">a third of the time</strong>. That is why safety never depends on the transcript.
-          </p>
-        </div>
       </div>
-      <div class="stack stagger">
-        <div class="feat"><div class="ico"><svg class="ic sm" viewBox="0 0 24 24"><use href="#i-globe"/></svg></div><div class="tx"><b>Language ID per message</b><span>She switches mid-conversation. No settings menu.</span></div></div>
-        <div class="feat"><div class="ico"><svg class="ic sm" viewBox="0 0 24 24"><use href="#i-mic"/></svg></div><div class="tx"><b>Voice in, voice out</b><span>In a Nigerian voice. Literacy stops being a barrier.</span></div></div>
-        <div class="feat"><div class="ico"><svg class="ic sm" viewBox="0 0 24 24"><use href="#i-eye"/></svg></div><div class="tx"><b>Photo triage</b><span>ANC cards, drugs and lab results, abnormals flagged.</span></div></div>
-        <div class="feat"><div class="ico"><svg class="ic sm" viewBox="0 0 24 24"><use href="#i-book"/></svg></div><div class="tx"><b>Grounded answers</b><span>Plus a 48-myth misinformation checker.</span></div></div>
-        <div class="feat"><div class="ico"><svg class="ic sm" viewBox="0 0 24 24"><use href="#i-rank"/></svg></div><div class="tx"><b>Explainable triage</b><span>The worklist says why each mother is on it.</span></div></div>
+      <div class="card gold">
+        <div class="k">Honest scope</div>
+        <p style="color:#fff;font-size:19px;margin-top:4px">
+          The three in-browser models are opt-in, about 100MB once, cached after that.
+          They are a companion for when signal fails, not a diagnosis.
+        </p>
       </div>
     </div>
   </div>
-  <div class="src">Word-error-rate comparison: Olatunji T, et al. <em>AfriSpeech-200: Pan-African Accented Speech Dataset for Clinical and General Domain ASR</em>, arXiv:2310.00274 (2023). 200 hours, 120 African accents, 13 countries; off-the-shelf Whisper-medium 0.332 WER against 0.167 on LibriSpeech.</div>
+  <div class="src">In-browser models run through transformers.js on WebAssembly, so the Android app, which is a Trusted Web Activity over the same engine, gets them too. Server models run on our own Modal containers rather than a third-party API. Word-error-rate comparison: Olatunji T, et al. <em>AfriSpeech-200</em>, arXiv:2310.00274 (2023), Whisper-medium 0.332 WER on African-accented English against 0.167 on LibriSpeech.</div>
 </section>
 
 <!-- ══════════ OFFLINE ══════════ -->

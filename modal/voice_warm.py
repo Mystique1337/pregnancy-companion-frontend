@@ -10,8 +10,8 @@ to zero afterwards. Nothing about the voice apps themselves changes; this reache
 in from outside and moves their autoscaler, so there is no redeploy of the models
 and no risk to the running endpoints.
 
-    Window   11:30 to 15:00 Africa/Lagos, every day
-    Cost     two GPUs held for 3.5h/day. That is the whole point, and it is not free.
+    Window   11:30 to 18:00 Africa/Lagos, every day
+    Cost     two GPUs held for 6.5h/day. That is the whole point, and it is not free.
 
 Deploy (note the profile — these apps live on chidi-ashinze, not the default):
 
@@ -63,9 +63,9 @@ def warm_up() -> None:
     _set(WARM)
 
 
-@app.function(schedule=modal.Cron("0 15 * * *", timezone=TZ))
+@app.function(schedule=modal.Cron("0 18 * * *", timezone=TZ))
 def cool_down() -> None:
-    """15:00 — release them. They idle out on their own scaledown window."""
+    """18:00 — release them. They idle out on their own scaledown window."""
     _set(0)
 
 
@@ -73,7 +73,7 @@ def cool_down() -> None:
 def ensure_cold() -> None:
     """23:50 — belt and braces.
 
-    If the 15:00 run is ever missed, two GPUs stay pinned until someone notices,
+    If the 18:00 run is ever missed, two GPUs stay pinned until someone notices,
     which on a scale-to-zero budget is the one failure worth paying three lines
     of code to avoid. Setting min_containers=0 when it is already 0 is a no-op.
     """

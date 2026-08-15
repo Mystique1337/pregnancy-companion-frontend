@@ -50,6 +50,7 @@ export default async function Home() {
             <div className="hero-btns">
               <a className="btn-pink" href="#register">{t("home.hero.cta1", L)}</a>
               <a className="btn-ghost" href="#how">{t("home.hero.cta2", L)}</a>
+              <a className="btn-ghost" href="/demo">{t("home.hero.cta3", L)}</a>
             </div>
             <div className="hero-trust">
               <div className="trust-item"><div className="trust-icon">🌸</div><div className="trust-text">{t("home.hero.t1", L)}</div></div>

@@ -10,6 +10,7 @@ import { normalizeLang } from "@/lib/languages";
 import { t } from "@/lib/i18n";
 import { telegramConfigured, telegramBotUsername } from "@/lib/telegram";
 import AppHeader from "../_components/AppHeader";
+import OfflinePrompt from "../_components/OfflinePrompt";
 import WeekExtras from "../_components/WeekExtras";
 import EnableNotifications from "../_components/EnableNotifications";
 import ProfileCache from "../_components/ProfileCache";
@@ -44,6 +45,7 @@ export default async function Dashboard() {
       <AppHeader plan={mother.plan} lang={mother.language} active="dashboard" features={features} />
       <ProfileCache firstName={(mother.full_name || "mama").split(" ")[0]} week={week} trimester={trimester} language={L} firstPregnancy={!!mother.first_pregnancy} dueDate={mother.due_date ? new Date(mother.due_date).toISOString().slice(0, 10) : null} />
       <div className="app-shell">
+        <OfflinePrompt />
         <p className="s-label">{t("dash.journey", L)}</p>
         <h1 className="s-title" style={{ marginBottom: 6 }}>
           {t("dash.hello", L)}, <em>{mother.full_name}</em>

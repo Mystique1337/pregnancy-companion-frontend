@@ -7,6 +7,7 @@ import { normalizeLang } from "@/lib/languages";
 import { t } from "@/lib/i18n";
 import AppHeader from "../_components/AppHeader";
 import ChatPanel from "../_components/ChatPanel";
+import OfflineHelper from "../_components/OfflineHelper";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +51,18 @@ export default async function ChatPage() {
               initial={await loadInitial(mother.id, mother.full_name, week)}
             />
             <p className="muted" style={{ textAlign: "center", marginTop: 12, fontSize: 11 }}>{t("chat.disclaimer", L)}</p>
+
+            {/* Chat is where she comes when she wants to ask something, so it is
+                where the no-signal version belongs too. Secondary by default so
+                it never competes with the real thing. */}
+            <details id="offline" style={{ marginTop: 26 }}>
+              <summary style={{ cursor: "pointer", fontSize: 14, fontWeight: 600, padding: "10px 0" }}>
+                📶 Ask with no network
+              </summary>
+              <div style={{ marginTop: 10 }}>
+                <OfflineHelper />
+              </div>
+            </details>
           </>
         ) : (
           <div className="pay-wall">

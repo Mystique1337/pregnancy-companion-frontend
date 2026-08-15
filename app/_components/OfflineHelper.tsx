@@ -66,6 +66,8 @@ export default function OfflineHelper() {
         },
       })) as typeof gen.current;
       setState("ready");
+      // Let other screens know the pack is installed, so they stop prompting.
+      try { localStorage.setItem("bumply_offline_ready", "1"); } catch {}
     } catch (e) {
       setErr("Couldn't load the offline helper. It needs one online download first."); setState("idle");
       console.error(e);

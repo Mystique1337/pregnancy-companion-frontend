@@ -32,3 +32,6 @@ coverage
 .vscode
 .idea
 README.md
+
+# The Android build is served from public/ and must ship in the image
+!public/bumply.apk

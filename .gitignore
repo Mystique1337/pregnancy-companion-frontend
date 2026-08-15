@@ -34,3 +34,9 @@ coolify.env
 
 # Local-only demo runbook
 DEMO.md
+
+# Android signing material and build output, never commit
+android/android.keystore
+android/*.jks
+android/app-release-*.apk
+android/*.aab

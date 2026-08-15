@@ -12,11 +12,14 @@
   "navigationDividerColorDark": "#000000",
   "backgroundColor": "#FBF7F1",
   "enableNotifications": true,
-  "startUrl": "/dashboard",
+  "startUrl": "/",
   "iconUrl": "https://app.bumply.mom/icon-512.png",
   "maskableIconUrl": "https://app.bumply.mom/icon-512-maskable.png",
   "splashScreenFadeOutDuration": 300,
-  "signingKey": { "path": "android.keystore", "alias": "bumply" },
+  "signingKey": {
+    "path": "android.keystore",
+    "alias": "bumply"
+  },
   "appVersionName": "1.0.0",
   "appVersionCode": 1,
   "shortcuts": [],

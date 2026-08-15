@@ -131,6 +131,7 @@ const STRINGS: Dict = {
     ig: "Mmelite kwa izu, otu nwa si eto, atụmatụ nri na nkwado obi. Ọ bụrụ na ihe adịghị mma, Bumply ga-achọpụta akara ihe ize ndụ ma nyere gị aka iru ụlọ ọgwụ.",
   },
   "home.hero.cta1": { en: "Begin My Journey ✨", pcm: "Make I Start ✨", yo: "Bẹ̀rẹ̀ Ìrìnàjò Mi ✨", ha: "Fara Tafiyata ✨", ig: "Malite Njem M ✨" },
+  "home.hero.apk": { en: "Download the Android app", pcm: "Download the Android app", yo: "Gba app Android", ha: "Sauke manhajar Android", ig: "Budata ngwa Android" },
   "home.hero.cta3": { en: "Try it without signing up", pcm: "Try am, no need to register", yo: "Gbìyànjú láìforúkọsílẹ̀", ha: "Gwada shi ba tare da yin rajista ba", ig: "Nwalee ya n'edebeghị aha" },
   "home.hero.cta2": { en: "See How It Works", pcm: "See How E Dey Work", yo: "Wo Bí Ó Ṣe Ń Ṣiṣẹ́", ha: "Duba Yadda Yake", ig: "Hụ Ka Ọ Si Arụ Ọrụ" },
   "home.hero.t1": { en: "Personalised to your week", pcm: "Personalised to your week", yo: "Tó bá ọ̀sẹ̀ rẹ mu", ha: "Daidai da makonki", ig: "Dabara maka izu gị" },

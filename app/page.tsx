@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import HeroIllustration from "./_components/HeroIllustration";
 import VideoEmbed from "./_components/VideoEmbed";
 import ScrollReveal from "./_components/ScrollReveal";
@@ -9,6 +11,8 @@ import { getUiLang } from "@/lib/serverLang";
 import { t } from "@/lib/i18n";
 
 export default async function Home() {
+  // Only offer the Android build if one has actually been published.
+  const apkExists = existsSync(join(process.cwd(), "public", "bumply.apk"));
   const L = await getUiLang();
   return (
     <>
@@ -52,6 +56,14 @@ export default async function Home() {
               <a className="btn-ghost" href="#how">{t("home.hero.cta2", L)}</a>
               <a className="btn-ghost" href="/demo">{t("home.hero.cta3", L)}</a>
             </div>
+            {apkExists && (
+              <p style={{ marginTop: 14, fontSize: 14 }}>
+                <a href="/bumply.apk" download
+                   style={{ color: "var(--pink)", fontWeight: 600, textDecoration: "none" }}>
+                  ⬇︎ {t("home.hero.apk", L)}
+                </a>
+              </p>
+            )}
             <div className="hero-trust">
               <div className="trust-item"><div className="trust-icon">🌸</div><div className="trust-text">{t("home.hero.t1", L)}</div></div>
               <div className="trust-item"><div className="trust-icon">🥗</div><div className="trust-text">{t("home.hero.t2", L)}</div></div>

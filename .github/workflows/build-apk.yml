@@ -1,13 +1,21 @@
 name: Build Android APK
 
-# Builds a signed TWA APK (loads app.bumply.mom, offline via the service worker)
-# and uploads it as a downloadable artifact you install manually.
+# Builds a signed TWA APK (loads app.bumply.mom, offline via the service worker),
+# verifies it still matches assetlinks.json, and publishes it to public/bumply.apk
+# so the home page can offer it and the next deployment ships it.
+#
+# Deliberately NOT run on every push. A Trusted Web Activity is a Chrome shell
+# around the live site, so web changes reach installed users immediately. Only
+# the shell needs rebuilding: id, name, icon, colours, start URL.
 on:
   workflow_dispatch:
   push:
     paths:
       - "android/**"
       - ".github/workflows/build-apk.yml"
+
+permissions:
+  contents: write
 
 jobs:
   apk:
@@ -56,6 +64,43 @@ jobs:
       - name: Show outputs
         working-directory: android
         run: ls -la *.apk *.aab 2>/dev/null || true
+
+      # If the signing fingerprint stops matching assetlinks.json, Android stops
+      # trusting the link and draws a browser address bar over the app. Cheaper
+      # to fail here than to find out on stage.
+      - name: Verify fingerprint matches assetlinks.json
+        working-directory: android
+        run: |
+          FP=$(keytool -list -v -keystore android.keystore -alias bumply \
+                 -storepass bumplySigning123 | grep "SHA256:" | head -1 \
+                 | sed 's/.*SHA256: *//' | tr -d ' ')
+          EXPECTED=$(python3 -c "import json;print(json.load(open('../public/.well-known/assetlinks.json'))[0]['target']['sha256_cert_fingerprints'][0])")
+          echo "built:    $FP"
+          echo "declared: $EXPECTED"
+          if [ "$FP" != "$EXPECTED" ]; then
+            echo "::error::Signing fingerprint does not match public/.well-known/assetlinks.json."
+            echo "::error::Update assetlinks.json to $FP, or build with the original keystore."
+            exit 1
+          fi
+          echo "fingerprint matches"
+
+      - name: Publish to public/bumply.apk
+        run: |
+          APK=$(ls android/*.apk | head -1)
+          cp "$APK" public/bumply.apk
+          ls -lh public/bumply.apk
+
+      - name: Commit the published APK
+        run: |
+          git config user.name "Chidi Ashinze"
+          git config user.email "chidi.ashinze@gmail.com"
+          git add -f public/bumply.apk
+          if git diff --cached --quiet; then
+            echo "APK unchanged, nothing to commit"
+          else
+            git commit -m "Publish Android build to /bumply.apk" -m "Built from android/twa-manifest.json. Fingerprint verified against public/.well-known/assetlinks.json."
+            git push
+          fi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

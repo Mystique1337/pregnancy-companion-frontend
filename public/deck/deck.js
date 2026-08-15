@@ -440,6 +440,32 @@ function chartSplit() {
   });
 }
 
+
+/* ---- warm the demo while the audience is still on slide 1 ----
+   The explainer is the single biggest asset in the deck and it sits on slide 7.
+   Waiting until then to fetch it means stalling in front of a room on venue
+   wifi. Start buffering as soon as the deck opens: by the time anyone reaches
+   it, several minutes of presenting have already gone into the download. */
+function warmVideo() {
+  const v = document.getElementById("demo");
+  if (!v || isExport()) return;
+  v.preload = "auto";
+  try { v.load(); } catch { /* older engines */ }
+
+  // Surface how much is buffered, so the presenter can see whether it is safe
+  // to advance rather than finding out live.
+  const chip = document.getElementById("soundchip");
+  const report = () => {
+    if (!chip || !v.duration) return;
+    const end = v.buffered.length ? v.buffered.end(v.buffered.length - 1) : 0;
+    const pct = Math.min(100, Math.round((end / v.duration) * 100));
+    chip.dataset.buffered = String(pct);
+    if (pct >= 99) v.removeEventListener("progress", report);
+  };
+  v.addEventListener("progress", report);
+  v.addEventListener("loadedmetadata", report);
+}
+
 /* ---- layout QA: a slide is a fixed canvas, so spill is silently clipped ---- */
 window.__overflow = () =>
   slides.flatMap((s, i) => {
@@ -692,6 +718,7 @@ function boot() {
   fit();
   wireStagger();
   wireVideo();
+  warmVideo();
   initHero();
   chartSensitivity(); chartCost(); chartMarket(); chartFunds(); chartSplit();
 

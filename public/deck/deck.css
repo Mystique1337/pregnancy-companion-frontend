@@ -416,3 +416,34 @@ body.print .slide {
 body.print #nav, body.print #hint, body.print #bar,
 body.export #nav, body.export #hint, body.export #bar { display: none; }
 @page { size: 1600px 900px; margin: 0; }
+
+/* ── slide 16, the thank-you close ────────────────────────────────────────
+   The QR is the point of this slide, so it is sized to be read from the back
+   of a room rather than to sit politely beside the text: 360px on a 1600px
+   stage, which is a quarter of the frame. Error correction is level H, so it
+   still scans if a hand or a lectern clips a corner. */
+.scanrow { margin-top: 46px; display: flex; align-items: center; gap: 46px; }
+.qrcard {
+  position: relative; flex: 0 0 auto; background: #fff; padding: 22px;
+  border-radius: 28px; box-shadow: 0 30px 80px rgba(0,0,0,.55);
+  animation: qrpulse 3.4s ease-in-out infinite;
+}
+.qrcard img {
+  width: 360px; height: 360px; display: block;
+  /* a QR is pixel art; smoothing it costs contrast at the module edges */
+  image-rendering: pixelated;
+}
+.qrcard .scanlbl {
+  position: absolute; left: 50%; bottom: -17px; transform: translateX(-50%);
+  background: var(--gold); color: #1B1410; font-size: 15px; font-weight: 700;
+  letter-spacing: .22em; padding: 7px 18px; border-radius: 99px; white-space: nowrap;
+}
+@keyframes qrpulse {
+  0%, 100% { box-shadow: 0 30px 80px rgba(0,0,0,.55), 0 0 0 0 rgba(232,185,111,.5); }
+  50%      { box-shadow: 0 30px 80px rgba(0,0,0,.55), 0 0 0 22px rgba(232,185,111,0); }
+}
+.qrtx .url { font-family: var(--serif); font-size: 52px; color: #fff; line-height: 1.05; }
+.qrtx p { font-size: 23px; color: rgba(255,255,255,.8); margin-top: 16px; max-width: 470px; line-height: 1.5; }
+.qrtx p strong { color: var(--gold); }
+/* Exports render one still frame, so hold the pulse at its widest ring. */
+body.print .qrcard { animation: none; box-shadow: 0 30px 80px rgba(0,0,0,.55), 0 0 0 10px rgba(232,185,111,.28); }
